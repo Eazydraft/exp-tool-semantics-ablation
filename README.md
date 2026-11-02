@@ -11,7 +11,8 @@ in `paper/` is built from `runs/main/analysis.json` with `./paper/build.sh`.
 ## Browsing the trajectories
 
 The 6,400 trajectories of the final run are in `runs/main/trajectories/` (one JSON file per
-model, condition and task, including every API request and response). `./browse.sh` serves a
+model, condition and task, including every API request and response); the repeated Claude Haiku 5.5
+D0 run used for the noise floor is in `runs/main/rerun/`. `./browse.sh` serves a
 small local UI at http://localhost:8765/: pick a model, click a cell in the task x condition
 matrix, and read the transcript, the checker's verdict with its state diff, and the tool
 schemas exactly as the model saw them under that condition.

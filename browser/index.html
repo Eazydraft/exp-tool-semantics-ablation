@@ -82,7 +82,7 @@
 
 <script>
 const RUN = "../runs/main/";
-const CONDS = ["D0","D1","D2","D3","D4","D5","D6","D7"];
+const CONDS = ["D0","D1","D2","D3","D4","D5","D6","D7","D0 run 2"];
 let INDEX, BY = {};          // BY[model][cond][taskId] -> index row
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -94,6 +94,12 @@ const glyph = r => r.inference_error ? "!" : r.valid ? "✓" : "✗";
 
 async function init() {
   INDEX = await (await fetch(RUN + "index.json")).json();
+  // The repeated D0 run (noise floor) lives in its own sub-run; show it as one more column.
+  const rerun = await fetch(RUN + "rerun/index.json").then(r => r.ok ? r.json() : null).catch(() => null);
+  for (const r of rerun?.trajectories || []) {
+    INDEX.trajectories.push({ ...r, condition: "D0 run 2", file: "rerun/" + r.file });
+    for (const [k, v] of Object.entries(rerun.summary)) INDEX.summary[k.replace(/ D0$/, " D0 run 2")] = v;
+  }
   for (const r of INDEX.trajectories) ((BY[r.model] ??= {})[r.condition] ??= {})[r.id] = r;
   const models = Object.keys(BY).sort();
   $("#model").innerHTML = models.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join("");

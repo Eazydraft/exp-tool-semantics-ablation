@@ -259,7 +259,7 @@ if "D6" in A["conditions"] and "D7" in A["conditions"]:
     write("sixparam", rows)
 
 # D0 rerun (Claude Haiku 5.5): run-to-run noise, from the rerun's index.json
-rerun = ROOT / "runs" / "rerun" / "index.json"
+rerun = ROOT / "runs" / "main" / "rerun" / "index.json"
 if rerun.exists():
     R = json.load(open(rerun))
     m = "anthropic/claude-haiku-5.5"
