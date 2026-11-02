@@ -1,0 +1,28 @@
+[project]
+name = "exp-tool-semantics-ablation"
+version = "0.1.0"
+description = "Tool-documentation ablation study on BFCL v3 multi-turn base (200 tasks)"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "bfcl_eval",
+    "openai>=1.86.0",
+    "httpx",
+    "python-dotenv",
+    "soundfile>=0.14.0",
+]
+
+[tool.uv.sources]
+# BFCL is used as-is from the untouched clone (editable install, no modifications).
+bfcl_eval = { path = "gorilla/berkeley-function-call-leaderboard", editable = true }
+
+[tool.uv]
+# These BFCL dependencies are only needed for the memory/web-search categories
+# (vector memory store, SerpAPI). They pull in torch and are never imported for
+# the multi_turn_base category, so we skip installing them.
+override-dependencies = [
+    "sentence-transformers ; sys_platform == 'never'",
+    "faiss-cpu ; sys_platform == 'never'",
+]
+
+[tool.setuptools]
+packages = ["ablation"]
