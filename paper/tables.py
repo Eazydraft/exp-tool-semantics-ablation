@@ -237,14 +237,15 @@ def valid_vec(m, c):
 if "D6" in A["conditions"] and "D7" in A["conditions"]:
     rows = []
     for m in MODELS:
-        cells = [pct(S[m][c]) for c in ["D0", "D2", "D6", "D7"]]
+        first = True
         for c in ["D6", "D7"]:
             for base in ["D0", "D2"]:
                 r = paired(valid_vec(m, base), valid_vec(m, c))
-                cells.append(f"{r['diff']:+.1f} [{r['ci'][0]:.1f}, {r['ci'][1]:.1f}]")
-                cells.append(f"{r['a_only']}/{r['b_only']}")
-                cells.append(fmt_p(r["p"]))
-        rows.append(f"{SHORT[m]} & " + " & ".join(cells) + " \\\\")
+                label = SHORT[m] if first else ""
+                first = False
+                rows.append(f"{label} & {c} vs {base} & {pct(S[m][base])} & {pct(S[m][c])} & {r['a_only']} & {r['b_only']} & {r['diff']:+.1f} & [{r['ci'][0]:.1f}, {r['ci'][1]:.1f}] & {fmt_p(r['p'])} \\\\")
+        if m != MODELS[-1]:
+            rows.append(r"\addlinespace")
     write("followup", rows)
     # six-parameter vs other tasks, all relevant conditions
     sp = A["six_param_tasks"]["per_model"]
@@ -267,7 +268,7 @@ if rerun.exists():
     first = {t["id"]: t["valid"] for t in A["per_task"][m]["D0"]}
     r = paired([first[i] for i in ids], [second[i] for i in ids])
     rows = [f"D0 run 1 vs D0 run 2 & {r['both']} & {r['a_only']} & {r['b_only']} & {r['neither']} & {r['diff']:+.1f} & [{r['ci'][0]:.1f}, {r['ci'][1]:.1f}] & {fmt_p(r['p'])} \\\\"]
-    for c in ["D1", "D2", "D3", "D4", "D6", "D7"]:
+    for c in ["D1", "D2", "D3", "D4", "D5", "D6", "D7"]:
         if c not in A["conditions"]:
             continue
         rows.append(f"D0 run 1 vs {c} & " + " & ".join(str(P[m][c][k]) if c in P[m] else "" for k in ["both", "d0_only", "abl_only", "neither"]) +

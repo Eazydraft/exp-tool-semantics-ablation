@@ -2,7 +2,11 @@
 
 Infrastructure for `experiment-design.md`: run BFCL v3 **multi_turn_base** (200 tasks) for
 4 models x 6 documentation conditions (D0..D5) via OpenRouter, using BFCL's own harness,
-tool implementations, execution environment and scorer unchanged.
+tool implementations, execution environment and scorer unchanged. Two follow-up conditions
+were added after the main analysis: D6 (parameter descriptions removed, but prose-only
+constraints moved into the schema as `enum`/`pattern`/renamed parameters) and D7 (parameter
+descriptions removed except for the six parameters that carried the D2 effect). The paper
+in `paper/` is built from `runs/main2/analysis.json` with `./paper/build.sh`.
 
 ## Run
 

@@ -282,7 +282,7 @@ if "D6" in A["conditions"] and "D7" in A["conditions"]:
         vals = [S[m][c] * 100 for c in conds]
         bars = ax.bar(x + (i - 1.5) * w, vals, w * 0.92, color=MCOL[i], label=SHORT[m], linewidth=0)
         for b, v in zip(bars, vals):
-            ax.text(b.get_x() + b.get_width() / 2, v + 1.2, f"{v:.0f}", ha="center", fontsize=6.3, color=TXT)
+            ax.text(b.get_x() + b.get_width() / 2, v + 1.2, f"{v:.1f}", ha="center", fontsize=5.8, color=TXT)
     ax.set_xticks(x, [lab[c] for c in conds])
     ax.set_ylabel("task success (200 tasks)")
     tidy(ax, 100, pct=True)
