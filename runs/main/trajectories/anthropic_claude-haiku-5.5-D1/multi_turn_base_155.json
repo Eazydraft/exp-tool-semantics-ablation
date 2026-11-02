@@ -1,0 +1,5629 @@
+{
+ "id": "multi_turn_base_155",
+ "model": "anthropic/claude-haiku-5.5",
+ "condition": "D1",
+ "registry_name": "anthropic/claude-haiku-5.5-D1",
+ "run": {
+  "run_name": "main2",
+  "models": [
+   "openai/gpt-6-luna",
+   "anthropic/claude-haiku-5.5",
+   "qwen/qwen3-30b-a3b-instruct-2507",
+   "google/gemma-4-26b-a4b-it"
+  ],
+  "conditions": [
+   "D0",
+   "D1",
+   "D2",
+   "D3",
+   "D4",
+   "D5"
+  ],
+  "temperature": 0.001,
+  "threads": 8,
+  "limit": null,
+  "task_ids": null,
+  "test_category": "multi_turn_base",
+  "bfcl_commit": "6ea57973c7a6097fd7c5915698c54c17c5b1b6c8",
+  "conditions_spec": {
+   "D0": {
+    "tool_names": true,
+    "tool_desc": true,
+    "param_names": true,
+    "param_desc": true
+   },
+   "D1": {
+    "tool_names": true,
+    "tool_desc": false,
+    "param_names": true,
+    "param_desc": true
+   },
+   "D2": {
+    "tool_names": true,
+    "tool_desc": true,
+    "param_names": true,
+    "param_desc": false
+   },
+   "D3": {
+    "tool_names": false,
+    "tool_desc": true,
+    "param_names": true,
+    "param_desc": true
+   },
+   "D4": {
+    "tool_names": true,
+    "tool_desc": true,
+    "param_names": false,
+    "param_desc": true
+   },
+   "D5": {
+    "tool_names": false,
+    "tool_desc": false,
+    "param_names": false,
+    "param_desc": false
+   }
+  }
+ },
+ "started_at": "2026-11-02T08:33:33.613778+00:00",
+ "finished_at": "2026-11-02T08:33:41.301523+00:00",
+ "wall_time_s": 7.687682151794434,
+ "totals": {
+  "api_calls": 5,
+  "prompt_tokens": 20097,
+  "completion_tokens": 1169,
+  "reasoning_tokens": 339,
+  "cached_tokens": 0,
+  "cost_usd": 0.0025942,
+  "latency_s": 7.657204
+ },
+ "error": null,
+ "task": {
+  "id": "multi_turn_base_155",
+  "question": [
+   [
+    {
+     "role": "user",
+     "content": "I'm planning to fly from LAX to JFK on November 15th 2026 and aim to travel in business class with a budget of $2400. Could you please book a seat for this flight? I'll be using my access token 'abc123xyz' and Mastercard with id 'id15583' for payment."
+    }
+   ],
+   [
+    {
+     "role": "user",
+     "content": "After booking my flight, I'd like to cover myself against any unforeseen issues. Can you purchase comprehensive travel insurance for $120, using the same credit card I used for the flight booking, to ensure I'm protected throughout my journey?"
+    }
+   ]
+  ],
+  "initial_config": {
+   "TravelAPI": {
+    "credit_card_list": {
+     "id15583": {
+      "card_number": "4920-1539-8456-3890",
+      "card_type": "Mastercard",
+      "expiration_date": "09/2026",
+      "cvv": 768,
+      "cardholder_name": "Michael Thompson",
+      "balance": 15000.0
+     }
+    },
+    "access_token": "abc123xyz",
+    "token_type": "Bearer",
+    "token_expires_in": 3600,
+    "token_scope": "booking insurance",
+    "user_first_name": "Michael",
+    "user_last_name": "Thompson",
+    "budget_limit": 600.0
+   }
+  },
+  "path": [
+   "TravelAPI.register_credit_card",
+   "TravelAPI.book_flight",
+   "TravelAPI.purchase_insurance"
+  ],
+  "involved_classes": [
+   "TravelAPI"
+  ]
+ },
+ "tools_sent": [
+  {
+   "type": "function",
+   "function": {
+    "name": "authenticate_travel",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "client_id": {
+       "type": "string",
+       "description": "The client applications client_id supplied by App Management"
+      },
+      "client_secret": {
+       "type": "string",
+       "description": "The client applications client_secret supplied by App Management"
+      },
+      "refresh_token": {
+       "type": "string",
+       "description": "The refresh token obtained from the initial authentication"
+      },
+      "grant_type": {
+       "type": "string",
+       "description": "The grant type of the authentication request. Here are the options: read_write, read, write"
+      },
+      "user_first_name": {
+       "type": "string",
+       "description": "The first name of the user"
+      },
+      "user_last_name": {
+       "type": "string",
+       "description": "The last name of the user"
+      }
+     },
+     "required": [
+      "client_id",
+      "client_secret",
+      "refresh_token",
+      "grant_type",
+      "user_first_name",
+      "user_last_name"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "expires_in": {
+       "type": "integer"
+      },
+      "access_token": {
+       "type": "string"
+      },
+      "token_type": {
+       "type": "string"
+      },
+      "scope": {
+       "type": "string"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "book_flight",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "access_token": {
+       "type": "string",
+       "description": "The access token obtained from the authenticate"
+      },
+      "card_id": {
+       "type": "string",
+       "description": "The ID of the credit card to use for the booking"
+      },
+      "travel_date": {
+       "type": "string",
+       "description": "The date of the travel in the format YYYY-MM-DD"
+      },
+      "travel_from": {
+       "type": "string",
+       "description": "The location the travel is from"
+      },
+      "travel_to": {
+       "type": "string",
+       "description": "The location the travel is to"
+      },
+      "travel_class": {
+       "type": "string",
+       "description": "The class of the travel"
+      }
+     },
+     "required": [
+      "access_token",
+      "card_id",
+      "travel_date",
+      "travel_from",
+      "travel_to",
+      "travel_class"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "booking_id": {
+       "type": "string"
+      },
+      "transaction_id": {
+       "type": "string"
+      },
+      "booking_status": {
+       "type": "boolean"
+      },
+      "booking_history": {
+       "type": "dict",
+       "properties": {
+        "booking_id": {
+         "type": "string"
+        },
+        "transaction_id": {
+         "type": "string"
+        },
+        "travel_date": {
+         "type": "string"
+        },
+        "travel_from": {
+         "type": "string"
+        },
+        "travel_to": {
+         "type": "string"
+        },
+        "travel_class": {
+         "type": "string"
+        },
+        "travel_cost": {
+         "type": "float"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "cancel_booking",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "access_token": {
+       "type": "string",
+       "description": "The access token obtained from the authenticate"
+      },
+      "booking_id": {
+       "type": "string",
+       "description": "The ID of the booking"
+      }
+     },
+     "required": [
+      "access_token",
+      "booking_id"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "cancel_status": {
+       "type": "boolean"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "compute_exchange_rate",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "base_currency": {
+       "type": "string",
+       "description": "The base currency. [Enum]: USD, RMB, EUR, JPY, GBP, CAD, AUD, INR, RUB, BRL, MXN"
+      },
+      "target_currency": {
+       "type": "string",
+       "description": "The target currency. [Enum]: USD, RMB, EUR, JPY, GBP, CAD, AUD, INR, RUB, BRL, MXN"
+      },
+      "value": {
+       "type": "number",
+       "description": "The value to convert This is a float type value.",
+       "format": "float"
+      }
+     },
+     "required": [
+      "base_currency",
+      "target_currency",
+      "value"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "exchanged_value": {
+       "type": "float"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "contact_customer_support",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "booking_id": {
+       "type": "string",
+       "description": "The ID of the booking"
+      },
+      "message": {
+       "type": "string",
+       "description": "The message to send to customer support"
+      }
+     },
+     "required": [
+      "booking_id",
+      "message"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "customer_support_message": {
+       "type": "string"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "get_all_credit_cards",
+    "parameters": {
+     "type": "object",
+     "properties": {},
+     "required": []
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "credit_card_list": {
+       "type": "dict",
+       "properties": {
+        "card_number": {
+         "type": "string"
+        },
+        "expiration_date": {
+         "type": "string"
+        },
+        "cardholder_name": {
+         "type": "string"
+        },
+        "card_verification_value": {
+         "type": "integer"
+        },
+        "balance": {
+         "type": "float"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "get_booking_history",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "access_token": {
+       "type": "string",
+       "description": "The access token obtained from the authenticate method. "
+      }
+     },
+     "required": [
+      "access_token"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "booking_history": {
+       "type": "dict",
+       "properties": {
+        "transaction_id": {
+         "type": "string"
+        },
+        "travel_date": {
+         "type": "string"
+        },
+        "travel_from": {
+         "type": "string"
+        },
+        "travel_to": {
+         "type": "string"
+        },
+        "travel_class": {
+         "type": "string"
+        },
+        "travel_cost": {
+         "type": "float"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "get_budget_fiscal_year",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "lastModifiedAfter": {
+       "type": "string",
+       "description": "Use this field if you only want Fiscal Years that were changed after the supplied date. The supplied date will be interpreted in the UTC time zone. If lastModifiedAfter is not supplied, the service will return all Fiscal Years, regardless of modified date. Example: 2016-03-29T16:12:20. Return in the format of YYYY-MM-DDTHH:MM:SS.",
+       "default": "None"
+      },
+      "includeRemoved": {
+       "type": "string",
+       "description": "If true, the service will return all Fiscal Years, including those that were previously removed. If not supplied, this field defaults to false.",
+       "default": "None"
+      }
+     },
+     "required": []
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "budget_fiscal_year": {
+       "type": "string"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "get_credit_card_balance",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "access_token": {
+       "type": "string",
+       "description": "The access token obtained from the authenticate"
+      },
+      "card_id": {
+       "type": "string",
+       "description": "The ID of the credit card"
+      }
+     },
+     "required": [
+      "access_token",
+      "card_id"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "card_balance": {
+       "type": "float"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "get_flight_cost",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "travel_from": {
+       "type": "string",
+       "description": "The 3 letter code of the departing airport"
+      },
+      "travel_to": {
+       "type": "string",
+       "description": "The 3 letter code of the arriving airport"
+      },
+      "travel_date": {
+       "type": "string",
+       "description": "The date of the travel in the format 'YYYY-MM-DD'"
+      },
+      "travel_class": {
+       "type": "string",
+       "description": "The class of the travel. Options are: economy, business, first."
+      }
+     },
+     "required": [
+      "travel_from",
+      "travel_to",
+      "travel_date",
+      "travel_class"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "travel_cost_list": {
+       "type": "array",
+       "items": {
+        "type": "float"
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "get_nearest_airport_by_city",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "location": {
+       "type": "string",
+       "description": "The name of the location. [Enum]: Rivermist, Stonebrook, Maplecrest, Silverpine, Shadowridge, London, Paris, Sunset Valley, Oakendale, Willowbend, Crescent Hollow, Autumnville, Pinehaven, Greenfield, San Francisco, Los Angeles, New York, Chicago, Boston, Beijing, Hong Kong, Rome, Tokyo"
+      }
+     },
+     "required": [
+      "location"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "nearest_airport": {
+       "type": "string"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "list_all_airports",
+    "parameters": {
+     "type": "object",
+     "properties": {},
+     "required": []
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "airports": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "purchase_insurance",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "access_token": {
+       "type": "string",
+       "description": "The access token obtained from the authenticate"
+      },
+      "insurance_type": {
+       "type": "string",
+       "description": "The type of insurance to purchase"
+      },
+      "insurance_cost": {
+       "type": "number",
+       "description": "The cost of the insurance This is a float type value.",
+       "format": "float"
+      },
+      "booking_id": {
+       "type": "string",
+       "description": "The ID of the booking"
+      },
+      "card_id": {
+       "type": "string",
+       "description": "The ID of the credit card to use for the"
+      }
+     },
+     "required": [
+      "access_token",
+      "insurance_type",
+      "booking_id",
+      "insurance_cost",
+      "card_id"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "insurance_id": {
+       "type": "string"
+      },
+      "insurance_status": {
+       "type": "boolean"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "register_credit_card",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "access_token": {
+       "type": "string",
+       "description": "The access token obtained from the authenticate method"
+      },
+      "card_number": {
+       "type": "string",
+       "description": "The credit card number"
+      },
+      "expiration_date": {
+       "type": "string",
+       "description": "The expiration date of the credit card in the format MM/YYYY"
+      },
+      "cardholder_name": {
+       "type": "string",
+       "description": "The name of the cardholder"
+      },
+      "card_verification_number": {
+       "type": "integer",
+       "description": "The card verification number"
+      }
+     },
+     "required": [
+      "access_token",
+      "card_number",
+      "expiration_date",
+      "cardholder_name",
+      "card_verification_number"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "card_id": {
+       "type": "string"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "retrieve_invoice",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "access_token": {
+       "type": "string",
+       "description": "The access token obtained from the authenticate"
+      },
+      "booking_id": {
+       "type": "string",
+       "description": "The ID of the booking",
+       "default": "None"
+      },
+      "insurance_id": {
+       "type": "string",
+       "description": "The ID of the insurance",
+       "default": "None"
+      }
+     },
+     "required": [
+      "access_token"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "invoice": {
+       "type": "dict",
+       "properties": {
+        "booking_id": {
+         "type": "string"
+        },
+        "travel_date": {
+         "type": "string"
+        },
+        "travel_from": {
+         "type": "string"
+        },
+        "travel_to": {
+         "type": "string"
+        },
+        "travel_class": {
+         "type": "string"
+        },
+        "travel_cost": {
+         "type": "float"
+        },
+        "transaction_id": {
+         "type": "string"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "set_budget_limit",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "access_token": {
+       "type": "string",
+       "description": "The access token obtained from the authentication process or initial configuration."
+      },
+      "budget_limit": {
+       "type": "number",
+       "description": "The budget limit to set in USD This is a float type value.",
+       "format": "float"
+      }
+     },
+     "required": [
+      "access_token",
+      "budget_limit"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "budget_limit": {
+       "type": "float"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "travel_get_login_status",
+    "parameters": {
+     "type": "object",
+     "properties": {},
+     "required": []
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "status": {
+       "type": "boolean"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "verify_traveler_information",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "first_name": {
+       "type": "string",
+       "description": "The first name of the traveler"
+      },
+      "last_name": {
+       "type": "string",
+       "description": "The last name of the traveler"
+      },
+      "date_of_birth": {
+       "type": "string",
+       "description": "The date of birth of the traveler in the format YYYY-MM-DD"
+      },
+      "passport_number": {
+       "type": "string",
+       "description": "The passport number of the traveler"
+      }
+     },
+     "required": [
+      "first_name",
+      "last_name",
+      "date_of_birth",
+      "passport_number"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "verification_status": {
+       "type": "boolean"
+      },
+      "verification_failure": {
+       "type": "string"
+      }
+     }
+    }
+   }
+  }
+ ],
+ "name_maps": {
+  "tool": {},
+  "param": {}
+ },
+ "bfcl_result": [
+  [
+   [
+    {
+     "get_flight_cost": "{\"travel_from\": \"LAX\", \"travel_to\": \"JFK\", \"travel_date\": \"2026-11-15\", \"travel_class\": \"business\"}"
+    }
+   ],
+   [
+    {
+     "book_flight": "{\"access_token\": \"abc123xyz\", \"card_id\": \"id15583\", \"travel_date\": \"2026-11-15\", \"travel_from\": \"LAX\", \"travel_to\": \"JFK\", \"travel_class\": \"business\"}"
+    }
+   ],
+   "Your flight is booked.\n\n- **Route:** LAX to JFK\n- **Date:** November 15, 2026\n- **Class:** Business\n- **Cost:** $2,400.00, paid with Mastercard (ID id15583)\n- **Booking ID:** 3426812\n- **Transaction ID:** 45451592\n\nThe fare uses your full $2,400 budget, so there is no room left under it for extras such as insurance. Let me know if you want anything else for this trip."
+  ],
+  [
+   [
+    {
+     "purchase_insurance": "{\"access_token\": \"abc123xyz\", \"booking_id\": \"3426812\", \"insurance_type\": \"comprehensive travel insurance\", \"insurance_cost\": 120.0, \"card_id\": \"id15583\"}"
+    }
+   ],
+   "Comprehensive travel insurance is now active for your flight.\n\n- **Booking ID:** 3426812\n- **Insurance ID:** 498276044\n- **Cost:** $120.00, charged to your Mastercard (ID id15583)\n\nThis brings your total spend to $2,520. That is $120 over the $2,400 budget you mentioned earlier, so you may want to adjust that limit if it matters to you."
+  ]
+ ],
+ "bfcl_metadata": {
+  "input_token_count": [
+   [
+    3389,
+    3749,
+    4063
+   ],
+   [
+    4298,
+    4598
+   ]
+  ],
+  "output_token_count": [
+   [
+    338,
+    268,
+    154
+   ],
+   [
+    275,
+    134
+   ]
+  ],
+  "latency": [
+   [
+    1.8267910480499268,
+    1.6409049034118652,
+    1.3566036224365234
+   ],
+   [
+    1.656001091003418,
+    1.201808214187622
+   ]
+  ],
+  "inference_log": [
+   [
+    {
+     "role": "state_info",
+     "class_name": "TravelAPI",
+     "content": {
+      "credit_card_list": {
+       "id15583": {
+        "card_number": "4920-1539-8456-3890",
+        "card_type": "Mastercard",
+        "expiration_date": "09/2026",
+        "cvv": 768,
+        "cardholder_name": "Michael Thompson",
+        "balance": 15000.0
+       }
+      },
+      "booking_record": {},
+      "access_token": "abc123xyz",
+      "token_type": "Bearer",
+      "token_expires_in": 3600,
+      "token_scope": "booking insurance",
+      "user_first_name": "Michael",
+      "user_last_name": "Thompson",
+      "budget_limit": 600.0,
+      "long_context": false
+     }
+    }
+   ],
+   {
+    "begin_of_turn_query": [
+     {
+      "role": "user",
+      "content": "I'm planning to fly from LAX to JFK on November 15th 2026 and aim to travel in business class with a budget of $2400. Could you please book a seat for this flight? I'll be using my access token 'abc123xyz' and Mastercard with id 'id15583' for payment."
+     }
+    ],
+    "step_0": [
+     {
+      "role": "assistant",
+      "content": [
+       {
+        "get_flight_cost": "{\"travel_from\": \"LAX\", \"travel_to\": \"JFK\", \"travel_date\": \"2026-11-15\", \"travel_class\": \"business\"}"
+       }
+      ]
+     },
+     {
+      "role": "handler_log",
+      "content": "Successfully decoded model response.",
+      "model_response_decoded": [
+       "get_flight_cost(travel_from='LAX',travel_to='JFK',travel_date='2026-11-15',travel_class='business')"
+      ]
+     },
+     {
+      "role": "tool",
+      "content": "{\"travel_cost_list\": [2400.0]}"
+     }
+    ],
+    "step_1": [
+     {
+      "role": "assistant",
+      "content": [
+       {
+        "book_flight": "{\"access_token\": \"abc123xyz\", \"card_id\": \"id15583\", \"travel_date\": \"2026-11-15\", \"travel_from\": \"LAX\", \"travel_to\": \"JFK\", \"travel_class\": \"business\"}"
+       }
+      ]
+     },
+     {
+      "role": "handler_log",
+      "content": "Successfully decoded model response.",
+      "model_response_decoded": [
+       "book_flight(access_token='abc123xyz',card_id='id15583',travel_date='2026-11-15',travel_from='LAX',travel_to='JFK',travel_class='business')"
+      ]
+     },
+     {
+      "role": "tool",
+      "content": "{\"booking_id\": \"3426812\", \"transaction_id\": \"45451592\", \"booking_status\": true, \"booking_history\": {}}"
+     }
+    ],
+    "step_2": [
+     {
+      "role": "assistant",
+      "content": "Your flight is booked.\n\n- **Route:** LAX to JFK\n- **Date:** November 15, 2026\n- **Class:** Business\n- **Cost:** $2,400.00, paid with Mastercard (ID id15583)\n- **Booking ID:** 3426812\n- **Transaction ID:** 45451592\n\nThe fare uses your full $2,400 budget, so there is no room left under it for extras such as insurance. Let me know if you want anything else for this trip."
+     },
+     {
+      "role": "handler_log",
+      "content": "Error decoding the model response. Proceed to next turn.",
+      "error": "'str' object has no attribute 'items'"
+     }
+    ]
+   },
+   [
+    {
+     "role": "state_info",
+     "class_name": "TravelAPI",
+     "content": {
+      "credit_card_list": {
+       "id15583": {
+        "card_number": "4920-1539-8456-3890",
+        "card_type": "Mastercard",
+        "expiration_date": "09/2026",
+        "cvv": 768,
+        "cardholder_name": "Michael Thompson",
+        "balance": 12600.0
+       }
+      },
+      "booking_record": {
+       "3426812": {
+        "card_id": "id15583",
+        "travel_date": "2026-11-15",
+        "travel_from": "LAX",
+        "travel_to": "JFK",
+        "travel_class": "business",
+        "travel_cost": 2400.0,
+        "transaction_id": "45451592"
+       }
+      },
+      "access_token": "abc123xyz",
+      "token_type": "Bearer",
+      "token_expires_in": 3600,
+      "token_scope": "booking insurance",
+      "user_first_name": "Michael",
+      "user_last_name": "Thompson",
+      "budget_limit": 600.0,
+      "long_context": false
+     }
+    }
+   ],
+   {
+    "begin_of_turn_query": [
+     {
+      "role": "user",
+      "content": "After booking my flight, I'd like to cover myself against any unforeseen issues. Can you purchase comprehensive travel insurance for $120, using the same credit card I used for the flight booking, to ensure I'm protected throughout my journey?"
+     }
+    ],
+    "step_0": [
+     {
+      "role": "assistant",
+      "content": [
+       {
+        "purchase_insurance": "{\"access_token\": \"abc123xyz\", \"booking_id\": \"3426812\", \"insurance_type\": \"comprehensive travel insurance\", \"insurance_cost\": 120.0, \"card_id\": \"id15583\"}"
+       }
+      ]
+     },
+     {
+      "role": "handler_log",
+      "content": "Successfully decoded model response.",
+      "model_response_decoded": [
+       "purchase_insurance(access_token='abc123xyz',booking_id='3426812',insurance_type='comprehensive travel insurance',insurance_cost=120.0,card_id='id15583')"
+      ]
+     },
+     {
+      "role": "tool",
+      "content": "{\"insurance_id\": \"498276044\", \"insurance_status\": true}"
+     }
+    ],
+    "step_1": [
+     {
+      "role": "assistant",
+      "content": "Comprehensive travel insurance is now active for your flight.\n\n- **Booking ID:** 3426812\n- **Insurance ID:** 498276044\n- **Cost:** $120.00, charged to your Mastercard (ID id15583)\n\nThis brings your total spend to $2,520. That is $120 over the $2,400 budget you mentioned earlier, so you may want to adjust that limit if it matters to you."
+     },
+     {
+      "role": "handler_log",
+      "content": "Error decoding the model response. Proceed to next turn.",
+      "error": "'str' object has no attribute 'items'"
+     }
+    ]
+   },
+   [
+    {
+     "role": "state_info",
+     "class_name": "TravelAPI",
+     "content": {
+      "credit_card_list": {
+       "id15583": {
+        "card_number": "4920-1539-8456-3890",
+        "card_type": "Mastercard",
+        "expiration_date": "09/2026",
+        "cvv": 768,
+        "cardholder_name": "Michael Thompson",
+        "balance": 12480.0
+       }
+      },
+      "booking_record": {
+       "3426812": {
+        "card_id": "id15583",
+        "travel_date": "2026-11-15",
+        "travel_from": "LAX",
+        "travel_to": "JFK",
+        "travel_class": "business",
+        "travel_cost": 2400.0,
+        "transaction_id": "45451592"
+       }
+      },
+      "access_token": "abc123xyz",
+      "token_type": "Bearer",
+      "token_expires_in": 3600,
+      "token_scope": "booking insurance",
+      "user_first_name": "Michael",
+      "user_last_name": "Thompson",
+      "budget_limit": 600.0,
+      "long_context": false
+     }
+    }
+   ]
+  ]
+ },
+ "api_calls": [
+  {
+   "request": {
+    "sent_at": "2026-11-02T08:33:33.618837+00:00",
+    "method": "POST",
+    "url": "https://openrouter.ai/api/v1/chat/completions",
+    "headers": {
+     "host": "openrouter.ai",
+     "accept-encoding": "gzip, deflate",
+     "connection": "keep-alive",
+     "authorization": "<redacted>",
+     "accept": "application/json",
+     "content-type": "application/json",
+     "user-agent": "OpenAI/Python 3.42.1",
+     "x-stainless-lang": "python",
+     "x-stainless-package-version": "3.42.1",
+     "x-stainless-os": "Linux",
+     "x-stainless-arch": "x64",
+     "x-stainless-runtime": "CPython",
+     "x-stainless-runtime-version": "3.12.3",
+     "x-stainless-async": "false",
+     "x-stainless-retry-count": "0",
+     "x-stainless-read-timeout": "600",
+     "cookie": "__cf_bm=ToPcy0xy.2nzUGRrCbhSuELRNyEhP7xEiETX0Cb52Sc-1793608135.2965412-1.0.1.1-MPqeOq01Vx_.T1nUbktMyRSbJjG9kyGfvKUGYiNiVaPlqEyBmYCxOv0HwX_lHxN7TZzf4zg_9NtzwWZ_wzavtvjVbCQ0BNEuq8cboH3iAmDryAaHVg1zIi7mYtKZJPy6",
+     "content-length": "11040"
+    },
+    "body": {
+     "model": "anthropic/claude-haiku-5.5",
+     "messages": [
+      {
+       "role": "user",
+       "content": "I'm planning to fly from LAX to JFK on November 15th 2026 and aim to travel in business class with a budget of $2400. Could you please book a seat for this flight? I'll be using my access token 'abc123xyz' and Mastercard with id 'id15583' for payment."
+      }
+     ],
+     "store": false,
+     "temperature": 0.001,
+     "tools": [
+      {
+       "type": "function",
+       "function": {
+        "name": "authenticate_travel",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "client_id": {
+           "type": "string",
+           "description": "The client applications client_id supplied by App Management"
+          },
+          "client_secret": {
+           "type": "string",
+           "description": "The client applications client_secret supplied by App Management"
+          },
+          "refresh_token": {
+           "type": "string",
+           "description": "The refresh token obtained from the initial authentication"
+          },
+          "grant_type": {
+           "type": "string",
+           "description": "The grant type of the authentication request. Here are the options: read_write, read, write"
+          },
+          "user_first_name": {
+           "type": "string",
+           "description": "The first name of the user"
+          },
+          "user_last_name": {
+           "type": "string",
+           "description": "The last name of the user"
+          }
+         },
+         "required": [
+          "client_id",
+          "client_secret",
+          "refresh_token",
+          "grant_type",
+          "user_first_name",
+          "user_last_name"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "expires_in": {
+           "type": "integer"
+          },
+          "access_token": {
+           "type": "string"
+          },
+          "token_type": {
+           "type": "string"
+          },
+          "scope": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "book_flight",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate"
+          },
+          "card_id": {
+           "type": "string",
+           "description": "The ID of the credit card to use for the booking"
+          },
+          "travel_date": {
+           "type": "string",
+           "description": "The date of the travel in the format YYYY-MM-DD"
+          },
+          "travel_from": {
+           "type": "string",
+           "description": "The location the travel is from"
+          },
+          "travel_to": {
+           "type": "string",
+           "description": "The location the travel is to"
+          },
+          "travel_class": {
+           "type": "string",
+           "description": "The class of the travel"
+          }
+         },
+         "required": [
+          "access_token",
+          "card_id",
+          "travel_date",
+          "travel_from",
+          "travel_to",
+          "travel_class"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "booking_id": {
+           "type": "string"
+          },
+          "transaction_id": {
+           "type": "string"
+          },
+          "booking_status": {
+           "type": "boolean"
+          },
+          "booking_history": {
+           "type": "dict",
+           "properties": {
+            "booking_id": {
+             "type": "string"
+            },
+            "transaction_id": {
+             "type": "string"
+            },
+            "travel_date": {
+             "type": "string"
+            },
+            "travel_from": {
+             "type": "string"
+            },
+            "travel_to": {
+             "type": "string"
+            },
+            "travel_class": {
+             "type": "string"
+            },
+            "travel_cost": {
+             "type": "float"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "cancel_booking",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate"
+          },
+          "booking_id": {
+           "type": "string",
+           "description": "The ID of the booking"
+          }
+         },
+         "required": [
+          "access_token",
+          "booking_id"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "cancel_status": {
+           "type": "boolean"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "compute_exchange_rate",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "base_currency": {
+           "type": "string",
+           "description": "The base currency. [Enum]: USD, RMB, EUR, JPY, GBP, CAD, AUD, INR, RUB, BRL, MXN"
+          },
+          "target_currency": {
+           "type": "string",
+           "description": "The target currency. [Enum]: USD, RMB, EUR, JPY, GBP, CAD, AUD, INR, RUB, BRL, MXN"
+          },
+          "value": {
+           "type": "number",
+           "description": "The value to convert This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "base_currency",
+          "target_currency",
+          "value"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "exchanged_value": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "contact_customer_support",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "booking_id": {
+           "type": "string",
+           "description": "The ID of the booking"
+          },
+          "message": {
+           "type": "string",
+           "description": "The message to send to customer support"
+          }
+         },
+         "required": [
+          "booking_id",
+          "message"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "customer_support_message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_all_credit_cards",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "credit_card_list": {
+           "type": "dict",
+           "properties": {
+            "card_number": {
+             "type": "string"
+            },
+            "expiration_date": {
+             "type": "string"
+            },
+            "cardholder_name": {
+             "type": "string"
+            },
+            "card_verification_value": {
+             "type": "integer"
+            },
+            "balance": {
+             "type": "float"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_booking_history",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate method. "
+          }
+         },
+         "required": [
+          "access_token"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "booking_history": {
+           "type": "dict",
+           "properties": {
+            "transaction_id": {
+             "type": "string"
+            },
+            "travel_date": {
+             "type": "string"
+            },
+            "travel_from": {
+             "type": "string"
+            },
+            "travel_to": {
+             "type": "string"
+            },
+            "travel_class": {
+             "type": "string"
+            },
+            "travel_cost": {
+             "type": "float"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_budget_fiscal_year",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "lastModifiedAfter": {
+           "type": "string",
+           "description": "Use this field if you only want Fiscal Years that were changed after the supplied date. The supplied date will be interpreted in the UTC time zone. If lastModifiedAfter is not supplied, the service will return all Fiscal Years, regardless of modified date. Example: 2016-03-29T16:12:20. Return in the format of YYYY-MM-DDTHH:MM:SS.",
+           "default": "None"
+          },
+          "includeRemoved": {
+           "type": "string",
+           "description": "If true, the service will return all Fiscal Years, including those that were previously removed. If not supplied, this field defaults to false.",
+           "default": "None"
+          }
+         },
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "budget_fiscal_year": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_credit_card_balance",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate"
+          },
+          "card_id": {
+           "type": "string",
+           "description": "The ID of the credit card"
+          }
+         },
+         "required": [
+          "access_token",
+          "card_id"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "card_balance": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_flight_cost",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "travel_from": {
+           "type": "string",
+           "description": "The 3 letter code of the departing airport"
+          },
+          "travel_to": {
+           "type": "string",
+           "description": "The 3 letter code of the arriving airport"
+          },
+          "travel_date": {
+           "type": "string",
+           "description": "The date of the travel in the format 'YYYY-MM-DD'"
+          },
+          "travel_class": {
+           "type": "string",
+           "description": "The class of the travel. Options are: economy, business, first."
+          }
+         },
+         "required": [
+          "travel_from",
+          "travel_to",
+          "travel_date",
+          "travel_class"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "travel_cost_list": {
+           "type": "array",
+           "items": {
+            "type": "float"
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_nearest_airport_by_city",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "location": {
+           "type": "string",
+           "description": "The name of the location. [Enum]: Rivermist, Stonebrook, Maplecrest, Silverpine, Shadowridge, London, Paris, Sunset Valley, Oakendale, Willowbend, Crescent Hollow, Autumnville, Pinehaven, Greenfield, San Francisco, Los Angeles, New York, Chicago, Boston, Beijing, Hong Kong, Rome, Tokyo"
+          }
+         },
+         "required": [
+          "location"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "nearest_airport": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "list_all_airports",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "airports": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "purchase_insurance",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate"
+          },
+          "insurance_type": {
+           "type": "string",
+           "description": "The type of insurance to purchase"
+          },
+          "insurance_cost": {
+           "type": "number",
+           "description": "The cost of the insurance This is a float type value.",
+           "format": "float"
+          },
+          "booking_id": {
+           "type": "string",
+           "description": "The ID of the booking"
+          },
+          "card_id": {
+           "type": "string",
+           "description": "The ID of the credit card to use for the"
+          }
+         },
+         "required": [
+          "access_token",
+          "insurance_type",
+          "booking_id",
+          "insurance_cost",
+          "card_id"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "insurance_id": {
+           "type": "string"
+          },
+          "insurance_status": {
+           "type": "boolean"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "register_credit_card",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate method"
+          },
+          "card_number": {
+           "type": "string",
+           "description": "The credit card number"
+          },
+          "expiration_date": {
+           "type": "string",
+           "description": "The expiration date of the credit card in the format MM/YYYY"
+          },
+          "cardholder_name": {
+           "type": "string",
+           "description": "The name of the cardholder"
+          },
+          "card_verification_number": {
+           "type": "integer",
+           "description": "The card verification number"
+          }
+         },
+         "required": [
+          "access_token",
+          "card_number",
+          "expiration_date",
+          "cardholder_name",
+          "card_verification_number"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "card_id": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "retrieve_invoice",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate"
+          },
+          "booking_id": {
+           "type": "string",
+           "description": "The ID of the booking",
+           "default": "None"
+          },
+          "insurance_id": {
+           "type": "string",
+           "description": "The ID of the insurance",
+           "default": "None"
+          }
+         },
+         "required": [
+          "access_token"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "invoice": {
+           "type": "dict",
+           "properties": {
+            "booking_id": {
+             "type": "string"
+            },
+            "travel_date": {
+             "type": "string"
+            },
+            "travel_from": {
+             "type": "string"
+            },
+            "travel_to": {
+             "type": "string"
+            },
+            "travel_class": {
+             "type": "string"
+            },
+            "travel_cost": {
+             "type": "float"
+            },
+            "transaction_id": {
+             "type": "string"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_budget_limit",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authentication process or initial configuration."
+          },
+          "budget_limit": {
+           "type": "number",
+           "description": "The budget limit to set in USD This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "access_token",
+          "budget_limit"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "budget_limit": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "travel_get_login_status",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "status": {
+           "type": "boolean"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "verify_traveler_information",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "first_name": {
+           "type": "string",
+           "description": "The first name of the traveler"
+          },
+          "last_name": {
+           "type": "string",
+           "description": "The last name of the traveler"
+          },
+          "date_of_birth": {
+           "type": "string",
+           "description": "The date of birth of the traveler in the format YYYY-MM-DD"
+          },
+          "passport_number": {
+           "type": "string",
+           "description": "The passport number of the traveler"
+          }
+         },
+         "required": [
+          "first_name",
+          "last_name",
+          "date_of_birth",
+          "passport_number"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "verification_status": {
+           "type": "boolean"
+          },
+          "verification_failure": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     ],
+     "usage": {
+      "include": true
+     }
+    }
+   },
+   "response": {
+    "received_at": "2026-11-02T08:33:35.442015+00:00",
+    "status_code": 200,
+    "headers": {
+     "date": "Mon, 02 Nov 2026 08:33:34 GMT",
+     "content-type": "application/json",
+     "transfer-encoding": "chunked",
+     "connection": "keep-alive",
+     "access-control-allow-origin": "*",
+     "x-generation-id": "gen-1793608413-QWRtujiKUJMwxsyqAni8",
+     "access-control-expose-headers": "X-Generation-Id,X-Provider-Name,request-id,cf-ray",
+     "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+     "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+     "x-content-type-options": "nosniff",
+     "content-encoding": "gzip",
+     "server": "cloudflare",
+     "cf-ray": "a541cb88daa8b6f1-DEL",
+     "alt-svc": "h3=\":443\"; ma=86400"
+    },
+    "body": {
+     "id": "gen-1793608413-QWRtujiKUJMwxsyqAni8",
+     "object": "chat.completion",
+     "created": 1793608413,
+     "model": "anthropic/claude-haiku-5.5",
+     "provider": "Google",
+     "system_fingerprint": null,
+     "service_tier": null,
+     "choices": [
+      {
+       "index": 0,
+       "logprobs": null,
+       "finish_reason": "tool_calls",
+       "native_finish_reason": "tool_use",
+       "message": {
+        "role": "assistant",
+        "content": null,
+        "refusal": null,
+        "reasoning": null,
+        "tool_calls": [
+         {
+          "type": "function",
+          "index": 0,
+          "id": "toolu_vrtx_01L1vCSrWfzdAF5knNCCTk5D",
+          "function": {
+           "name": "get_flight_cost",
+           "arguments": "{\"travel_from\": \"LAX\", \"travel_to\": \"JFK\", \"travel_date\": \"2026-11-15\", \"travel_class\": \"business\"}"
+          }
+         }
+        ],
+        "reasoning_details": [
+         {
+          "type": "reasoning.text",
+          "signature": "CAQSvwgKEggTEAIYAjgBQgh0aGlua2luZxIMOXjNLh4deVzdxMVSGgz2g1rusGg1gvaTvfUiME2xl6DcEjP9efGxzi/XH9ouhgeyeaj6m44+ssMDDBe4BJoVpEDGN56woPe+u0z4zSraB+qfJOL0FUXKd/j1O1/T5SIvHOB3OPYbzYzFFkqdM8MUn4otcZr7f4WSrvvCC6bnsjIh2cxHkZffKzILDA5Oq3uCy4vrCapfd78q2aWuDJmLBG8+yRYXtLtjk0/Qa6GOhYYuZJSpoOsXNq//aq9Gi/cBcu/erAgnYBUJwDTXgHmq4V/2Nu+Oq/IOrgjSJQGqY5Y10V6BdyU4zBxieXiVqJrexX8V1aisxHDJVJrtFFZdWP0E8v7zUj5rmjJqEHoxbKPQHALpGVyi2sHAwFG0SUQYAToIs46us3UGhXD07EJLkSSNuc/IKqILmpHttUnc5Y1Di9HvIYOJQ/2KOWfj5BDBy7zWjuTdMMpWBnzEd6NJbVk7sA7BVz0j/KtsWfBWEAkV5UUXlWrAnOIYRCouVze7Tvnbau104VfBoQa6YjOzf+RXwndTSOljtLN23TfATq31xtd+2smLdw0nC0gaoBsIRQ3mvelaymGYKYXVlFFzDIQiB0/rEj93MF8AI8u4xJU/SlI4P7nMKY3YmLBEa/am5/RErTIucgzE6gCIwCUxezDCCA4k85Qp+Za6k07Zu6isd63pWvcrnxx4pruCUav0dp9tiafODUk5RyXDgCYwmqQ1nyBFj5EvTnq70ptcLPK5evpUjjDuAgRMl9kUsC1Bp/HM9VsAvjqJZDUsMLBJVzmnPQ3YF4qvNDBe/23lYOK9Y9ORuReUEPVYbuzpcQGdpShbyMXA75PxGfbLHuubyvxQ4l1s7TsuDK6igvWArRZTVyuV0BvkdfVlhFFYIUm3bH2K47uEzvOZKynQz7WyZLJWNE3AxuvmM2bDEg3/y0sEasXCp9v1MCiOxjUszLxpVS6MN7ovBb4OtXiyCrN1PQzrFXeDENGrmghdxPvSFObFDZs6c3HPUiaNjoTC89+RjIEwIv859yR6lB4ZWHGLAOJxDdGPQ6Omu33MuXEWcyCy/3ueBPgzplEnjGK0L7ilap6p1u0dwC/ORUXJDkaw55sLuQiX7jlYzFG39QRV1PlPYu13IYndA6M0g/aevNQI6yWkk8UWLxPkn53qfndUbqLbU05hCEWL1ouuaLINg0lWKaogOTTf9DUq0y8VMCxiNSlNzI4AbsdjFY1xdUuFb6mORMYQxDkN+rvGKY8qg9i/EaLX4pnLJxr3fVn1+Aj+pDCIX7R8ozhfpoeBIhFNiet9ocaL6lgIFfgcxCHjCkYWQnG/jEpgGUdwR+1EA7Pr5Maz36Lfa/ghumxx6MFZ8lZ6STeWJfbHPJgmcS2m+SU8EL91UL52+JMKuWSNVS2l4MBWQxvUUTFbGAE=.eyJlbmRwb2ludF9zbHVnIjoiYW50aHJvcGljL2NsYXVkZS1oYWlrdS01LjUtMjAyNjEwMDd8Z29vZ2xlLXZlcnRleC9nbG9iYWwifQ",
+          "format": "anthropic-claude-v1",
+          "index": 0
+         }
+        ]
+       }
+      }
+     ],
+     "usage": {
+      "prompt_tokens": 3389,
+      "completion_tokens": 338,
+      "total_tokens": 3727,
+      "cost": 0.0005079,
+      "is_byok": false,
+      "prompt_tokens_details": {
+       "cached_tokens": 0,
+       "cache_write_tokens": 0,
+       "audio_tokens": 0,
+       "video_tokens": 0
+      },
+      "cost_details": {
+       "upstream_inference_cost": 0.0005079,
+       "upstream_inference_prompt_cost": 0.0003389,
+       "upstream_inference_completions_cost": 0.000169
+      },
+      "completion_tokens_details": {
+       "reasoning_tokens": 202,
+       "image_tokens": 0,
+       "audio_tokens": 0
+      }
+     }
+    }
+   },
+   "latency_s": 1.822946
+  },
+  {
+   "request": {
+    "sent_at": "2026-11-02T08:33:35.445978+00:00",
+    "method": "POST",
+    "url": "https://openrouter.ai/api/v1/chat/completions",
+    "headers": {
+     "host": "openrouter.ai",
+     "accept-encoding": "gzip, deflate",
+     "connection": "keep-alive",
+     "authorization": "<redacted>",
+     "accept": "application/json",
+     "content-type": "application/json",
+     "user-agent": "OpenAI/Python 3.42.1",
+     "x-stainless-lang": "python",
+     "x-stainless-package-version": "3.42.1",
+     "x-stainless-os": "Linux",
+     "x-stainless-arch": "x64",
+     "x-stainless-runtime": "CPython",
+     "x-stainless-runtime-version": "3.12.3",
+     "x-stainless-async": "false",
+     "x-stainless-retry-count": "0",
+     "x-stainless-read-timeout": "600",
+     "cookie": "__cf_bm=ToPcy0xy.2nzUGRrCbhSuELRNyEhP7xEiETX0Cb52Sc-1793608135.2965412-1.0.1.1-MPqeOq01Vx_.T1nUbktMyRSbJjG9kyGfvKUGYiNiVaPlqEyBmYCxOv0HwX_lHxN7TZzf4zg_9NtzwWZ_wzavtvjVbCQ0BNEuq8cboH3iAmDryAaHVg1zIi7mYtKZJPy6",
+     "content-length": "13145"
+    },
+    "body": {
+     "model": "anthropic/claude-haiku-5.5",
+     "messages": [
+      {
+       "role": "user",
+       "content": "I'm planning to fly from LAX to JFK on November 15th 2026 and aim to travel in business class with a budget of $2400. Could you please book a seat for this flight? I'll be using my access token 'abc123xyz' and Mastercard with id 'id15583' for payment."
+      },
+      {
+       "content": null,
+       "refusal": null,
+       "role": "assistant",
+       "tool_calls": [
+        {
+         "id": "toolu_vrtx_01L1vCSrWfzdAF5knNCCTk5D",
+         "function": {
+          "arguments": "{\"travel_from\": \"LAX\", \"travel_to\": \"JFK\", \"travel_date\": \"2026-11-15\", \"travel_class\": \"business\"}",
+          "name": "get_flight_cost"
+         },
+         "type": "function",
+         "index": 0
+        }
+       ],
+       "reasoning": null,
+       "reasoning_details": [
+        {
+         "type": "reasoning.text",
+         "signature": "CAQSvwgKEggTEAIYAjgBQgh0aGlua2luZxIMOXjNLh4deVzdxMVSGgz2g1rusGg1gvaTvfUiME2xl6DcEjP9efGxzi/XH9ouhgeyeaj6m44+ssMDDBe4BJoVpEDGN56woPe+u0z4zSraB+qfJOL0FUXKd/j1O1/T5SIvHOB3OPYbzYzFFkqdM8MUn4otcZr7f4WSrvvCC6bnsjIh2cxHkZffKzILDA5Oq3uCy4vrCapfd78q2aWuDJmLBG8+yRYXtLtjk0/Qa6GOhYYuZJSpoOsXNq//aq9Gi/cBcu/erAgnYBUJwDTXgHmq4V/2Nu+Oq/IOrgjSJQGqY5Y10V6BdyU4zBxieXiVqJrexX8V1aisxHDJVJrtFFZdWP0E8v7zUj5rmjJqEHoxbKPQHALpGVyi2sHAwFG0SUQYAToIs46us3UGhXD07EJLkSSNuc/IKqILmpHttUnc5Y1Di9HvIYOJQ/2KOWfj5BDBy7zWjuTdMMpWBnzEd6NJbVk7sA7BVz0j/KtsWfBWEAkV5UUXlWrAnOIYRCouVze7Tvnbau104VfBoQa6YjOzf+RXwndTSOljtLN23TfATq31xtd+2smLdw0nC0gaoBsIRQ3mvelaymGYKYXVlFFzDIQiB0/rEj93MF8AI8u4xJU/SlI4P7nMKY3YmLBEa/am5/RErTIucgzE6gCIwCUxezDCCA4k85Qp+Za6k07Zu6isd63pWvcrnxx4pruCUav0dp9tiafODUk5RyXDgCYwmqQ1nyBFj5EvTnq70ptcLPK5evpUjjDuAgRMl9kUsC1Bp/HM9VsAvjqJZDUsMLBJVzmnPQ3YF4qvNDBe/23lYOK9Y9ORuReUEPVYbuzpcQGdpShbyMXA75PxGfbLHuubyvxQ4l1s7TsuDK6igvWArRZTVyuV0BvkdfVlhFFYIUm3bH2K47uEzvOZKynQz7WyZLJWNE3AxuvmM2bDEg3/y0sEasXCp9v1MCiOxjUszLxpVS6MN7ovBb4OtXiyCrN1PQzrFXeDENGrmghdxPvSFObFDZs6c3HPUiaNjoTC89+RjIEwIv859yR6lB4ZWHGLAOJxDdGPQ6Omu33MuXEWcyCy/3ueBPgzplEnjGK0L7ilap6p1u0dwC/ORUXJDkaw55sLuQiX7jlYzFG39QRV1PlPYu13IYndA6M0g/aevNQI6yWkk8UWLxPkn53qfndUbqLbU05hCEWL1ouuaLINg0lWKaogOTTf9DUq0y8VMCxiNSlNzI4AbsdjFY1xdUuFb6mORMYQxDkN+rvGKY8qg9i/EaLX4pnLJxr3fVn1+Aj+pDCIX7R8ozhfpoeBIhFNiet9ocaL6lgIFfgcxCHjCkYWQnG/jEpgGUdwR+1EA7Pr5Maz36Lfa/ghumxx6MFZ8lZ6STeWJfbHPJgmcS2m+SU8EL91UL52+JMKuWSNVS2l4MBWQxvUUTFbGAE=.eyJlbmRwb2ludF9zbHVnIjoiYW50aHJvcGljL2NsYXVkZS1oYWlrdS01LjUtMjAyNjEwMDd8Z29vZ2xlLXZlcnRleC9nbG9iYWwifQ",
+         "format": "anthropic-claude-v1",
+         "index": 0
+        }
+       ]
+      },
+      {
+       "role": "tool",
+       "content": "{\"travel_cost_list\": [2400.0]}",
+       "tool_call_id": "toolu_vrtx_01L1vCSrWfzdAF5knNCCTk5D"
+      }
+     ],
+     "store": false,
+     "temperature": 0.001,
+     "tools": [
+      {
+       "type": "function",
+       "function": {
+        "name": "authenticate_travel",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "client_id": {
+           "type": "string",
+           "description": "The client applications client_id supplied by App Management"
+          },
+          "client_secret": {
+           "type": "string",
+           "description": "The client applications client_secret supplied by App Management"
+          },
+          "refresh_token": {
+           "type": "string",
+           "description": "The refresh token obtained from the initial authentication"
+          },
+          "grant_type": {
+           "type": "string",
+           "description": "The grant type of the authentication request. Here are the options: read_write, read, write"
+          },
+          "user_first_name": {
+           "type": "string",
+           "description": "The first name of the user"
+          },
+          "user_last_name": {
+           "type": "string",
+           "description": "The last name of the user"
+          }
+         },
+         "required": [
+          "client_id",
+          "client_secret",
+          "refresh_token",
+          "grant_type",
+          "user_first_name",
+          "user_last_name"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "expires_in": {
+           "type": "integer"
+          },
+          "access_token": {
+           "type": "string"
+          },
+          "token_type": {
+           "type": "string"
+          },
+          "scope": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "book_flight",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate"
+          },
+          "card_id": {
+           "type": "string",
+           "description": "The ID of the credit card to use for the booking"
+          },
+          "travel_date": {
+           "type": "string",
+           "description": "The date of the travel in the format YYYY-MM-DD"
+          },
+          "travel_from": {
+           "type": "string",
+           "description": "The location the travel is from"
+          },
+          "travel_to": {
+           "type": "string",
+           "description": "The location the travel is to"
+          },
+          "travel_class": {
+           "type": "string",
+           "description": "The class of the travel"
+          }
+         },
+         "required": [
+          "access_token",
+          "card_id",
+          "travel_date",
+          "travel_from",
+          "travel_to",
+          "travel_class"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "booking_id": {
+           "type": "string"
+          },
+          "transaction_id": {
+           "type": "string"
+          },
+          "booking_status": {
+           "type": "boolean"
+          },
+          "booking_history": {
+           "type": "dict",
+           "properties": {
+            "booking_id": {
+             "type": "string"
+            },
+            "transaction_id": {
+             "type": "string"
+            },
+            "travel_date": {
+             "type": "string"
+            },
+            "travel_from": {
+             "type": "string"
+            },
+            "travel_to": {
+             "type": "string"
+            },
+            "travel_class": {
+             "type": "string"
+            },
+            "travel_cost": {
+             "type": "float"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "cancel_booking",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate"
+          },
+          "booking_id": {
+           "type": "string",
+           "description": "The ID of the booking"
+          }
+         },
+         "required": [
+          "access_token",
+          "booking_id"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "cancel_status": {
+           "type": "boolean"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "compute_exchange_rate",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "base_currency": {
+           "type": "string",
+           "description": "The base currency. [Enum]: USD, RMB, EUR, JPY, GBP, CAD, AUD, INR, RUB, BRL, MXN"
+          },
+          "target_currency": {
+           "type": "string",
+           "description": "The target currency. [Enum]: USD, RMB, EUR, JPY, GBP, CAD, AUD, INR, RUB, BRL, MXN"
+          },
+          "value": {
+           "type": "number",
+           "description": "The value to convert This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "base_currency",
+          "target_currency",
+          "value"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "exchanged_value": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "contact_customer_support",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "booking_id": {
+           "type": "string",
+           "description": "The ID of the booking"
+          },
+          "message": {
+           "type": "string",
+           "description": "The message to send to customer support"
+          }
+         },
+         "required": [
+          "booking_id",
+          "message"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "customer_support_message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_all_credit_cards",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "credit_card_list": {
+           "type": "dict",
+           "properties": {
+            "card_number": {
+             "type": "string"
+            },
+            "expiration_date": {
+             "type": "string"
+            },
+            "cardholder_name": {
+             "type": "string"
+            },
+            "card_verification_value": {
+             "type": "integer"
+            },
+            "balance": {
+             "type": "float"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_booking_history",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate method. "
+          }
+         },
+         "required": [
+          "access_token"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "booking_history": {
+           "type": "dict",
+           "properties": {
+            "transaction_id": {
+             "type": "string"
+            },
+            "travel_date": {
+             "type": "string"
+            },
+            "travel_from": {
+             "type": "string"
+            },
+            "travel_to": {
+             "type": "string"
+            },
+            "travel_class": {
+             "type": "string"
+            },
+            "travel_cost": {
+             "type": "float"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_budget_fiscal_year",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "lastModifiedAfter": {
+           "type": "string",
+           "description": "Use this field if you only want Fiscal Years that were changed after the supplied date. The supplied date will be interpreted in the UTC time zone. If lastModifiedAfter is not supplied, the service will return all Fiscal Years, regardless of modified date. Example: 2016-03-29T16:12:20. Return in the format of YYYY-MM-DDTHH:MM:SS.",
+           "default": "None"
+          },
+          "includeRemoved": {
+           "type": "string",
+           "description": "If true, the service will return all Fiscal Years, including those that were previously removed. If not supplied, this field defaults to false.",
+           "default": "None"
+          }
+         },
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "budget_fiscal_year": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_credit_card_balance",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate"
+          },
+          "card_id": {
+           "type": "string",
+           "description": "The ID of the credit card"
+          }
+         },
+         "required": [
+          "access_token",
+          "card_id"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "card_balance": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_flight_cost",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "travel_from": {
+           "type": "string",
+           "description": "The 3 letter code of the departing airport"
+          },
+          "travel_to": {
+           "type": "string",
+           "description": "The 3 letter code of the arriving airport"
+          },
+          "travel_date": {
+           "type": "string",
+           "description": "The date of the travel in the format 'YYYY-MM-DD'"
+          },
+          "travel_class": {
+           "type": "string",
+           "description": "The class of the travel. Options are: economy, business, first."
+          }
+         },
+         "required": [
+          "travel_from",
+          "travel_to",
+          "travel_date",
+          "travel_class"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "travel_cost_list": {
+           "type": "array",
+           "items": {
+            "type": "float"
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_nearest_airport_by_city",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "location": {
+           "type": "string",
+           "description": "The name of the location. [Enum]: Rivermist, Stonebrook, Maplecrest, Silverpine, Shadowridge, London, Paris, Sunset Valley, Oakendale, Willowbend, Crescent Hollow, Autumnville, Pinehaven, Greenfield, San Francisco, Los Angeles, New York, Chicago, Boston, Beijing, Hong Kong, Rome, Tokyo"
+          }
+         },
+         "required": [
+          "location"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "nearest_airport": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "list_all_airports",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "airports": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "purchase_insurance",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate"
+          },
+          "insurance_type": {
+           "type": "string",
+           "description": "The type of insurance to purchase"
+          },
+          "insurance_cost": {
+           "type": "number",
+           "description": "The cost of the insurance This is a float type value.",
+           "format": "float"
+          },
+          "booking_id": {
+           "type": "string",
+           "description": "The ID of the booking"
+          },
+          "card_id": {
+           "type": "string",
+           "description": "The ID of the credit card to use for the"
+          }
+         },
+         "required": [
+          "access_token",
+          "insurance_type",
+          "booking_id",
+          "insurance_cost",
+          "card_id"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "insurance_id": {
+           "type": "string"
+          },
+          "insurance_status": {
+           "type": "boolean"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "register_credit_card",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate method"
+          },
+          "card_number": {
+           "type": "string",
+           "description": "The credit card number"
+          },
+          "expiration_date": {
+           "type": "string",
+           "description": "The expiration date of the credit card in the format MM/YYYY"
+          },
+          "cardholder_name": {
+           "type": "string",
+           "description": "The name of the cardholder"
+          },
+          "card_verification_number": {
+           "type": "integer",
+           "description": "The card verification number"
+          }
+         },
+         "required": [
+          "access_token",
+          "card_number",
+          "expiration_date",
+          "cardholder_name",
+          "card_verification_number"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "card_id": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "retrieve_invoice",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate"
+          },
+          "booking_id": {
+           "type": "string",
+           "description": "The ID of the booking",
+           "default": "None"
+          },
+          "insurance_id": {
+           "type": "string",
+           "description": "The ID of the insurance",
+           "default": "None"
+          }
+         },
+         "required": [
+          "access_token"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "invoice": {
+           "type": "dict",
+           "properties": {
+            "booking_id": {
+             "type": "string"
+            },
+            "travel_date": {
+             "type": "string"
+            },
+            "travel_from": {
+             "type": "string"
+            },
+            "travel_to": {
+             "type": "string"
+            },
+            "travel_class": {
+             "type": "string"
+            },
+            "travel_cost": {
+             "type": "float"
+            },
+            "transaction_id": {
+             "type": "string"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_budget_limit",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authentication process or initial configuration."
+          },
+          "budget_limit": {
+           "type": "number",
+           "description": "The budget limit to set in USD This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "access_token",
+          "budget_limit"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "budget_limit": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "travel_get_login_status",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "status": {
+           "type": "boolean"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "verify_traveler_information",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "first_name": {
+           "type": "string",
+           "description": "The first name of the traveler"
+          },
+          "last_name": {
+           "type": "string",
+           "description": "The last name of the traveler"
+          },
+          "date_of_birth": {
+           "type": "string",
+           "description": "The date of birth of the traveler in the format YYYY-MM-DD"
+          },
+          "passport_number": {
+           "type": "string",
+           "description": "The passport number of the traveler"
+          }
+         },
+         "required": [
+          "first_name",
+          "last_name",
+          "date_of_birth",
+          "passport_number"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "verification_status": {
+           "type": "boolean"
+          },
+          "verification_failure": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     ],
+     "usage": {
+      "include": true
+     }
+    }
+   },
+   "response": {
+    "received_at": "2026-11-02T08:33:37.083456+00:00",
+    "status_code": 200,
+    "headers": {
+     "date": "Mon, 02 Nov 2026 08:33:36 GMT",
+     "content-type": "application/json",
+     "transfer-encoding": "chunked",
+     "connection": "keep-alive",
+     "access-control-allow-origin": "*",
+     "x-generation-id": "gen-1793608415-8oO7cEmN9VXjDECq2FKM",
+     "access-control-expose-headers": "X-Generation-Id,X-Provider-Name,request-id,cf-ray",
+     "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+     "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+     "x-content-type-options": "nosniff",
+     "content-encoding": "gzip",
+     "server": "cloudflare",
+     "cf-ray": "a541cb944b86b6f1-DEL",
+     "alt-svc": "h3=\":443\"; ma=86400"
+    },
+    "body": {
+     "id": "gen-1793608415-8oO7cEmN9VXjDECq2FKM",
+     "object": "chat.completion",
+     "created": 1793608415,
+     "model": "anthropic/claude-haiku-5.5",
+     "provider": "Google",
+     "system_fingerprint": null,
+     "service_tier": null,
+     "choices": [
+      {
+       "index": 0,
+       "logprobs": null,
+       "finish_reason": "tool_calls",
+       "native_finish_reason": "tool_use",
+       "message": {
+        "role": "assistant",
+        "content": "The business class fare for LAX to JFK on November 15, 2026 is $2,400, which is exactly your budget. I'll go ahead and book it.",
+        "refusal": null,
+        "reasoning": null,
+        "tool_calls": [
+         {
+          "type": "function",
+          "index": 0,
+          "id": "toolu_vrtx_0189DoHH36tVGcuCSC8S792T",
+          "function": {
+           "name": "book_flight",
+           "arguments": "{\"access_token\": \"abc123xyz\", \"card_id\": \"id15583\", \"travel_date\": \"2026-11-15\", \"travel_from\": \"LAX\", \"travel_to\": \"JFK\", \"travel_class\": \"business\"}"
+          }
+         }
+        ],
+        "reasoning_details": [
+         {
+          "type": "reasoning.text",
+          "signature": "CAQSjAUKEggTEAIYAjgBQgh0aGlua2luZxIMDq6XxnjEyuMA3WLzGgx0OXer9GJzFNXbo2kiMGiLppHNTXhYB/Kq0MMzAezYyZ55chHi3Y2T4HxbMaVCa1OgkicCJ/Z6kHsW2NHV3SqnBACoi4Qlych3eNZDp60DhHmFg6qYtcODsLen/k3vvZl9OmRYo/gV/HDeu+F9U92Avo4QXahW2+1bzbnlxKjSLQfg1rqhTP89wIjdFiLvH0/1wcUQHzlQXXNwraIMweZsNlOTWzhrj6J/vDvGh80jK/OIL5erMfRnbnMd4ZXtx0wWBeIpjIw/NeZRcLIF2+zaNTMy7JVNTmBBPhNNyks9dsjmASLX306hOosPjMvlY6+r/WKyrbpn8RGWmDYp6F0idd0MnvxLmXbWYj7j5wKYIGEVszef56eHknpX48AIq+GPxXkRpo3+orbCP9MOqCpw3fEL+45/IuplAxDsxT2u7S9U+svuwryDTFYfKHYUa0l656nm59je4VViFCebBqrRJkhgJ1fNeyNvWlny3oR1Ki3L2ccJhW8ro7H7i2bZKuP2ZRdLjhZvNWUpLuWvPJSBwLAdgdVtjtJps5SbUOmBnFuwqP9Ct/gln3wcvpufHyRJ4Ca8K/r4ettcYewNl1h/Yg7xwqO5IjaC/G8rTGFxPpx5uzYvqCZylsGESm9jlkYoNC5WHIQX901f9skj7OwSekzLzQC5QjLadj92sXFwVtHWcI5yvRPFDIUtU4WONnF3ToxKD0jAipX5Flyedwgq54gkvnuF+bu/VSNIWBokZf8TXJkqulB1TWVXHM4FXkS+2mJV/w2zkv81HOSASPurmh3gTNalpALTq2kg/lBpSSL0tqgA1OHNGAE=.eyJlbmRwb2ludF9zbHVnIjoiYW50aHJvcGljL2NsYXVkZS1oYWlrdS01LjUtMjAyNjEwMDd8Z29vZ2xlLXZlcnRleC9nbG9iYWwifQ",
+          "format": "anthropic-claude-v1",
+          "index": 0
+         }
+        ]
+       }
+      }
+     ],
+     "usage": {
+      "prompt_tokens": 3749,
+      "completion_tokens": 268,
+      "total_tokens": 4017,
+      "cost": 0.0005089,
+      "is_byok": false,
+      "prompt_tokens_details": {
+       "cached_tokens": 0,
+       "cache_write_tokens": 0,
+       "audio_tokens": 0,
+       "video_tokens": 0
+      },
+      "cost_details": {
+       "upstream_inference_cost": 0.0005089,
+       "upstream_inference_prompt_cost": 0.0003749,
+       "upstream_inference_completions_cost": 0.000134
+      },
+      "completion_tokens_details": {
+       "reasoning_tokens": 34,
+       "image_tokens": 0,
+       "audio_tokens": 0
+      }
+     }
+    }
+   },
+   "latency_s": 1.637011
+  },
+  {
+   "request": {
+    "sent_at": "2026-11-02T08:33:37.087921+00:00",
+    "method": "POST",
+    "url": "https://openrouter.ai/api/v1/chat/completions",
+    "headers": {
+     "host": "openrouter.ai",
+     "accept-encoding": "gzip, deflate",
+     "connection": "keep-alive",
+     "authorization": "<redacted>",
+     "accept": "application/json",
+     "content-type": "application/json",
+     "user-agent": "OpenAI/Python 3.42.1",
+     "x-stainless-lang": "python",
+     "x-stainless-package-version": "3.42.1",
+     "x-stainless-os": "Linux",
+     "x-stainless-arch": "x64",
+     "x-stainless-runtime": "CPython",
+     "x-stainless-runtime-version": "3.12.3",
+     "x-stainless-async": "false",
+     "x-stainless-retry-count": "0",
+     "x-stainless-read-timeout": "600",
+     "cookie": "__cf_bm=ToPcy0xy.2nzUGRrCbhSuELRNyEhP7xEiETX0Cb52Sc-1793608135.2965412-1.0.1.1-MPqeOq01Vx_.T1nUbktMyRSbJjG9kyGfvKUGYiNiVaPlqEyBmYCxOv0HwX_lHxN7TZzf4zg_9NtzwWZ_wzavtvjVbCQ0BNEuq8cboH3iAmDryAaHVg1zIi7mYtKZJPy6",
+     "content-length": "14932"
+    },
+    "body": {
+     "model": "anthropic/claude-haiku-5.5",
+     "messages": [
+      {
+       "role": "user",
+       "content": "I'm planning to fly from LAX to JFK on November 15th 2026 and aim to travel in business class with a budget of $2400. Could you please book a seat for this flight? I'll be using my access token 'abc123xyz' and Mastercard with id 'id15583' for payment."
+      },
+      {
+       "content": null,
+       "refusal": null,
+       "role": "assistant",
+       "tool_calls": [
+        {
+         "id": "toolu_vrtx_01L1vCSrWfzdAF5knNCCTk5D",
+         "function": {
+          "arguments": "{\"travel_from\": \"LAX\", \"travel_to\": \"JFK\", \"travel_date\": \"2026-11-15\", \"travel_class\": \"business\"}",
+          "name": "get_flight_cost"
+         },
+         "type": "function",
+         "index": 0
+        }
+       ],
+       "reasoning": null,
+       "reasoning_details": [
+        {
+         "type": "reasoning.text",
+         "signature": "CAQSvwgKEggTEAIYAjgBQgh0aGlua2luZxIMOXjNLh4deVzdxMVSGgz2g1rusGg1gvaTvfUiME2xl6DcEjP9efGxzi/XH9ouhgeyeaj6m44+ssMDDBe4BJoVpEDGN56woPe+u0z4zSraB+qfJOL0FUXKd/j1O1/T5SIvHOB3OPYbzYzFFkqdM8MUn4otcZr7f4WSrvvCC6bnsjIh2cxHkZffKzILDA5Oq3uCy4vrCapfd78q2aWuDJmLBG8+yRYXtLtjk0/Qa6GOhYYuZJSpoOsXNq//aq9Gi/cBcu/erAgnYBUJwDTXgHmq4V/2Nu+Oq/IOrgjSJQGqY5Y10V6BdyU4zBxieXiVqJrexX8V1aisxHDJVJrtFFZdWP0E8v7zUj5rmjJqEHoxbKPQHALpGVyi2sHAwFG0SUQYAToIs46us3UGhXD07EJLkSSNuc/IKqILmpHttUnc5Y1Di9HvIYOJQ/2KOWfj5BDBy7zWjuTdMMpWBnzEd6NJbVk7sA7BVz0j/KtsWfBWEAkV5UUXlWrAnOIYRCouVze7Tvnbau104VfBoQa6YjOzf+RXwndTSOljtLN23TfATq31xtd+2smLdw0nC0gaoBsIRQ3mvelaymGYKYXVlFFzDIQiB0/rEj93MF8AI8u4xJU/SlI4P7nMKY3YmLBEa/am5/RErTIucgzE6gCIwCUxezDCCA4k85Qp+Za6k07Zu6isd63pWvcrnxx4pruCUav0dp9tiafODUk5RyXDgCYwmqQ1nyBFj5EvTnq70ptcLPK5evpUjjDuAgRMl9kUsC1Bp/HM9VsAvjqJZDUsMLBJVzmnPQ3YF4qvNDBe/23lYOK9Y9ORuReUEPVYbuzpcQGdpShbyMXA75PxGfbLHuubyvxQ4l1s7TsuDK6igvWArRZTVyuV0BvkdfVlhFFYIUm3bH2K47uEzvOZKynQz7WyZLJWNE3AxuvmM2bDEg3/y0sEasXCp9v1MCiOxjUszLxpVS6MN7ovBb4OtXiyCrN1PQzrFXeDENGrmghdxPvSFObFDZs6c3HPUiaNjoTC89+RjIEwIv859yR6lB4ZWHGLAOJxDdGPQ6Omu33MuXEWcyCy/3ueBPgzplEnjGK0L7ilap6p1u0dwC/ORUXJDkaw55sLuQiX7jlYzFG39QRV1PlPYu13IYndA6M0g/aevNQI6yWkk8UWLxPkn53qfndUbqLbU05hCEWL1ouuaLINg0lWKaogOTTf9DUq0y8VMCxiNSlNzI4AbsdjFY1xdUuFb6mORMYQxDkN+rvGKY8qg9i/EaLX4pnLJxr3fVn1+Aj+pDCIX7R8ozhfpoeBIhFNiet9ocaL6lgIFfgcxCHjCkYWQnG/jEpgGUdwR+1EA7Pr5Maz36Lfa/ghumxx6MFZ8lZ6STeWJfbHPJgmcS2m+SU8EL91UL52+JMKuWSNVS2l4MBWQxvUUTFbGAE=.eyJlbmRwb2ludF9zbHVnIjoiYW50aHJvcGljL2NsYXVkZS1oYWlrdS01LjUtMjAyNjEwMDd8Z29vZ2xlLXZlcnRleC9nbG9iYWwifQ",
+         "format": "anthropic-claude-v1",
+         "index": 0
+        }
+       ]
+      },
+      {
+       "role": "tool",
+       "content": "{\"travel_cost_list\": [2400.0]}",
+       "tool_call_id": "toolu_vrtx_01L1vCSrWfzdAF5knNCCTk5D"
+      },
+      {
+       "content": "The business class fare for LAX to JFK on November 15, 2026 is $2,400, which is exactly your budget. I'll go ahead and book it.",
+       "refusal": null,
+       "role": "assistant",
+       "tool_calls": [
+        {
+         "id": "toolu_vrtx_0189DoHH36tVGcuCSC8S792T",
+         "function": {
+          "arguments": "{\"access_token\": \"abc123xyz\", \"card_id\": \"id15583\", \"travel_date\": \"2026-11-15\", \"travel_from\": \"LAX\", \"travel_to\": \"JFK\", \"travel_class\": \"business\"}",
+          "name": "book_flight"
+         },
+         "type": "function",
+         "index": 0
+        }
+       ],
+       "reasoning": null,
+       "reasoning_details": [
+        {
+         "type": "reasoning.text",
+         "signature": "CAQSjAUKEggTEAIYAjgBQgh0aGlua2luZxIMDq6XxnjEyuMA3WLzGgx0OXer9GJzFNXbo2kiMGiLppHNTXhYB/Kq0MMzAezYyZ55chHi3Y2T4HxbMaVCa1OgkicCJ/Z6kHsW2NHV3SqnBACoi4Qlych3eNZDp60DhHmFg6qYtcODsLen/k3vvZl9OmRYo/gV/HDeu+F9U92Avo4QXahW2+1bzbnlxKjSLQfg1rqhTP89wIjdFiLvH0/1wcUQHzlQXXNwraIMweZsNlOTWzhrj6J/vDvGh80jK/OIL5erMfRnbnMd4ZXtx0wWBeIpjIw/NeZRcLIF2+zaNTMy7JVNTmBBPhNNyks9dsjmASLX306hOosPjMvlY6+r/WKyrbpn8RGWmDYp6F0idd0MnvxLmXbWYj7j5wKYIGEVszef56eHknpX48AIq+GPxXkRpo3+orbCP9MOqCpw3fEL+45/IuplAxDsxT2u7S9U+svuwryDTFYfKHYUa0l656nm59je4VViFCebBqrRJkhgJ1fNeyNvWlny3oR1Ki3L2ccJhW8ro7H7i2bZKuP2ZRdLjhZvNWUpLuWvPJSBwLAdgdVtjtJps5SbUOmBnFuwqP9Ct/gln3wcvpufHyRJ4Ca8K/r4ettcYewNl1h/Yg7xwqO5IjaC/G8rTGFxPpx5uzYvqCZylsGESm9jlkYoNC5WHIQX901f9skj7OwSekzLzQC5QjLadj92sXFwVtHWcI5yvRPFDIUtU4WONnF3ToxKD0jAipX5Flyedwgq54gkvnuF+bu/VSNIWBokZf8TXJkqulB1TWVXHM4FXkS+2mJV/w2zkv81HOSASPurmh3gTNalpALTq2kg/lBpSSL0tqgA1OHNGAE=.eyJlbmRwb2ludF9zbHVnIjoiYW50aHJvcGljL2NsYXVkZS1oYWlrdS01LjUtMjAyNjEwMDd8Z29vZ2xlLXZlcnRleC9nbG9iYWwifQ",
+         "format": "anthropic-claude-v1",
+         "index": 0
+        }
+       ]
+      },
+      {
+       "role": "tool",
+       "content": "{\"booking_id\": \"3426812\", \"transaction_id\": \"45451592\", \"booking_status\": true, \"booking_history\": {}}",
+       "tool_call_id": "toolu_vrtx_0189DoHH36tVGcuCSC8S792T"
+      }
+     ],
+     "store": false,
+     "temperature": 0.001,
+     "tools": [
+      {
+       "type": "function",
+       "function": {
+        "name": "authenticate_travel",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "client_id": {
+           "type": "string",
+           "description": "The client applications client_id supplied by App Management"
+          },
+          "client_secret": {
+           "type": "string",
+           "description": "The client applications client_secret supplied by App Management"
+          },
+          "refresh_token": {
+           "type": "string",
+           "description": "The refresh token obtained from the initial authentication"
+          },
+          "grant_type": {
+           "type": "string",
+           "description": "The grant type of the authentication request. Here are the options: read_write, read, write"
+          },
+          "user_first_name": {
+           "type": "string",
+           "description": "The first name of the user"
+          },
+          "user_last_name": {
+           "type": "string",
+           "description": "The last name of the user"
+          }
+         },
+         "required": [
+          "client_id",
+          "client_secret",
+          "refresh_token",
+          "grant_type",
+          "user_first_name",
+          "user_last_name"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "expires_in": {
+           "type": "integer"
+          },
+          "access_token": {
+           "type": "string"
+          },
+          "token_type": {
+           "type": "string"
+          },
+          "scope": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "book_flight",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate"
+          },
+          "card_id": {
+           "type": "string",
+           "description": "The ID of the credit card to use for the booking"
+          },
+          "travel_date": {
+           "type": "string",
+           "description": "The date of the travel in the format YYYY-MM-DD"
+          },
+          "travel_from": {
+           "type": "string",
+           "description": "The location the travel is from"
+          },
+          "travel_to": {
+           "type": "string",
+           "description": "The location the travel is to"
+          },
+          "travel_class": {
+           "type": "string",
+           "description": "The class of the travel"
+          }
+         },
+         "required": [
+          "access_token",
+          "card_id",
+          "travel_date",
+          "travel_from",
+          "travel_to",
+          "travel_class"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "booking_id": {
+           "type": "string"
+          },
+          "transaction_id": {
+           "type": "string"
+          },
+          "booking_status": {
+           "type": "boolean"
+          },
+          "booking_history": {
+           "type": "dict",
+           "properties": {
+            "booking_id": {
+             "type": "string"
+            },
+            "transaction_id": {
+             "type": "string"
+            },
+            "travel_date": {
+             "type": "string"
+            },
+            "travel_from": {
+             "type": "string"
+            },
+            "travel_to": {
+             "type": "string"
+            },
+            "travel_class": {
+             "type": "string"
+            },
+            "travel_cost": {
+             "type": "float"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "cancel_booking",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate"
+          },
+          "booking_id": {
+           "type": "string",
+           "description": "The ID of the booking"
+          }
+         },
+         "required": [
+          "access_token",
+          "booking_id"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "cancel_status": {
+           "type": "boolean"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "compute_exchange_rate",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "base_currency": {
+           "type": "string",
+           "description": "The base currency. [Enum]: USD, RMB, EUR, JPY, GBP, CAD, AUD, INR, RUB, BRL, MXN"
+          },
+          "target_currency": {
+           "type": "string",
+           "description": "The target currency. [Enum]: USD, RMB, EUR, JPY, GBP, CAD, AUD, INR, RUB, BRL, MXN"
+          },
+          "value": {
+           "type": "number",
+           "description": "The value to convert This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "base_currency",
+          "target_currency",
+          "value"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "exchanged_value": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "contact_customer_support",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "booking_id": {
+           "type": "string",
+           "description": "The ID of the booking"
+          },
+          "message": {
+           "type": "string",
+           "description": "The message to send to customer support"
+          }
+         },
+         "required": [
+          "booking_id",
+          "message"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "customer_support_message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_all_credit_cards",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "credit_card_list": {
+           "type": "dict",
+           "properties": {
+            "card_number": {
+             "type": "string"
+            },
+            "expiration_date": {
+             "type": "string"
+            },
+            "cardholder_name": {
+             "type": "string"
+            },
+            "card_verification_value": {
+             "type": "integer"
+            },
+            "balance": {
+             "type": "float"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_booking_history",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate method. "
+          }
+         },
+         "required": [
+          "access_token"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "booking_history": {
+           "type": "dict",
+           "properties": {
+            "transaction_id": {
+             "type": "string"
+            },
+            "travel_date": {
+             "type": "string"
+            },
+            "travel_from": {
+             "type": "string"
+            },
+            "travel_to": {
+             "type": "string"
+            },
+            "travel_class": {
+             "type": "string"
+            },
+            "travel_cost": {
+             "type": "float"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_budget_fiscal_year",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "lastModifiedAfter": {
+           "type": "string",
+           "description": "Use this field if you only want Fiscal Years that were changed after the supplied date. The supplied date will be interpreted in the UTC time zone. If lastModifiedAfter is not supplied, the service will return all Fiscal Years, regardless of modified date. Example: 2016-03-29T16:12:20. Return in the format of YYYY-MM-DDTHH:MM:SS.",
+           "default": "None"
+          },
+          "includeRemoved": {
+           "type": "string",
+           "description": "If true, the service will return all Fiscal Years, including those that were previously removed. If not supplied, this field defaults to false.",
+           "default": "None"
+          }
+         },
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "budget_fiscal_year": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_credit_card_balance",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate"
+          },
+          "card_id": {
+           "type": "string",
+           "description": "The ID of the credit card"
+          }
+         },
+         "required": [
+          "access_token",
+          "card_id"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "card_balance": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_flight_cost",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "travel_from": {
+           "type": "string",
+           "description": "The 3 letter code of the departing airport"
+          },
+          "travel_to": {
+           "type": "string",
+           "description": "The 3 letter code of the arriving airport"
+          },
+          "travel_date": {
+           "type": "string",
+           "description": "The date of the travel in the format 'YYYY-MM-DD'"
+          },
+          "travel_class": {
+           "type": "string",
+           "description": "The class of the travel. Options are: economy, business, first."
+          }
+         },
+         "required": [
+          "travel_from",
+          "travel_to",
+          "travel_date",
+          "travel_class"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "travel_cost_list": {
+           "type": "array",
+           "items": {
+            "type": "float"
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_nearest_airport_by_city",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "location": {
+           "type": "string",
+           "description": "The name of the location. [Enum]: Rivermist, Stonebrook, Maplecrest, Silverpine, Shadowridge, London, Paris, Sunset Valley, Oakendale, Willowbend, Crescent Hollow, Autumnville, Pinehaven, Greenfield, San Francisco, Los Angeles, New York, Chicago, Boston, Beijing, Hong Kong, Rome, Tokyo"
+          }
+         },
+         "required": [
+          "location"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "nearest_airport": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "list_all_airports",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "airports": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "purchase_insurance",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate"
+          },
+          "insurance_type": {
+           "type": "string",
+           "description": "The type of insurance to purchase"
+          },
+          "insurance_cost": {
+           "type": "number",
+           "description": "The cost of the insurance This is a float type value.",
+           "format": "float"
+          },
+          "booking_id": {
+           "type": "string",
+           "description": "The ID of the booking"
+          },
+          "card_id": {
+           "type": "string",
+           "description": "The ID of the credit card to use for the"
+          }
+         },
+         "required": [
+          "access_token",
+          "insurance_type",
+          "booking_id",
+          "insurance_cost",
+          "card_id"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "insurance_id": {
+           "type": "string"
+          },
+          "insurance_status": {
+           "type": "boolean"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "register_credit_card",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate method"
+          },
+          "card_number": {
+           "type": "string",
+           "description": "The credit card number"
+          },
+          "expiration_date": {
+           "type": "string",
+           "description": "The expiration date of the credit card in the format MM/YYYY"
+          },
+          "cardholder_name": {
+           "type": "string",
+           "description": "The name of the cardholder"
+          },
+          "card_verification_number": {
+           "type": "integer",
+           "description": "The card verification number"
+          }
+         },
+         "required": [
+          "access_token",
+          "card_number",
+          "expiration_date",
+          "cardholder_name",
+          "card_verification_number"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "card_id": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "retrieve_invoice",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate"
+          },
+          "booking_id": {
+           "type": "string",
+           "description": "The ID of the booking",
+           "default": "None"
+          },
+          "insurance_id": {
+           "type": "string",
+           "description": "The ID of the insurance",
+           "default": "None"
+          }
+         },
+         "required": [
+          "access_token"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "invoice": {
+           "type": "dict",
+           "properties": {
+            "booking_id": {
+             "type": "string"
+            },
+            "travel_date": {
+             "type": "string"
+            },
+            "travel_from": {
+             "type": "string"
+            },
+            "travel_to": {
+             "type": "string"
+            },
+            "travel_class": {
+             "type": "string"
+            },
+            "travel_cost": {
+             "type": "float"
+            },
+            "transaction_id": {
+             "type": "string"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_budget_limit",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authentication process or initial configuration."
+          },
+          "budget_limit": {
+           "type": "number",
+           "description": "The budget limit to set in USD This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "access_token",
+          "budget_limit"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "budget_limit": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "travel_get_login_status",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "status": {
+           "type": "boolean"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "verify_traveler_information",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "first_name": {
+           "type": "string",
+           "description": "The first name of the traveler"
+          },
+          "last_name": {
+           "type": "string",
+           "description": "The last name of the traveler"
+          },
+          "date_of_birth": {
+           "type": "string",
+           "description": "The date of birth of the traveler in the format YYYY-MM-DD"
+          },
+          "passport_number": {
+           "type": "string",
+           "description": "The passport number of the traveler"
+          }
+         },
+         "required": [
+          "first_name",
+          "last_name",
+          "date_of_birth",
+          "passport_number"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "verification_status": {
+           "type": "boolean"
+          },
+          "verification_failure": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     ],
+     "usage": {
+      "include": true
+     }
+    }
+   },
+   "response": {
+    "received_at": "2026-11-02T08:33:38.440627+00:00",
+    "status_code": 200,
+    "headers": {
+     "date": "Mon, 02 Nov 2026 08:33:37 GMT",
+     "content-type": "application/json",
+     "transfer-encoding": "chunked",
+     "connection": "keep-alive",
+     "access-control-allow-origin": "*",
+     "x-generation-id": "gen-1793608417-jTDkTIjNhLemNIGXa3Nh",
+     "access-control-expose-headers": "X-Generation-Id,X-Provider-Name,request-id,cf-ray",
+     "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+     "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+     "x-content-type-options": "nosniff",
+     "content-encoding": "gzip",
+     "server": "cloudflare",
+     "cf-ray": "a541cb9e8a4fb6f1-DEL",
+     "alt-svc": "h3=\":443\"; ma=86400"
+    },
+    "body": {
+     "id": "gen-1793608417-jTDkTIjNhLemNIGXa3Nh",
+     "object": "chat.completion",
+     "created": 1793608417,
+     "model": "anthropic/claude-haiku-5.5",
+     "provider": "Google",
+     "system_fingerprint": null,
+     "service_tier": null,
+     "choices": [
+      {
+       "index": 0,
+       "logprobs": null,
+       "finish_reason": "stop",
+       "native_finish_reason": "end_turn",
+       "message": {
+        "role": "assistant",
+        "content": "Your flight is booked.\n\n- **Route:** LAX to JFK\n- **Date:** November 15, 2026\n- **Class:** Business\n- **Cost:** $2,400.00, paid with Mastercard (ID id15583)\n- **Booking ID:** 3426812\n- **Transaction ID:** 45451592\n\nThe fare uses your full $2,400 budget, so there is no room left under it for extras such as insurance. Let me know if you want anything else for this trip.",
+        "refusal": null,
+        "reasoning": null
+       }
+      }
+     ],
+     "usage": {
+      "prompt_tokens": 4063,
+      "completion_tokens": 154,
+      "total_tokens": 4217,
+      "cost": 0.0004833,
+      "is_byok": false,
+      "prompt_tokens_details": {
+       "cached_tokens": 0,
+       "cache_write_tokens": 0,
+       "audio_tokens": 0,
+       "video_tokens": 0
+      },
+      "cost_details": {
+       "upstream_inference_cost": 0.0004833,
+       "upstream_inference_prompt_cost": 0.0004063,
+       "upstream_inference_completions_cost": 7.7e-05
+      },
+      "completion_tokens_details": {
+       "reasoning_tokens": 0,
+       "image_tokens": 0,
+       "audio_tokens": 0
+      }
+     }
+    }
+   },
+   "latency_s": 1.352329
+  },
+  {
+   "request": {
+    "sent_at": "2026-11-02T08:33:38.446150+00:00",
+    "method": "POST",
+    "url": "https://openrouter.ai/api/v1/chat/completions",
+    "headers": {
+     "host": "openrouter.ai",
+     "accept-encoding": "gzip, deflate",
+     "connection": "keep-alive",
+     "authorization": "<redacted>",
+     "accept": "application/json",
+     "content-type": "application/json",
+     "user-agent": "OpenAI/Python 3.42.1",
+     "x-stainless-lang": "python",
+     "x-stainless-package-version": "3.42.1",
+     "x-stainless-os": "Linux",
+     "x-stainless-arch": "x64",
+     "x-stainless-runtime": "CPython",
+     "x-stainless-runtime-version": "3.12.3",
+     "x-stainless-async": "false",
+     "x-stainless-retry-count": "0",
+     "x-stainless-read-timeout": "600",
+     "cookie": "__cf_bm=ToPcy0xy.2nzUGRrCbhSuELRNyEhP7xEiETX0Cb52Sc-1793608135.2965412-1.0.1.1-MPqeOq01Vx_.T1nUbktMyRSbJjG9kyGfvKUGYiNiVaPlqEyBmYCxOv0HwX_lHxN7TZzf4zg_9NtzwWZ_wzavtvjVbCQ0BNEuq8cboH3iAmDryAaHVg1zIi7mYtKZJPy6",
+     "content-length": "15649"
+    },
+    "body": {
+     "model": "anthropic/claude-haiku-5.5",
+     "messages": [
+      {
+       "role": "user",
+       "content": "I'm planning to fly from LAX to JFK on November 15th 2026 and aim to travel in business class with a budget of $2400. Could you please book a seat for this flight? I'll be using my access token 'abc123xyz' and Mastercard with id 'id15583' for payment."
+      },
+      {
+       "content": null,
+       "refusal": null,
+       "role": "assistant",
+       "tool_calls": [
+        {
+         "id": "toolu_vrtx_01L1vCSrWfzdAF5knNCCTk5D",
+         "function": {
+          "arguments": "{\"travel_from\": \"LAX\", \"travel_to\": \"JFK\", \"travel_date\": \"2026-11-15\", \"travel_class\": \"business\"}",
+          "name": "get_flight_cost"
+         },
+         "type": "function",
+         "index": 0
+        }
+       ],
+       "reasoning": null,
+       "reasoning_details": [
+        {
+         "type": "reasoning.text",
+         "signature": "CAQSvwgKEggTEAIYAjgBQgh0aGlua2luZxIMOXjNLh4deVzdxMVSGgz2g1rusGg1gvaTvfUiME2xl6DcEjP9efGxzi/XH9ouhgeyeaj6m44+ssMDDBe4BJoVpEDGN56woPe+u0z4zSraB+qfJOL0FUXKd/j1O1/T5SIvHOB3OPYbzYzFFkqdM8MUn4otcZr7f4WSrvvCC6bnsjIh2cxHkZffKzILDA5Oq3uCy4vrCapfd78q2aWuDJmLBG8+yRYXtLtjk0/Qa6GOhYYuZJSpoOsXNq//aq9Gi/cBcu/erAgnYBUJwDTXgHmq4V/2Nu+Oq/IOrgjSJQGqY5Y10V6BdyU4zBxieXiVqJrexX8V1aisxHDJVJrtFFZdWP0E8v7zUj5rmjJqEHoxbKPQHALpGVyi2sHAwFG0SUQYAToIs46us3UGhXD07EJLkSSNuc/IKqILmpHttUnc5Y1Di9HvIYOJQ/2KOWfj5BDBy7zWjuTdMMpWBnzEd6NJbVk7sA7BVz0j/KtsWfBWEAkV5UUXlWrAnOIYRCouVze7Tvnbau104VfBoQa6YjOzf+RXwndTSOljtLN23TfATq31xtd+2smLdw0nC0gaoBsIRQ3mvelaymGYKYXVlFFzDIQiB0/rEj93MF8AI8u4xJU/SlI4P7nMKY3YmLBEa/am5/RErTIucgzE6gCIwCUxezDCCA4k85Qp+Za6k07Zu6isd63pWvcrnxx4pruCUav0dp9tiafODUk5RyXDgCYwmqQ1nyBFj5EvTnq70ptcLPK5evpUjjDuAgRMl9kUsC1Bp/HM9VsAvjqJZDUsMLBJVzmnPQ3YF4qvNDBe/23lYOK9Y9ORuReUEPVYbuzpcQGdpShbyMXA75PxGfbLHuubyvxQ4l1s7TsuDK6igvWArRZTVyuV0BvkdfVlhFFYIUm3bH2K47uEzvOZKynQz7WyZLJWNE3AxuvmM2bDEg3/y0sEasXCp9v1MCiOxjUszLxpVS6MN7ovBb4OtXiyCrN1PQzrFXeDENGrmghdxPvSFObFDZs6c3HPUiaNjoTC89+RjIEwIv859yR6lB4ZWHGLAOJxDdGPQ6Omu33MuXEWcyCy/3ueBPgzplEnjGK0L7ilap6p1u0dwC/ORUXJDkaw55sLuQiX7jlYzFG39QRV1PlPYu13IYndA6M0g/aevNQI6yWkk8UWLxPkn53qfndUbqLbU05hCEWL1ouuaLINg0lWKaogOTTf9DUq0y8VMCxiNSlNzI4AbsdjFY1xdUuFb6mORMYQxDkN+rvGKY8qg9i/EaLX4pnLJxr3fVn1+Aj+pDCIX7R8ozhfpoeBIhFNiet9ocaL6lgIFfgcxCHjCkYWQnG/jEpgGUdwR+1EA7Pr5Maz36Lfa/ghumxx6MFZ8lZ6STeWJfbHPJgmcS2m+SU8EL91UL52+JMKuWSNVS2l4MBWQxvUUTFbGAE=.eyJlbmRwb2ludF9zbHVnIjoiYW50aHJvcGljL2NsYXVkZS1oYWlrdS01LjUtMjAyNjEwMDd8Z29vZ2xlLXZlcnRleC9nbG9iYWwifQ",
+         "format": "anthropic-claude-v1",
+         "index": 0
+        }
+       ]
+      },
+      {
+       "role": "tool",
+       "content": "{\"travel_cost_list\": [2400.0]}",
+       "tool_call_id": "toolu_vrtx_01L1vCSrWfzdAF5knNCCTk5D"
+      },
+      {
+       "content": "The business class fare for LAX to JFK on November 15, 2026 is $2,400, which is exactly your budget. I'll go ahead and book it.",
+       "refusal": null,
+       "role": "assistant",
+       "tool_calls": [
+        {
+         "id": "toolu_vrtx_0189DoHH36tVGcuCSC8S792T",
+         "function": {
+          "arguments": "{\"access_token\": \"abc123xyz\", \"card_id\": \"id15583\", \"travel_date\": \"2026-11-15\", \"travel_from\": \"LAX\", \"travel_to\": \"JFK\", \"travel_class\": \"business\"}",
+          "name": "book_flight"
+         },
+         "type": "function",
+         "index": 0
+        }
+       ],
+       "reasoning": null,
+       "reasoning_details": [
+        {
+         "type": "reasoning.text",
+         "signature": "CAQSjAUKEggTEAIYAjgBQgh0aGlua2luZxIMDq6XxnjEyuMA3WLzGgx0OXer9GJzFNXbo2kiMGiLppHNTXhYB/Kq0MMzAezYyZ55chHi3Y2T4HxbMaVCa1OgkicCJ/Z6kHsW2NHV3SqnBACoi4Qlych3eNZDp60DhHmFg6qYtcODsLen/k3vvZl9OmRYo/gV/HDeu+F9U92Avo4QXahW2+1bzbnlxKjSLQfg1rqhTP89wIjdFiLvH0/1wcUQHzlQXXNwraIMweZsNlOTWzhrj6J/vDvGh80jK/OIL5erMfRnbnMd4ZXtx0wWBeIpjIw/NeZRcLIF2+zaNTMy7JVNTmBBPhNNyks9dsjmASLX306hOosPjMvlY6+r/WKyrbpn8RGWmDYp6F0idd0MnvxLmXbWYj7j5wKYIGEVszef56eHknpX48AIq+GPxXkRpo3+orbCP9MOqCpw3fEL+45/IuplAxDsxT2u7S9U+svuwryDTFYfKHYUa0l656nm59je4VViFCebBqrRJkhgJ1fNeyNvWlny3oR1Ki3L2ccJhW8ro7H7i2bZKuP2ZRdLjhZvNWUpLuWvPJSBwLAdgdVtjtJps5SbUOmBnFuwqP9Ct/gln3wcvpufHyRJ4Ca8K/r4ettcYewNl1h/Yg7xwqO5IjaC/G8rTGFxPpx5uzYvqCZylsGESm9jlkYoNC5WHIQX901f9skj7OwSekzLzQC5QjLadj92sXFwVtHWcI5yvRPFDIUtU4WONnF3ToxKD0jAipX5Flyedwgq54gkvnuF+bu/VSNIWBokZf8TXJkqulB1TWVXHM4FXkS+2mJV/w2zkv81HOSASPurmh3gTNalpALTq2kg/lBpSSL0tqgA1OHNGAE=.eyJlbmRwb2ludF9zbHVnIjoiYW50aHJvcGljL2NsYXVkZS1oYWlrdS01LjUtMjAyNjEwMDd8Z29vZ2xlLXZlcnRleC9nbG9iYWwifQ",
+         "format": "anthropic-claude-v1",
+         "index": 0
+        }
+       ]
+      },
+      {
+       "role": "tool",
+       "content": "{\"booking_id\": \"3426812\", \"transaction_id\": \"45451592\", \"booking_status\": true, \"booking_history\": {}}",
+       "tool_call_id": "toolu_vrtx_0189DoHH36tVGcuCSC8S792T"
+      },
+      {
+       "content": "Your flight is booked.\n\n- **Route:** LAX to JFK\n- **Date:** November 15, 2026\n- **Class:** Business\n- **Cost:** $2,400.00, paid with Mastercard (ID id15583)\n- **Booking ID:** 3426812\n- **Transaction ID:** 45451592\n\nThe fare uses your full $2,400 budget, so there is no room left under it for extras such as insurance. Let me know if you want anything else for this trip.",
+       "refusal": null,
+       "role": "assistant",
+       "reasoning": null
+      },
+      {
+       "role": "user",
+       "content": "After booking my flight, I'd like to cover myself against any unforeseen issues. Can you purchase comprehensive travel insurance for $120, using the same credit card I used for the flight booking, to ensure I'm protected throughout my journey?"
+      }
+     ],
+     "store": false,
+     "temperature": 0.001,
+     "tools": [
+      {
+       "type": "function",
+       "function": {
+        "name": "authenticate_travel",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "client_id": {
+           "type": "string",
+           "description": "The client applications client_id supplied by App Management"
+          },
+          "client_secret": {
+           "type": "string",
+           "description": "The client applications client_secret supplied by App Management"
+          },
+          "refresh_token": {
+           "type": "string",
+           "description": "The refresh token obtained from the initial authentication"
+          },
+          "grant_type": {
+           "type": "string",
+           "description": "The grant type of the authentication request. Here are the options: read_write, read, write"
+          },
+          "user_first_name": {
+           "type": "string",
+           "description": "The first name of the user"
+          },
+          "user_last_name": {
+           "type": "string",
+           "description": "The last name of the user"
+          }
+         },
+         "required": [
+          "client_id",
+          "client_secret",
+          "refresh_token",
+          "grant_type",
+          "user_first_name",
+          "user_last_name"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "expires_in": {
+           "type": "integer"
+          },
+          "access_token": {
+           "type": "string"
+          },
+          "token_type": {
+           "type": "string"
+          },
+          "scope": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "book_flight",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate"
+          },
+          "card_id": {
+           "type": "string",
+           "description": "The ID of the credit card to use for the booking"
+          },
+          "travel_date": {
+           "type": "string",
+           "description": "The date of the travel in the format YYYY-MM-DD"
+          },
+          "travel_from": {
+           "type": "string",
+           "description": "The location the travel is from"
+          },
+          "travel_to": {
+           "type": "string",
+           "description": "The location the travel is to"
+          },
+          "travel_class": {
+           "type": "string",
+           "description": "The class of the travel"
+          }
+         },
+         "required": [
+          "access_token",
+          "card_id",
+          "travel_date",
+          "travel_from",
+          "travel_to",
+          "travel_class"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "booking_id": {
+           "type": "string"
+          },
+          "transaction_id": {
+           "type": "string"
+          },
+          "booking_status": {
+           "type": "boolean"
+          },
+          "booking_history": {
+           "type": "dict",
+           "properties": {
+            "booking_id": {
+             "type": "string"
+            },
+            "transaction_id": {
+             "type": "string"
+            },
+            "travel_date": {
+             "type": "string"
+            },
+            "travel_from": {
+             "type": "string"
+            },
+            "travel_to": {
+             "type": "string"
+            },
+            "travel_class": {
+             "type": "string"
+            },
+            "travel_cost": {
+             "type": "float"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "cancel_booking",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate"
+          },
+          "booking_id": {
+           "type": "string",
+           "description": "The ID of the booking"
+          }
+         },
+         "required": [
+          "access_token",
+          "booking_id"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "cancel_status": {
+           "type": "boolean"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "compute_exchange_rate",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "base_currency": {
+           "type": "string",
+           "description": "The base currency. [Enum]: USD, RMB, EUR, JPY, GBP, CAD, AUD, INR, RUB, BRL, MXN"
+          },
+          "target_currency": {
+           "type": "string",
+           "description": "The target currency. [Enum]: USD, RMB, EUR, JPY, GBP, CAD, AUD, INR, RUB, BRL, MXN"
+          },
+          "value": {
+           "type": "number",
+           "description": "The value to convert This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "base_currency",
+          "target_currency",
+          "value"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "exchanged_value": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "contact_customer_support",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "booking_id": {
+           "type": "string",
+           "description": "The ID of the booking"
+          },
+          "message": {
+           "type": "string",
+           "description": "The message to send to customer support"
+          }
+         },
+         "required": [
+          "booking_id",
+          "message"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "customer_support_message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_all_credit_cards",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "credit_card_list": {
+           "type": "dict",
+           "properties": {
+            "card_number": {
+             "type": "string"
+            },
+            "expiration_date": {
+             "type": "string"
+            },
+            "cardholder_name": {
+             "type": "string"
+            },
+            "card_verification_value": {
+             "type": "integer"
+            },
+            "balance": {
+             "type": "float"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_booking_history",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate method. "
+          }
+         },
+         "required": [
+          "access_token"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "booking_history": {
+           "type": "dict",
+           "properties": {
+            "transaction_id": {
+             "type": "string"
+            },
+            "travel_date": {
+             "type": "string"
+            },
+            "travel_from": {
+             "type": "string"
+            },
+            "travel_to": {
+             "type": "string"
+            },
+            "travel_class": {
+             "type": "string"
+            },
+            "travel_cost": {
+             "type": "float"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_budget_fiscal_year",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "lastModifiedAfter": {
+           "type": "string",
+           "description": "Use this field if you only want Fiscal Years that were changed after the supplied date. The supplied date will be interpreted in the UTC time zone. If lastModifiedAfter is not supplied, the service will return all Fiscal Years, regardless of modified date. Example: 2016-03-29T16:12:20. Return in the format of YYYY-MM-DDTHH:MM:SS.",
+           "default": "None"
+          },
+          "includeRemoved": {
+           "type": "string",
+           "description": "If true, the service will return all Fiscal Years, including those that were previously removed. If not supplied, this field defaults to false.",
+           "default": "None"
+          }
+         },
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "budget_fiscal_year": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_credit_card_balance",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate"
+          },
+          "card_id": {
+           "type": "string",
+           "description": "The ID of the credit card"
+          }
+         },
+         "required": [
+          "access_token",
+          "card_id"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "card_balance": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_flight_cost",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "travel_from": {
+           "type": "string",
+           "description": "The 3 letter code of the departing airport"
+          },
+          "travel_to": {
+           "type": "string",
+           "description": "The 3 letter code of the arriving airport"
+          },
+          "travel_date": {
+           "type": "string",
+           "description": "The date of the travel in the format 'YYYY-MM-DD'"
+          },
+          "travel_class": {
+           "type": "string",
+           "description": "The class of the travel. Options are: economy, business, first."
+          }
+         },
+         "required": [
+          "travel_from",
+          "travel_to",
+          "travel_date",
+          "travel_class"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "travel_cost_list": {
+           "type": "array",
+           "items": {
+            "type": "float"
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_nearest_airport_by_city",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "location": {
+           "type": "string",
+           "description": "The name of the location. [Enum]: Rivermist, Stonebrook, Maplecrest, Silverpine, Shadowridge, London, Paris, Sunset Valley, Oakendale, Willowbend, Crescent Hollow, Autumnville, Pinehaven, Greenfield, San Francisco, Los Angeles, New York, Chicago, Boston, Beijing, Hong Kong, Rome, Tokyo"
+          }
+         },
+         "required": [
+          "location"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "nearest_airport": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "list_all_airports",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "airports": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "purchase_insurance",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate"
+          },
+          "insurance_type": {
+           "type": "string",
+           "description": "The type of insurance to purchase"
+          },
+          "insurance_cost": {
+           "type": "number",
+           "description": "The cost of the insurance This is a float type value.",
+           "format": "float"
+          },
+          "booking_id": {
+           "type": "string",
+           "description": "The ID of the booking"
+          },
+          "card_id": {
+           "type": "string",
+           "description": "The ID of the credit card to use for the"
+          }
+         },
+         "required": [
+          "access_token",
+          "insurance_type",
+          "booking_id",
+          "insurance_cost",
+          "card_id"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "insurance_id": {
+           "type": "string"
+          },
+          "insurance_status": {
+           "type": "boolean"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "register_credit_card",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate method"
+          },
+          "card_number": {
+           "type": "string",
+           "description": "The credit card number"
+          },
+          "expiration_date": {
+           "type": "string",
+           "description": "The expiration date of the credit card in the format MM/YYYY"
+          },
+          "cardholder_name": {
+           "type": "string",
+           "description": "The name of the cardholder"
+          },
+          "card_verification_number": {
+           "type": "integer",
+           "description": "The card verification number"
+          }
+         },
+         "required": [
+          "access_token",
+          "card_number",
+          "expiration_date",
+          "cardholder_name",
+          "card_verification_number"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "card_id": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "retrieve_invoice",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate"
+          },
+          "booking_id": {
+           "type": "string",
+           "description": "The ID of the booking",
+           "default": "None"
+          },
+          "insurance_id": {
+           "type": "string",
+           "description": "The ID of the insurance",
+           "default": "None"
+          }
+         },
+         "required": [
+          "access_token"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "invoice": {
+           "type": "dict",
+           "properties": {
+            "booking_id": {
+             "type": "string"
+            },
+            "travel_date": {
+             "type": "string"
+            },
+            "travel_from": {
+             "type": "string"
+            },
+            "travel_to": {
+             "type": "string"
+            },
+            "travel_class": {
+             "type": "string"
+            },
+            "travel_cost": {
+             "type": "float"
+            },
+            "transaction_id": {
+             "type": "string"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_budget_limit",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authentication process or initial configuration."
+          },
+          "budget_limit": {
+           "type": "number",
+           "description": "The budget limit to set in USD This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "access_token",
+          "budget_limit"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "budget_limit": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "travel_get_login_status",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "status": {
+           "type": "boolean"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "verify_traveler_information",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "first_name": {
+           "type": "string",
+           "description": "The first name of the traveler"
+          },
+          "last_name": {
+           "type": "string",
+           "description": "The last name of the traveler"
+          },
+          "date_of_birth": {
+           "type": "string",
+           "description": "The date of birth of the traveler in the format YYYY-MM-DD"
+          },
+          "passport_number": {
+           "type": "string",
+           "description": "The passport number of the traveler"
+          }
+         },
+         "required": [
+          "first_name",
+          "last_name",
+          "date_of_birth",
+          "passport_number"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "verification_status": {
+           "type": "boolean"
+          },
+          "verification_failure": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     ],
+     "usage": {
+      "include": true
+     }
+    }
+   },
+   "response": {
+    "received_at": "2026-11-02T08:33:40.097128+00:00",
+    "status_code": 200,
+    "headers": {
+     "date": "Mon, 02 Nov 2026 08:33:39 GMT",
+     "content-type": "application/json",
+     "transfer-encoding": "chunked",
+     "connection": "keep-alive",
+     "access-control-allow-origin": "*",
+     "x-generation-id": "gen-1793608418-mLZaqjD5ksfsvw5POGoa",
+     "access-control-expose-headers": "X-Generation-Id,X-Provider-Name,request-id,cf-ray",
+     "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+     "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+     "x-content-type-options": "nosniff",
+     "content-encoding": "gzip",
+     "server": "cloudflare",
+     "cf-ray": "a541cba70e3eb6f1-DEL",
+     "alt-svc": "h3=\":443\"; ma=86400"
+    },
+    "body": {
+     "id": "gen-1793608418-mLZaqjD5ksfsvw5POGoa",
+     "object": "chat.completion",
+     "created": 1793608418,
+     "model": "anthropic/claude-haiku-5.5",
+     "provider": "Google",
+     "system_fingerprint": null,
+     "service_tier": null,
+     "choices": [
+      {
+       "index": 0,
+       "logprobs": null,
+       "finish_reason": "tool_calls",
+       "native_finish_reason": "tool_use",
+       "message": {
+        "role": "assistant",
+        "content": null,
+        "refusal": null,
+        "reasoning": null,
+        "tool_calls": [
+         {
+          "type": "function",
+          "index": 0,
+          "id": "toolu_vrtx_01Xjz2oH3p2kjhWoF4KYsrvG",
+          "function": {
+           "name": "purchase_insurance",
+           "arguments": "{\"access_token\": \"abc123xyz\", \"booking_id\": \"3426812\", \"insurance_type\": \"comprehensive travel insurance\", \"insurance_cost\": 120.0, \"card_id\": \"id15583\"}"
+          }
+         }
+        ],
+        "reasoning_details": [
+         {
+          "type": "reasoning.text",
+          "signature": "CAQS/AYKEggTEAIYAjgBQgh0aGlua2luZxIMaTgOFQ7UghLu94/9GgyrsCawWOiMXG1Ts6wiML7ypPhCo6XolvWO7yzJweUlD5ROHCp4E4i14IUUd5eQ5hGTGRV/b7gmrhbylBF+BCqXBtbh/GcU/P/B5tjE/DhB2s/gz3HFHqv2IK7IXG5W/gTAqKOk6aY6yg83IdHgUEAj8sKiu5yv/PC9yAC+dxuuLpJCT6o2SPyA3bvJ9CSpR/DXLK5UgrED+aPqsv+7flc9DNEjnkCtDbWafbDsBZnf43C4aAIcUEALTqd5BQDXtKZxzTITIVfveyJG1xoSZdkYH5JQNv0/jQXEHduPtqMeikSFHVKybSJwSRMYQdTrJqomVEb3O3t0rwxI1P0hxz9p41nkhrGHuDd+1u4BGsZ+PJddjQvLYfarPZunyBapqoZ/Mc4krUaT/+DPP4DLM+cW4oL4luImd4TvU0Uoif8Kn3F28wdDnVEr6YysJ7NGJRULS9Mz18M7ySkAZA2xkay8KGfCde7B5h+sV5ZsGf50eDDLb+qSlahia2Yo6hFmuQihfskxxqqb2dGiaGlKjnHauKcu621NxxcyNDM9chfRvbMyV+vRzRUJkUzGe9mPfVV3sgc1qMjFUUkIDaoOEJ8GvqmE/6F06bGs/oOHG+giGjkOu27JyqWotrr5GTMXRz8g5h95w2zTz5MzUEWyySYiKQtCu2PEyrJPgwm+IXjxhx6JEg+EshfsjKB/VC5Rp9LEEPiFigCssYbS8VEdOSF9dBsrvQbQw6KyTUcwMnufWxEWmwOp/mFEWU1Dcb9ngzQgXZItqraTE5K/0JmqrveDT81QZhLYQVUGH8D2M03ooAVQBcpiT7n6hCy+mKBI80ROgBdctKJSI6igY/6D2ZnElO8CDrZ5F9aY4MCvuUX88zBgtPUFnMhRYXIpA1/Z00LLtVjpS4RqgYKdUziHFc/wvsmTzhjb5oYAQ8TBHn9otJC70bE1cXOzYVV9Od8dgXAoGnX8ask2YgK1w/rdcdXvD+0WljKIuezdrUph/nTQMxuO1l7N0XQEKTz0P54FPM9XlLZEbP+/pFTmzdsB0pFzRSr1AllowJF+dNCQklKyIMmT00zsP8niYWeDGKJQXnwCE72VUwjuD4RLcdfHlPNV3kPK3E/W7vK2JBa7uJuNUKGQXPuJroZ1GAE=.eyJlbmRwb2ludF9zbHVnIjoiYW50aHJvcGljL2NsYXVkZS1oYWlrdS01LjUtMjAyNjEwMDd8Z29vZ2xlLXZlcnRleC9nbG9iYWwifQ",
+          "format": "anthropic-claude-v1",
+          "index": 0
+         }
+        ]
+       }
+      }
+     ],
+     "usage": {
+      "prompt_tokens": 4298,
+      "completion_tokens": 275,
+      "total_tokens": 4573,
+      "cost": 0.0005673,
+      "is_byok": false,
+      "prompt_tokens_details": {
+       "cached_tokens": 0,
+       "cache_write_tokens": 0,
+       "audio_tokens": 0,
+       "video_tokens": 0
+      },
+      "cost_details": {
+       "upstream_inference_cost": 0.0005673,
+       "upstream_inference_prompt_cost": 0.0004298,
+       "upstream_inference_completions_cost": 0.0001375
+      },
+      "completion_tokens_details": {
+       "reasoning_tokens": 103,
+       "image_tokens": 0,
+       "audio_tokens": 0
+      }
+     }
+    }
+   },
+   "latency_s": 1.650657
+  },
+  {
+   "request": {
+    "sent_at": "2026-11-02T08:33:40.104943+00:00",
+    "method": "POST",
+    "url": "https://openrouter.ai/api/v1/chat/completions",
+    "headers": {
+     "host": "openrouter.ai",
+     "accept-encoding": "gzip, deflate",
+     "connection": "keep-alive",
+     "authorization": "<redacted>",
+     "accept": "application/json",
+     "content-type": "application/json",
+     "user-agent": "OpenAI/Python 3.42.1",
+     "x-stainless-lang": "python",
+     "x-stainless-package-version": "3.42.1",
+     "x-stainless-os": "Linux",
+     "x-stainless-arch": "x64",
+     "x-stainless-runtime": "CPython",
+     "x-stainless-runtime-version": "3.12.3",
+     "x-stainless-async": "false",
+     "x-stainless-retry-count": "0",
+     "x-stainless-read-timeout": "600",
+     "cookie": "__cf_bm=ToPcy0xy.2nzUGRrCbhSuELRNyEhP7xEiETX0Cb52Sc-1793608135.2965412-1.0.1.1-MPqeOq01Vx_.T1nUbktMyRSbJjG9kyGfvKUGYiNiVaPlqEyBmYCxOv0HwX_lHxN7TZzf4zg_9NtzwWZ_wzavtvjVbCQ0BNEuq8cboH3iAmDryAaHVg1zIi7mYtKZJPy6",
+     "content-length": "17582"
+    },
+    "body": {
+     "model": "anthropic/claude-haiku-5.5",
+     "messages": [
+      {
+       "role": "user",
+       "content": "I'm planning to fly from LAX to JFK on November 15th 2026 and aim to travel in business class with a budget of $2400. Could you please book a seat for this flight? I'll be using my access token 'abc123xyz' and Mastercard with id 'id15583' for payment."
+      },
+      {
+       "content": null,
+       "refusal": null,
+       "role": "assistant",
+       "tool_calls": [
+        {
+         "id": "toolu_vrtx_01L1vCSrWfzdAF5knNCCTk5D",
+         "function": {
+          "arguments": "{\"travel_from\": \"LAX\", \"travel_to\": \"JFK\", \"travel_date\": \"2026-11-15\", \"travel_class\": \"business\"}",
+          "name": "get_flight_cost"
+         },
+         "type": "function",
+         "index": 0
+        }
+       ],
+       "reasoning": null,
+       "reasoning_details": [
+        {
+         "type": "reasoning.text",
+         "signature": "CAQSvwgKEggTEAIYAjgBQgh0aGlua2luZxIMOXjNLh4deVzdxMVSGgz2g1rusGg1gvaTvfUiME2xl6DcEjP9efGxzi/XH9ouhgeyeaj6m44+ssMDDBe4BJoVpEDGN56woPe+u0z4zSraB+qfJOL0FUXKd/j1O1/T5SIvHOB3OPYbzYzFFkqdM8MUn4otcZr7f4WSrvvCC6bnsjIh2cxHkZffKzILDA5Oq3uCy4vrCapfd78q2aWuDJmLBG8+yRYXtLtjk0/Qa6GOhYYuZJSpoOsXNq//aq9Gi/cBcu/erAgnYBUJwDTXgHmq4V/2Nu+Oq/IOrgjSJQGqY5Y10V6BdyU4zBxieXiVqJrexX8V1aisxHDJVJrtFFZdWP0E8v7zUj5rmjJqEHoxbKPQHALpGVyi2sHAwFG0SUQYAToIs46us3UGhXD07EJLkSSNuc/IKqILmpHttUnc5Y1Di9HvIYOJQ/2KOWfj5BDBy7zWjuTdMMpWBnzEd6NJbVk7sA7BVz0j/KtsWfBWEAkV5UUXlWrAnOIYRCouVze7Tvnbau104VfBoQa6YjOzf+RXwndTSOljtLN23TfATq31xtd+2smLdw0nC0gaoBsIRQ3mvelaymGYKYXVlFFzDIQiB0/rEj93MF8AI8u4xJU/SlI4P7nMKY3YmLBEa/am5/RErTIucgzE6gCIwCUxezDCCA4k85Qp+Za6k07Zu6isd63pWvcrnxx4pruCUav0dp9tiafODUk5RyXDgCYwmqQ1nyBFj5EvTnq70ptcLPK5evpUjjDuAgRMl9kUsC1Bp/HM9VsAvjqJZDUsMLBJVzmnPQ3YF4qvNDBe/23lYOK9Y9ORuReUEPVYbuzpcQGdpShbyMXA75PxGfbLHuubyvxQ4l1s7TsuDK6igvWArRZTVyuV0BvkdfVlhFFYIUm3bH2K47uEzvOZKynQz7WyZLJWNE3AxuvmM2bDEg3/y0sEasXCp9v1MCiOxjUszLxpVS6MN7ovBb4OtXiyCrN1PQzrFXeDENGrmghdxPvSFObFDZs6c3HPUiaNjoTC89+RjIEwIv859yR6lB4ZWHGLAOJxDdGPQ6Omu33MuXEWcyCy/3ueBPgzplEnjGK0L7ilap6p1u0dwC/ORUXJDkaw55sLuQiX7jlYzFG39QRV1PlPYu13IYndA6M0g/aevNQI6yWkk8UWLxPkn53qfndUbqLbU05hCEWL1ouuaLINg0lWKaogOTTf9DUq0y8VMCxiNSlNzI4AbsdjFY1xdUuFb6mORMYQxDkN+rvGKY8qg9i/EaLX4pnLJxr3fVn1+Aj+pDCIX7R8ozhfpoeBIhFNiet9ocaL6lgIFfgcxCHjCkYWQnG/jEpgGUdwR+1EA7Pr5Maz36Lfa/ghumxx6MFZ8lZ6STeWJfbHPJgmcS2m+SU8EL91UL52+JMKuWSNVS2l4MBWQxvUUTFbGAE=.eyJlbmRwb2ludF9zbHVnIjoiYW50aHJvcGljL2NsYXVkZS1oYWlrdS01LjUtMjAyNjEwMDd8Z29vZ2xlLXZlcnRleC9nbG9iYWwifQ",
+         "format": "anthropic-claude-v1",
+         "index": 0
+        }
+       ]
+      },
+      {
+       "role": "tool",
+       "content": "{\"travel_cost_list\": [2400.0]}",
+       "tool_call_id": "toolu_vrtx_01L1vCSrWfzdAF5knNCCTk5D"
+      },
+      {
+       "content": "The business class fare for LAX to JFK on November 15, 2026 is $2,400, which is exactly your budget. I'll go ahead and book it.",
+       "refusal": null,
+       "role": "assistant",
+       "tool_calls": [
+        {
+         "id": "toolu_vrtx_0189DoHH36tVGcuCSC8S792T",
+         "function": {
+          "arguments": "{\"access_token\": \"abc123xyz\", \"card_id\": \"id15583\", \"travel_date\": \"2026-11-15\", \"travel_from\": \"LAX\", \"travel_to\": \"JFK\", \"travel_class\": \"business\"}",
+          "name": "book_flight"
+         },
+         "type": "function",
+         "index": 0
+        }
+       ],
+       "reasoning": null,
+       "reasoning_details": [
+        {
+         "type": "reasoning.text",
+         "signature": "CAQSjAUKEggTEAIYAjgBQgh0aGlua2luZxIMDq6XxnjEyuMA3WLzGgx0OXer9GJzFNXbo2kiMGiLppHNTXhYB/Kq0MMzAezYyZ55chHi3Y2T4HxbMaVCa1OgkicCJ/Z6kHsW2NHV3SqnBACoi4Qlych3eNZDp60DhHmFg6qYtcODsLen/k3vvZl9OmRYo/gV/HDeu+F9U92Avo4QXahW2+1bzbnlxKjSLQfg1rqhTP89wIjdFiLvH0/1wcUQHzlQXXNwraIMweZsNlOTWzhrj6J/vDvGh80jK/OIL5erMfRnbnMd4ZXtx0wWBeIpjIw/NeZRcLIF2+zaNTMy7JVNTmBBPhNNyks9dsjmASLX306hOosPjMvlY6+r/WKyrbpn8RGWmDYp6F0idd0MnvxLmXbWYj7j5wKYIGEVszef56eHknpX48AIq+GPxXkRpo3+orbCP9MOqCpw3fEL+45/IuplAxDsxT2u7S9U+svuwryDTFYfKHYUa0l656nm59je4VViFCebBqrRJkhgJ1fNeyNvWlny3oR1Ki3L2ccJhW8ro7H7i2bZKuP2ZRdLjhZvNWUpLuWvPJSBwLAdgdVtjtJps5SbUOmBnFuwqP9Ct/gln3wcvpufHyRJ4Ca8K/r4ettcYewNl1h/Yg7xwqO5IjaC/G8rTGFxPpx5uzYvqCZylsGESm9jlkYoNC5WHIQX901f9skj7OwSekzLzQC5QjLadj92sXFwVtHWcI5yvRPFDIUtU4WONnF3ToxKD0jAipX5Flyedwgq54gkvnuF+bu/VSNIWBokZf8TXJkqulB1TWVXHM4FXkS+2mJV/w2zkv81HOSASPurmh3gTNalpALTq2kg/lBpSSL0tqgA1OHNGAE=.eyJlbmRwb2ludF9zbHVnIjoiYW50aHJvcGljL2NsYXVkZS1oYWlrdS01LjUtMjAyNjEwMDd8Z29vZ2xlLXZlcnRleC9nbG9iYWwifQ",
+         "format": "anthropic-claude-v1",
+         "index": 0
+        }
+       ]
+      },
+      {
+       "role": "tool",
+       "content": "{\"booking_id\": \"3426812\", \"transaction_id\": \"45451592\", \"booking_status\": true, \"booking_history\": {}}",
+       "tool_call_id": "toolu_vrtx_0189DoHH36tVGcuCSC8S792T"
+      },
+      {
+       "content": "Your flight is booked.\n\n- **Route:** LAX to JFK\n- **Date:** November 15, 2026\n- **Class:** Business\n- **Cost:** $2,400.00, paid with Mastercard (ID id15583)\n- **Booking ID:** 3426812\n- **Transaction ID:** 45451592\n\nThe fare uses your full $2,400 budget, so there is no room left under it for extras such as insurance. Let me know if you want anything else for this trip.",
+       "refusal": null,
+       "role": "assistant",
+       "reasoning": null
+      },
+      {
+       "role": "user",
+       "content": "After booking my flight, I'd like to cover myself against any unforeseen issues. Can you purchase comprehensive travel insurance for $120, using the same credit card I used for the flight booking, to ensure I'm protected throughout my journey?"
+      },
+      {
+       "content": null,
+       "refusal": null,
+       "role": "assistant",
+       "tool_calls": [
+        {
+         "id": "toolu_vrtx_01Xjz2oH3p2kjhWoF4KYsrvG",
+         "function": {
+          "arguments": "{\"access_token\": \"abc123xyz\", \"booking_id\": \"3426812\", \"insurance_type\": \"comprehensive travel insurance\", \"insurance_cost\": 120.0, \"card_id\": \"id15583\"}",
+          "name": "purchase_insurance"
+         },
+         "type": "function",
+         "index": 0
+        }
+       ],
+       "reasoning": null,
+       "reasoning_details": [
+        {
+         "type": "reasoning.text",
+         "signature": "CAQS/AYKEggTEAIYAjgBQgh0aGlua2luZxIMaTgOFQ7UghLu94/9GgyrsCawWOiMXG1Ts6wiML7ypPhCo6XolvWO7yzJweUlD5ROHCp4E4i14IUUd5eQ5hGTGRV/b7gmrhbylBF+BCqXBtbh/GcU/P/B5tjE/DhB2s/gz3HFHqv2IK7IXG5W/gTAqKOk6aY6yg83IdHgUEAj8sKiu5yv/PC9yAC+dxuuLpJCT6o2SPyA3bvJ9CSpR/DXLK5UgrED+aPqsv+7flc9DNEjnkCtDbWafbDsBZnf43C4aAIcUEALTqd5BQDXtKZxzTITIVfveyJG1xoSZdkYH5JQNv0/jQXEHduPtqMeikSFHVKybSJwSRMYQdTrJqomVEb3O3t0rwxI1P0hxz9p41nkhrGHuDd+1u4BGsZ+PJddjQvLYfarPZunyBapqoZ/Mc4krUaT/+DPP4DLM+cW4oL4luImd4TvU0Uoif8Kn3F28wdDnVEr6YysJ7NGJRULS9Mz18M7ySkAZA2xkay8KGfCde7B5h+sV5ZsGf50eDDLb+qSlahia2Yo6hFmuQihfskxxqqb2dGiaGlKjnHauKcu621NxxcyNDM9chfRvbMyV+vRzRUJkUzGe9mPfVV3sgc1qMjFUUkIDaoOEJ8GvqmE/6F06bGs/oOHG+giGjkOu27JyqWotrr5GTMXRz8g5h95w2zTz5MzUEWyySYiKQtCu2PEyrJPgwm+IXjxhx6JEg+EshfsjKB/VC5Rp9LEEPiFigCssYbS8VEdOSF9dBsrvQbQw6KyTUcwMnufWxEWmwOp/mFEWU1Dcb9ngzQgXZItqraTE5K/0JmqrveDT81QZhLYQVUGH8D2M03ooAVQBcpiT7n6hCy+mKBI80ROgBdctKJSI6igY/6D2ZnElO8CDrZ5F9aY4MCvuUX88zBgtPUFnMhRYXIpA1/Z00LLtVjpS4RqgYKdUziHFc/wvsmTzhjb5oYAQ8TBHn9otJC70bE1cXOzYVV9Od8dgXAoGnX8ask2YgK1w/rdcdXvD+0WljKIuezdrUph/nTQMxuO1l7N0XQEKTz0P54FPM9XlLZEbP+/pFTmzdsB0pFzRSr1AllowJF+dNCQklKyIMmT00zsP8niYWeDGKJQXnwCE72VUwjuD4RLcdfHlPNV3kPK3E/W7vK2JBa7uJuNUKGQXPuJroZ1GAE=.eyJlbmRwb2ludF9zbHVnIjoiYW50aHJvcGljL2NsYXVkZS1oYWlrdS01LjUtMjAyNjEwMDd8Z29vZ2xlLXZlcnRleC9nbG9iYWwifQ",
+         "format": "anthropic-claude-v1",
+         "index": 0
+        }
+       ]
+      },
+      {
+       "role": "tool",
+       "content": "{\"insurance_id\": \"498276044\", \"insurance_status\": true}",
+       "tool_call_id": "toolu_vrtx_01Xjz2oH3p2kjhWoF4KYsrvG"
+      }
+     ],
+     "store": false,
+     "temperature": 0.001,
+     "tools": [
+      {
+       "type": "function",
+       "function": {
+        "name": "authenticate_travel",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "client_id": {
+           "type": "string",
+           "description": "The client applications client_id supplied by App Management"
+          },
+          "client_secret": {
+           "type": "string",
+           "description": "The client applications client_secret supplied by App Management"
+          },
+          "refresh_token": {
+           "type": "string",
+           "description": "The refresh token obtained from the initial authentication"
+          },
+          "grant_type": {
+           "type": "string",
+           "description": "The grant type of the authentication request. Here are the options: read_write, read, write"
+          },
+          "user_first_name": {
+           "type": "string",
+           "description": "The first name of the user"
+          },
+          "user_last_name": {
+           "type": "string",
+           "description": "The last name of the user"
+          }
+         },
+         "required": [
+          "client_id",
+          "client_secret",
+          "refresh_token",
+          "grant_type",
+          "user_first_name",
+          "user_last_name"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "expires_in": {
+           "type": "integer"
+          },
+          "access_token": {
+           "type": "string"
+          },
+          "token_type": {
+           "type": "string"
+          },
+          "scope": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "book_flight",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate"
+          },
+          "card_id": {
+           "type": "string",
+           "description": "The ID of the credit card to use for the booking"
+          },
+          "travel_date": {
+           "type": "string",
+           "description": "The date of the travel in the format YYYY-MM-DD"
+          },
+          "travel_from": {
+           "type": "string",
+           "description": "The location the travel is from"
+          },
+          "travel_to": {
+           "type": "string",
+           "description": "The location the travel is to"
+          },
+          "travel_class": {
+           "type": "string",
+           "description": "The class of the travel"
+          }
+         },
+         "required": [
+          "access_token",
+          "card_id",
+          "travel_date",
+          "travel_from",
+          "travel_to",
+          "travel_class"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "booking_id": {
+           "type": "string"
+          },
+          "transaction_id": {
+           "type": "string"
+          },
+          "booking_status": {
+           "type": "boolean"
+          },
+          "booking_history": {
+           "type": "dict",
+           "properties": {
+            "booking_id": {
+             "type": "string"
+            },
+            "transaction_id": {
+             "type": "string"
+            },
+            "travel_date": {
+             "type": "string"
+            },
+            "travel_from": {
+             "type": "string"
+            },
+            "travel_to": {
+             "type": "string"
+            },
+            "travel_class": {
+             "type": "string"
+            },
+            "travel_cost": {
+             "type": "float"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "cancel_booking",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate"
+          },
+          "booking_id": {
+           "type": "string",
+           "description": "The ID of the booking"
+          }
+         },
+         "required": [
+          "access_token",
+          "booking_id"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "cancel_status": {
+           "type": "boolean"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "compute_exchange_rate",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "base_currency": {
+           "type": "string",
+           "description": "The base currency. [Enum]: USD, RMB, EUR, JPY, GBP, CAD, AUD, INR, RUB, BRL, MXN"
+          },
+          "target_currency": {
+           "type": "string",
+           "description": "The target currency. [Enum]: USD, RMB, EUR, JPY, GBP, CAD, AUD, INR, RUB, BRL, MXN"
+          },
+          "value": {
+           "type": "number",
+           "description": "The value to convert This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "base_currency",
+          "target_currency",
+          "value"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "exchanged_value": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "contact_customer_support",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "booking_id": {
+           "type": "string",
+           "description": "The ID of the booking"
+          },
+          "message": {
+           "type": "string",
+           "description": "The message to send to customer support"
+          }
+         },
+         "required": [
+          "booking_id",
+          "message"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "customer_support_message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_all_credit_cards",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "credit_card_list": {
+           "type": "dict",
+           "properties": {
+            "card_number": {
+             "type": "string"
+            },
+            "expiration_date": {
+             "type": "string"
+            },
+            "cardholder_name": {
+             "type": "string"
+            },
+            "card_verification_value": {
+             "type": "integer"
+            },
+            "balance": {
+             "type": "float"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_booking_history",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate method. "
+          }
+         },
+         "required": [
+          "access_token"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "booking_history": {
+           "type": "dict",
+           "properties": {
+            "transaction_id": {
+             "type": "string"
+            },
+            "travel_date": {
+             "type": "string"
+            },
+            "travel_from": {
+             "type": "string"
+            },
+            "travel_to": {
+             "type": "string"
+            },
+            "travel_class": {
+             "type": "string"
+            },
+            "travel_cost": {
+             "type": "float"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_budget_fiscal_year",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "lastModifiedAfter": {
+           "type": "string",
+           "description": "Use this field if you only want Fiscal Years that were changed after the supplied date. The supplied date will be interpreted in the UTC time zone. If lastModifiedAfter is not supplied, the service will return all Fiscal Years, regardless of modified date. Example: 2016-03-29T16:12:20. Return in the format of YYYY-MM-DDTHH:MM:SS.",
+           "default": "None"
+          },
+          "includeRemoved": {
+           "type": "string",
+           "description": "If true, the service will return all Fiscal Years, including those that were previously removed. If not supplied, this field defaults to false.",
+           "default": "None"
+          }
+         },
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "budget_fiscal_year": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_credit_card_balance",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate"
+          },
+          "card_id": {
+           "type": "string",
+           "description": "The ID of the credit card"
+          }
+         },
+         "required": [
+          "access_token",
+          "card_id"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "card_balance": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_flight_cost",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "travel_from": {
+           "type": "string",
+           "description": "The 3 letter code of the departing airport"
+          },
+          "travel_to": {
+           "type": "string",
+           "description": "The 3 letter code of the arriving airport"
+          },
+          "travel_date": {
+           "type": "string",
+           "description": "The date of the travel in the format 'YYYY-MM-DD'"
+          },
+          "travel_class": {
+           "type": "string",
+           "description": "The class of the travel. Options are: economy, business, first."
+          }
+         },
+         "required": [
+          "travel_from",
+          "travel_to",
+          "travel_date",
+          "travel_class"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "travel_cost_list": {
+           "type": "array",
+           "items": {
+            "type": "float"
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_nearest_airport_by_city",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "location": {
+           "type": "string",
+           "description": "The name of the location. [Enum]: Rivermist, Stonebrook, Maplecrest, Silverpine, Shadowridge, London, Paris, Sunset Valley, Oakendale, Willowbend, Crescent Hollow, Autumnville, Pinehaven, Greenfield, San Francisco, Los Angeles, New York, Chicago, Boston, Beijing, Hong Kong, Rome, Tokyo"
+          }
+         },
+         "required": [
+          "location"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "nearest_airport": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "list_all_airports",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "airports": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "purchase_insurance",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate"
+          },
+          "insurance_type": {
+           "type": "string",
+           "description": "The type of insurance to purchase"
+          },
+          "insurance_cost": {
+           "type": "number",
+           "description": "The cost of the insurance This is a float type value.",
+           "format": "float"
+          },
+          "booking_id": {
+           "type": "string",
+           "description": "The ID of the booking"
+          },
+          "card_id": {
+           "type": "string",
+           "description": "The ID of the credit card to use for the"
+          }
+         },
+         "required": [
+          "access_token",
+          "insurance_type",
+          "booking_id",
+          "insurance_cost",
+          "card_id"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "insurance_id": {
+           "type": "string"
+          },
+          "insurance_status": {
+           "type": "boolean"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "register_credit_card",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate method"
+          },
+          "card_number": {
+           "type": "string",
+           "description": "The credit card number"
+          },
+          "expiration_date": {
+           "type": "string",
+           "description": "The expiration date of the credit card in the format MM/YYYY"
+          },
+          "cardholder_name": {
+           "type": "string",
+           "description": "The name of the cardholder"
+          },
+          "card_verification_number": {
+           "type": "integer",
+           "description": "The card verification number"
+          }
+         },
+         "required": [
+          "access_token",
+          "card_number",
+          "expiration_date",
+          "cardholder_name",
+          "card_verification_number"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "card_id": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "retrieve_invoice",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authenticate"
+          },
+          "booking_id": {
+           "type": "string",
+           "description": "The ID of the booking",
+           "default": "None"
+          },
+          "insurance_id": {
+           "type": "string",
+           "description": "The ID of the insurance",
+           "default": "None"
+          }
+         },
+         "required": [
+          "access_token"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "invoice": {
+           "type": "dict",
+           "properties": {
+            "booking_id": {
+             "type": "string"
+            },
+            "travel_date": {
+             "type": "string"
+            },
+            "travel_from": {
+             "type": "string"
+            },
+            "travel_to": {
+             "type": "string"
+            },
+            "travel_class": {
+             "type": "string"
+            },
+            "travel_cost": {
+             "type": "float"
+            },
+            "transaction_id": {
+             "type": "string"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_budget_limit",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "access_token": {
+           "type": "string",
+           "description": "The access token obtained from the authentication process or initial configuration."
+          },
+          "budget_limit": {
+           "type": "number",
+           "description": "The budget limit to set in USD This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "access_token",
+          "budget_limit"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "budget_limit": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "travel_get_login_status",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "status": {
+           "type": "boolean"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "verify_traveler_information",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "first_name": {
+           "type": "string",
+           "description": "The first name of the traveler"
+          },
+          "last_name": {
+           "type": "string",
+           "description": "The last name of the traveler"
+          },
+          "date_of_birth": {
+           "type": "string",
+           "description": "The date of birth of the traveler in the format YYYY-MM-DD"
+          },
+          "passport_number": {
+           "type": "string",
+           "description": "The passport number of the traveler"
+          }
+         },
+         "required": [
+          "first_name",
+          "last_name",
+          "date_of_birth",
+          "passport_number"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "verification_status": {
+           "type": "boolean"
+          },
+          "verification_failure": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     ],
+     "usage": {
+      "include": true
+     }
+    }
+   },
+   "response": {
+    "received_at": "2026-11-02T08:33:41.299951+00:00",
+    "status_code": 200,
+    "headers": {
+     "date": "Mon, 02 Nov 2026 08:33:40 GMT",
+     "content-type": "application/json",
+     "transfer-encoding": "chunked",
+     "connection": "keep-alive",
+     "access-control-allow-origin": "*",
+     "x-generation-id": "gen-1793608420-tsepKqF1PoXCtUAmlopO",
+     "access-control-expose-headers": "X-Generation-Id,X-Provider-Name,request-id,cf-ray",
+     "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+     "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+     "x-content-type-options": "nosniff",
+     "content-encoding": "gzip",
+     "server": "cloudflare",
+     "cf-ray": "a541cbb16b6bb6f1-DEL",
+     "alt-svc": "h3=\":443\"; ma=86400"
+    },
+    "body": {
+     "id": "gen-1793608420-tsepKqF1PoXCtUAmlopO",
+     "object": "chat.completion",
+     "created": 1793608420,
+     "model": "anthropic/claude-haiku-5.5",
+     "provider": "Google",
+     "system_fingerprint": null,
+     "service_tier": null,
+     "choices": [
+      {
+       "index": 0,
+       "logprobs": null,
+       "finish_reason": "stop",
+       "native_finish_reason": "end_turn",
+       "message": {
+        "role": "assistant",
+        "content": "Comprehensive travel insurance is now active for your flight.\n\n- **Booking ID:** 3426812\n- **Insurance ID:** 498276044\n- **Cost:** $120.00, charged to your Mastercard (ID id15583)\n\nThis brings your total spend to $2,520. That is $120 over the $2,400 budget you mentioned earlier, so you may want to adjust that limit if it matters to you.",
+        "refusal": null,
+        "reasoning": null
+       }
+      }
+     ],
+     "usage": {
+      "prompt_tokens": 4598,
+      "completion_tokens": 134,
+      "total_tokens": 4732,
+      "cost": 0.0005268,
+      "is_byok": false,
+      "prompt_tokens_details": {
+       "cached_tokens": 0,
+       "cache_write_tokens": 0,
+       "audio_tokens": 0,
+       "video_tokens": 0
+      },
+      "cost_details": {
+       "upstream_inference_cost": 0.0005268,
+       "upstream_inference_prompt_cost": 0.0004598,
+       "upstream_inference_completions_cost": 6.7e-05
+      },
+      "completion_tokens_details": {
+       "reasoning_tokens": 0,
+       "image_tokens": 0,
+       "audio_tokens": 0
+      }
+     }
+    }
+   },
+   "latency_s": 1.194261
+  }
+ ],
+ "evaluation": {
+  "valid": true,
+  "error": null
+ }
+}

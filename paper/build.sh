@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Rebuild figures, tables and the PDF from runs/main2/analysis.json.
+# Rebuild figures, tables and the PDF from runs/main/analysis.json.
 #   ./paper/build.sh          -> paper/main.pdf
 set -euo pipefail
 cd "$(dirname "$0")/.."

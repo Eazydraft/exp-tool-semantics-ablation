@@ -1,4 +1,4 @@
-"""Build the paper's figures from runs/main2/analysis.json.
+"""Build the paper's figures from runs/main/analysis.json.
 
     uv run --with matplotlib python paper/figures.py      ->  paper/figures/*.pdf
 """
@@ -13,7 +13,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "paper" / "figures"
 OUT.mkdir(exist_ok=True)
-A = json.load(open(ROOT / "runs" / "main2" / "analysis.json"))
+A = json.load(open(ROOT / "runs" / "main" / "analysis.json"))
 S, B, P = A["success"], A["behaviour"], A["paired"]
 
 MODELS = ["openai/gpt-6-luna", "anthropic/claude-haiku-5.5", "qwen/qwen3-30b-a3b-instruct-2507", "google/gemma-4-26b-a4b-it"]

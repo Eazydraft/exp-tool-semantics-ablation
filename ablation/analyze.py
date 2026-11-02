@@ -1,6 +1,6 @@
 """Trajectory analysis for one run (bfcl_trajectory_analysis_plan_updated.md).
 
-    python -m ablation.analyze --run-name main2      ->  runs/main2/analysis.json
+    python -m ablation.analyze --run-name main      ->  runs/main/analysis.json
 
 Everything here is computed from the trajectory files plus BFCL's ground truth;
 no LLM judging. Operational definitions used throughout:
@@ -185,7 +185,7 @@ def paired_bootstrap_ci(base: list[bool], abl: list[bool], n=2000, seed=0):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--run-name", default="main2")
+    p.add_argument("--run-name", default="main")
     args = p.parse_args()
     run_dir = PROJECT_DIR / "runs" / args.run_name
     os.environ["BFCL_PROJECT_ROOT"] = str(run_dir)

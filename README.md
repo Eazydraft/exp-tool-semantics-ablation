@@ -6,7 +6,15 @@ tool implementations, execution environment and scorer unchanged. Two follow-up 
 were added after the main analysis: D6 (parameter descriptions removed, but prose-only
 constraints moved into the schema as `enum`/`pattern`/renamed parameters) and D7 (parameter
 descriptions removed except for the six parameters that carried the D2 effect). The paper
-in `paper/` is built from `runs/main2/analysis.json` with `./paper/build.sh`.
+in `paper/` is built from `runs/main/analysis.json` with `./paper/build.sh`.
+
+## Browsing the trajectories
+
+The 6,400 trajectories of the final run are in `runs/main/trajectories/` (one JSON file per
+model, condition and task, including every API request and response). `./browse.sh` serves a
+small local UI at http://localhost:8765/: pick a model, click a cell in the task x condition
+matrix, and read the transcript, the checker's verdict with its state diff, and the tool
+schemas exactly as the model saw them under that condition.
 
 ## Run
 

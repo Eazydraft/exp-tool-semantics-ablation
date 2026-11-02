@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trajectory browser</title>
+<style>
+  :root {
+    --bg: #fff; --fg: #1f2328; --muted: #6b7280; --line: #e5e7eb; --panel: #f6f8fa;
+    --pass: #1baf7a; --fail: #eb6834; --err: #9ca3af;
+    --user: #e8f1fd; --assistant: #fff; --tool: #f6f8fa; --accent: #2a78d6;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0f1115; --fg: #e6e6e6; --muted: #9aa0a6; --line: #2a2f37; --panel: #171a20;
+            --user: #16263d; --assistant: #12151b; --tool: #171a20; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.45 system-ui, sans-serif; color: var(--fg); background: var(--bg); }
+  a { color: var(--accent); }
+  header { display: flex; gap: 16px; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--bg); z-index: 2; flex-wrap: wrap; }
+  header h1 { font-size: 15px; margin: 0 12px 0 0; }
+  select, input, button { font: inherit; color: inherit; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; }
+  button { cursor: pointer; }
+  main { padding: 16px; max-width: 1400px; margin: 0 auto; }
+  .muted { color: var(--muted); }
+  .rates { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 12px; }
+  .rates div { padding: 6px 10px; background: var(--panel); border-radius: 6px; }
+  .rates b { display: block; font-size: 16px; }
+  table.matrix { border-collapse: separate; border-spacing: 2px; }
+  table.matrix th { font-weight: 500; color: var(--muted); font-size: 12px; padding: 2px 4px; text-align: center; }
+  table.matrix th.task { text-align: right; font-family: var(--mono); }
+  table.matrix td { width: 44px; height: 24px; text-align: center; border-radius: 4px; cursor: pointer; color: #fff; font-size: 12px; }
+  td.pass { background: var(--pass); } td.fail { background: var(--fail); } td.err { background: var(--err); }
+  td.cell:hover { outline: 2px solid var(--fg); }
+  .legend { margin: 8px 0 14px; display: flex; gap: 14px; align-items: center; }
+  .legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+  .legend .p::before { background: var(--pass); } .legend .f::before { background: var(--fail); } .legend .e::before { background: var(--err); }
+
+  /* trajectory view */
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 14px; }
+  .tabs a { padding: 4px 10px; border-radius: 6px; color: #fff; text-decoration: none; font-size: 13px; }
+  .tabs a.cur { outline: 3px solid var(--fg); }
+  .kv { display: flex; gap: 16px; flex-wrap: wrap; margin: 6px 0 14px; color: var(--muted); }
+  .kv b { color: var(--fg); font-weight: 600; }
+  .box { border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; margin: 10px 0; }
+  .box.error { border-color: var(--fail); }
+  details > summary { cursor: pointer; font-weight: 600; }
+  pre { font: 12px/1.4 var(--mono); white-space: pre-wrap; word-break: break-word; margin: 6px 0; padding: 8px; background: var(--panel); border-radius: 6px; max-height: 420px; overflow: auto; }
+  .diff { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .diff h4 { margin: 4px 0; font-size: 12px; color: var(--muted); }
+  .msg { border-radius: 8px; padding: 8px 12px; margin: 8px 0; border: 1px solid var(--line); }
+  .msg.user { background: var(--user); } .msg.assistant { background: var(--assistant); } .msg.tool { background: var(--tool); }
+  .msg .role { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-bottom: 4px; }
+  .msg .text { white-space: pre-wrap; }
+  .call { font-family: var(--mono); font-size: 12.5px; margin: 4px 0; padding: 4px 8px; border-left: 3px solid var(--accent); background: var(--panel); border-radius: 0 6px 6px 0; }
+  .call b { color: var(--accent); }
+  .turn { margin: 22px 0 6px; font-size: 12px; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 6px; }
+  .turn.bad { color: var(--fail); }
+  table.params { border-collapse: collapse; width: 100%; font-size: 12.5px; margin: 4px 0 10px; }
+  table.params th, table.params td { text-align: left; vertical-align: top; padding: 3px 8px; border-bottom: 1px solid var(--line); }
+  table.params code { font-family: var(--mono); font-size: 12px; }
+  .tool-def { margin: 10px 0 14px; }
+  .tool-def .name { font-family: var(--mono); font-weight: 600; }
+  .orig { color: var(--muted); font-weight: 400; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Trajectory browser</h1>
+  <label>Model <select id="model"></select></label>
+  <label>Show <select id="filter">
+    <option value="all">all tasks</option>
+    <option value="diverge">tasks whose verdict differs across conditions</option>
+    <option value="d0pass">tasks that pass under D0</option>
+    <option value="d0fail">tasks that fail under D0</option>
+  </select></label>
+  <label>Task <input id="search" placeholder="e.g. 78" size="6"></label>
+  <span id="status" class="muted"></span>
+</header>
+<main id="main"></main>
+
+<script>
+const RUN = "../runs/main/";
+const CONDS = ["D0","D1","D2","D3","D4","D5","D6","D7"];
+let INDEX, BY = {};          // BY[model][cond][taskId] -> index row
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const num = id => parseInt(id.split("_").pop(), 10);
+const short = m => m.split("/").pop();
+const pretty = v => { if (typeof v === "string") { try { v = JSON.parse(v); } catch {} } return typeof v === "string" ? v : JSON.stringify(v, null, 2); };
+const cls = r => r.inference_error ? "err" : r.valid ? "pass" : "fail";
+const glyph = r => r.inference_error ? "!" : r.valid ? "✓" : "✗";
+
+async function init() {
+  INDEX = await (await fetch(RUN + "index.json")).json();
+  for (const r of INDEX.trajectories) ((BY[r.model] ??= {})[r.condition] ??= {})[r.id] = r;
+  const models = Object.keys(BY).sort();
+  $("#model").innerHTML = models.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join("");
+  for (const el of ["#model", "#filter"]) $(el).onchange = () => { location.hash = ""; render(); };
+  $("#search").oninput = render;
+  window.onhashchange = render;
+  render();
+}
+
+function render() {
+  const h = location.hash.slice(1);
+  if (h) { const [m, c, t] = JSON.parse(decodeURIComponent(h)); $("#model").value = m; return showTrajectory(m, c, t); }
+  showMatrix($("#model").value);
+}
+
+function showMatrix(model) {
+  const conds = CONDS.filter(c => BY[model][c]);
+  const ids = Object.keys(BY[model][conds[0]]).sort((a, b) => num(a) - num(b));
+  const filter = $("#filter").value, q = $("#search").value.trim();
+  const rows = ids.filter(id => {
+    if (q && num(id) !== parseInt(q, 10)) return false;
+    const v = conds.map(c => BY[model][c][id]?.valid);
+    if (filter === "diverge") return new Set(v).size > 1;
+    if (filter === "d0pass") return v[0] === true;
+    if (filter === "d0fail") return v[0] === false;
+    return true;
+  });
+  const rates = conds.map(c => { const s = INDEX.summary[`${model} ${c}`]; return `<div><span class="muted">${c}</span><b>${(100 * s.success_rate).toFixed(1)}%</b><span class="muted">${s.passed}/${s.tasks}</span></div>`; }).join("");
+  const head = `<tr><th></th>${conds.map(c => `<th>${c}</th>`).join("")}</tr>`;
+  const body = rows.map(id => `<tr><th class="task">${num(id)}</th>${conds.map(c => {
+    const r = BY[model][c][id]; const link = encodeURIComponent(JSON.stringify([model, c, id]));
+    return `<td class="cell ${cls(r)}" title="${esc(r.error_type || "pass")} · ${r.num_tool_calls} calls" onclick="location.hash='${link}'">${glyph(r)}</td>`;
+  }).join("")}</tr>`).join("");
+  $("#status").textContent = `${rows.length} of ${ids.length} tasks`;
+  $("#main").innerHTML = `<div class="rates">${rates}</div>
+    <div class="legend"><span class="p">pass</span><span class="f">fail</span><span class="e">inference error</span><span class="muted">Click a cell to open the trajectory.</span></div>
+    <table class="matrix">${head}${body}</table>`;
+}
+
+async function showTrajectory(model, cond, id) {
+  const row = BY[model][cond][id];
+  $("#status").textContent = "loading…";
+  const d = await (await fetch(RUN + row.file)).json();
+  $("#status").textContent = "";
+  const tabs = CONDS.filter(c => BY[model][c]).map(c => { const r = BY[model][c][id];
+    return `<a class="${cls(r)}${c === cond ? " cur" : ""}" href="#${encodeURIComponent(JSON.stringify([model, c, id]))}">${c} ${glyph(r)}</a>`; }).join("");
+  const provider = d.api_calls.map(c => c.response?.body?.provider).find(Boolean) || "–";
+  const t = d.totals;
+  const kv = [["verdict", row.valid ? "pass" : row.error_type || "fail"], ["turns", row.num_turns], ["API calls", row.api_calls],
+    ["tool calls", `${row.num_tool_calls} (${row.num_failed_tool_calls} failed)`], ["tokens", `${t.prompt_tokens.toLocaleString()} in / ${t.completion_tokens.toLocaleString()} out`],
+    ["cost", `$${t.cost_usd.toFixed(4)}`], ["wall time", `${row.wall_time_s.toFixed(0)} s`], ["provider", provider], ["classes", d.task.involved_classes.join(", ")]]
+    .map(([k, v]) => `<span>${k} <b>${esc(v)}</b></span>`).join("");
+
+  $("#main").innerHTML = `<p><a href="#" onclick="location.hash='';return false">← back to ${esc(short(model))}</a></p>
+    <h2 style="margin:4px 0">${esc(id)} · ${esc(short(model))} · ${cond}</h2>
+    <div class="tabs">${tabs}</div>
+    <div class="kv">${kv}</div>
+    ${d.error ? `<div class="box error"><b>Inference error.</b> ${esc(d.error.message)}</div>` : ""}
+    ${renderEval(d.evaluation)}
+    <h3>Transcript</h3>${renderTranscript(d)}
+    <details class="box"><summary>Tools sent to the model (${d.tools_sent.length})</summary>${renderTools(d)}</details>
+    <details class="box"><summary>Task definition</summary><pre>${esc(JSON.stringify(d.task, null, 2))}</pre></details>
+    <details class="box"><summary>BFCL result (decoded calls per step)</summary><pre>${esc(JSON.stringify(d.bfcl_result, null, 2))}</pre></details>`;
+  window.scrollTo(0, 0);
+}
+
+function renderEval(ev) {
+  if (ev.valid) return `<div class="box"><b>Pass.</b> Final state and execution responses match the ground truth in every turn.</div>`;
+  const e = ev.error || {}; let body = "";
+  const diffs = e.details?.differences;
+  if (diffs) body += Object.entries(diffs).map(([k, v]) => `<div class="diff"><div><h4>${esc(k)} · model</h4><pre>${esc(v.model)}</pre></div><div><h4>${esc(k)} · ground truth</h4><pre>${esc(v.ground_truth)}</pre></div></div>`).join("");
+  if (e.details?.missing_items) body += `<h4 class="muted">Ground-truth execution responses the model never produced</h4><pre>${esc(e.details.missing_items.join("\n"))}</pre>`;
+  const rest = Object.fromEntries(Object.entries(e.details || {}).filter(([k]) => !["differences", "missing_items"].includes(k)));
+  if (Object.keys(rest).length) body += `<details><summary class="muted">Other checker details</summary><pre>${esc(JSON.stringify(rest, null, 2))}</pre></details>`;
+  return `<div class="box error"><b>Fail · ${esc(e.error_type || "")}</b><div>${esc([].concat(e.error_message || []).join(" "))}</div>${body}</div>`;
+}
+
+// Walk the API calls in order. Each request carries the full history, so the messages added
+// since the previous request plus the response form a linear transcript.
+function renderTranscript(d) {
+  let prev = 0, out = "", turn = 0;
+  d.api_calls.forEach((c, i) => {
+    const msgs = c.request?.body?.messages || [];
+    const fresh = msgs.length >= prev ? msgs.slice(prev) : msgs;
+    if (msgs.length < prev) out += `<div class="turn bad">History shrank before call ${i + 1}; showing the full request.</div>`;
+    for (const m of fresh) { if (m.role === "user") out += `<div class="turn">Turn ${++turn}</div>`; out += renderMsg(m); }
+    const r = c.response || {}, choice = r.body?.choices?.[0];
+    const meta = `call ${i + 1}/${d.api_calls.length} · ${c.latency_s?.toFixed(1)} s · ${r.body?.usage?.prompt_tokens ?? "?"} in / ${r.body?.usage?.completion_tokens ?? "?"} out${choice ? " · " + choice.finish_reason : ""}`;
+    if (choice) { out += renderMsg(choice.message, meta); prev = msgs.length + 1; }
+    else { out += `<div class="msg tool"><div class="role">response · HTTP ${r.status_code}</div><pre>${esc(JSON.stringify(r.body, null, 2))}</pre></div>`; prev = msgs.length; }
+  });
+  return out || `<p class="muted">No API calls were recorded.</p>`;
+}
+
+function renderMsg(m, meta) {
+  let body = "";
+  if (m.reasoning) body += `<details><summary class="muted">reasoning</summary><div class="text">${esc(m.reasoning)}</div></details>`;
+  if (m.content) body += m.role === "tool" ? renderLong(pretty(m.content)) : `<div class="text">${esc(m.content)}</div>`;
+  for (const tc of m.tool_calls || []) { const a = pretty(tc.function.arguments); body += `<div class="call"><b>${esc(tc.function.name)}</b>(${a.length > 90 ? `<pre>${esc(a)}</pre>` : esc(a.replace(/\s*\n\s*/g, " "))})</div>`; }
+  return `<div class="msg ${m.role}"><div class="role">${m.role}${meta ? " · " + esc(meta) : ""}</div>${body || '<span class="muted">(empty)</span>'}</div>`;
+}
+
+function renderLong(s) {
+  return s.length > 600 ? `<details><summary class="muted">${esc(s.slice(0, 200))}… (${s.length} chars)</summary><pre>${esc(s)}</pre></details>` : `<pre>${esc(s)}</pre>`;
+}
+
+function renderTools(d) {
+  const tmap = d.name_maps?.tool || {}, pmap = d.name_maps?.param || {};
+  return d.tools_sent.map(t => {
+    const f = t.function, props = f.parameters?.properties || {}, req = new Set(f.parameters?.required || []);
+    const rows = Object.entries(props).map(([p, s]) => {
+      const orig = pmap[f.name]?.[p]?.name; const extra = ["enum", "pattern", "items", "default"].filter(k => k in s).map(k => `${k}: ${JSON.stringify(s[k])}`).join("<br>");
+      return `<tr><td><code>${esc(p)}</code>${orig && orig !== p ? ` <span class="orig">(${esc(orig)})</span>` : ""}${req.has(p) ? "" : ' <span class="muted">optional</span>'}</td><td><code>${esc(s.type || "")}</code></td><td>${esc(s.description || "") || '<span class="muted">—</span>'}${extra ? `<div class="muted">${extra}</div>` : ""}</td></tr>`;
+    }).join("");
+    return `<div class="tool-def"><div class="name">${esc(f.name)}${tmap[f.name] ? ` <span class="orig">(${esc(tmap[f.name])})</span>` : ""}</div>
+      <div>${esc(f.description || "") || '<span class="muted">(no description)</span>'}</div>
+      ${rows ? `<table class="params"><tr><th>parameter</th><th>type</th><th>description</th></tr>${rows}</table>` : ""}</div>`;
+  }).join("");
+}
+
+init().catch(e => { $("#main").innerHTML = `<p class="box error">Could not load ${RUN}index.json: ${esc(e)}. Start the browser with <code>./browse.sh</code> from the repository root.</p>`; });
+</script>
+</body>
+</html>

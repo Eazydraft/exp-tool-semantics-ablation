@@ -1,4 +1,4 @@
-"""Write the paper's numeric tables as LaTeX fragments from runs/main2/analysis.json.
+"""Write the paper's numeric tables as LaTeX fragments from runs/main/analysis.json.
 
     python3 paper/tables.py   ->  paper/tables/*.tex
 """
@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "paper" / "tables"
 OUT.mkdir(exist_ok=True)
-A = json.load(open(ROOT / "runs" / "main2" / "analysis.json"))
+A = json.load(open(ROOT / "runs" / "main" / "analysis.json"))
 S, B, P = A["success"], A["behaviour"], A["paired"]
 MODELS = ["openai/gpt-6-luna", "anthropic/claude-haiku-5.5", "qwen/qwen3-30b-a3b-instruct-2507", "google/gemma-4-26b-a4b-it"]
 SHORT = {"openai/gpt-6-luna": "GPT-6 Luna", "anthropic/claude-haiku-5.5": "Claude Haiku 5.5",

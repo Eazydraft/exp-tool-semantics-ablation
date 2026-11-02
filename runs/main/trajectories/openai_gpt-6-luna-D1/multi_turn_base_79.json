@@ -1,0 +1,5613 @@
+{
+ "id": "multi_turn_base_79",
+ "model": "openai/gpt-6-luna",
+ "condition": "D1",
+ "registry_name": "openai/gpt-6-luna-D1",
+ "run": {
+  "run_name": "main2",
+  "models": [
+   "openai/gpt-6-luna",
+   "anthropic/claude-haiku-5.5",
+   "qwen/qwen3-30b-a3b-instruct-2507",
+   "google/gemma-4-26b-a4b-it"
+  ],
+  "conditions": [
+   "D0",
+   "D1",
+   "D2",
+   "D3",
+   "D4",
+   "D5"
+  ],
+  "temperature": 0.001,
+  "threads": 8,
+  "limit": null,
+  "task_ids": null,
+  "test_category": "multi_turn_base",
+  "bfcl_commit": "6ea57973c7a6097fd7c5915698c54c17c5b1b6c8",
+  "conditions_spec": {
+   "D0": {
+    "tool_names": true,
+    "tool_desc": true,
+    "param_names": true,
+    "param_desc": true
+   },
+   "D1": {
+    "tool_names": true,
+    "tool_desc": false,
+    "param_names": true,
+    "param_desc": true
+   },
+   "D2": {
+    "tool_names": true,
+    "tool_desc": true,
+    "param_names": true,
+    "param_desc": false
+   },
+   "D3": {
+    "tool_names": false,
+    "tool_desc": true,
+    "param_names": true,
+    "param_desc": true
+   },
+   "D4": {
+    "tool_names": true,
+    "tool_desc": true,
+    "param_names": false,
+    "param_desc": true
+   },
+   "D5": {
+    "tool_names": false,
+    "tool_desc": false,
+    "param_names": false,
+    "param_desc": false
+   }
+  }
+ },
+ "started_at": "2026-11-02T08:14:56.234347+00:00",
+ "finished_at": "2026-11-02T08:15:16.260949+00:00",
+ "wall_time_s": 20.026535987854004,
+ "totals": {
+  "api_calls": 5,
+  "prompt_tokens": 5367,
+  "completion_tokens": 647,
+  "reasoning_tokens": 480,
+  "cached_tokens": 1244,
+  "cost_usd": 0.000784265,
+  "latency_s": 19.991453
+ },
+ "error": null,
+ "task": {
+  "id": "multi_turn_base_79",
+  "question": [
+   [
+    {
+     "role": "user",
+     "content": "I just returned to my vehicle, and it dawned on me that I may not have unlocked the doors yet. Would you assist in unlocking them all?"
+    }
+   ],
+   [
+    {
+     "role": "user",
+     "content": "With every door now open, please proceed to fire up the engine; I need to ensure everything's in working order before hitting the road."
+    }
+   ],
+   [
+    {
+     "role": "user",
+     "content": "Fantastic! With the engine humming nicely, it’s time for my adventure. Could you adjust the cruise control to 65 mph and make sure we're keeping a prudent distance (100 meters) from the car in front?"
+    }
+   ]
+  ],
+  "initial_config": {
+   "VehicleControlAPI": {
+    "fuelLevel": 15.5,
+    "batteryVoltage": 12.8,
+    "engineState": "stopped",
+    "doorStatus": {
+     "driver": "locked",
+     "passenger": "locked",
+     "rear_left": "locked",
+     "rear_right": "locked"
+    },
+    "acTemperature": 22.0,
+    "fanSpeed": 60,
+    "acMode": "auto",
+    "humidityLevel": 45.0,
+    "headLightStatus": "off",
+    "parkingBrakeStatus": "released",
+    "parkingBrakeForce": 0.0,
+    "slopeAngle": 0.0,
+    "distanceToNextVehicle": 100.0,
+    "cruiseStatus": "inactive",
+    "destination": "None",
+    "frontLeftTirePressure": 32.0,
+    "frontRightTirePressure": 32.0,
+    "rearLeftTirePressure": 30.0,
+    "rearRightTirePressure": 30.0
+   }
+  },
+  "path": [
+   "VehicleControlAPI.displayCarStatus",
+   "VehicleControlAPI.lockDoors",
+   "VehicleControlAPI.startEngine",
+   "VehicleControlAPI.setCruiseControl"
+  ],
+  "involved_classes": [
+   "VehicleControlAPI"
+  ]
+ },
+ "tools_sent": [
+  {
+   "type": "function",
+   "function": {
+    "name": "activateParkingBrake",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "mode": {
+       "type": "string",
+       "description": "The mode to set. [Enum]: [\"engage\", \"release\"]"
+      }
+     },
+     "required": [
+      "mode"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "parkingBrakeStatus": {
+       "type": "string"
+      },
+      "_parkingBrakeForce": {
+       "type": "float"
+      },
+      "_slopeAngle": {
+       "type": "float"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "adjustClimateControl",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "temperature": {
+       "type": "number",
+       "description": "The temperature to set in degree. Default to be celsius. This is a float type value.",
+       "format": "float"
+      },
+      "unit": {
+       "type": "string",
+       "description": "The unit of temperature. [Enum]: [\"celsius\", \"fahrenheit\"]",
+       "default": "celsius"
+      },
+      "fanSpeed": {
+       "type": "integer",
+       "description": "The fan speed to set from 0 to 100. Default is 50.",
+       "default": 50
+      },
+      "mode": {
+       "type": "string",
+       "description": "The climate mode to set. [Enum]: [\"auto\", \"cool\", \"heat\", \"defrost\"]",
+       "default": "auto"
+      }
+     },
+     "required": [
+      "temperature"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "currentTemperature": {
+       "type": "float"
+      },
+      "climateMode": {
+       "type": "string"
+      },
+      "humidityLevel": {
+       "type": "float"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "check_tire_pressure",
+    "parameters": {
+     "type": "object",
+     "properties": {},
+     "required": []
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "tirePressure": {
+       "type": "dict",
+       "properties": {
+        "frontLeftTirePressure": {
+         "type": "float"
+        },
+        "frontRightTirePressure": {
+         "type": "float"
+        },
+        "rearLeftTirePressure": {
+         "type": "float"
+        },
+        "rearRightTirePressure": {
+         "type": "float"
+        },
+        "healthy_tire_pressure": {
+         "type": "boolean"
+        },
+        "car_info": {
+         "type": "dict"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "displayCarStatus",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "option": {
+       "type": "string",
+       "description": "The option to display. [Enum]: [\"fuel\", \"battery\", \"doors\", \"climate\", \"headlights\", \"parkingBrake\", \"brakePedal\", \"engine\"]"
+      }
+     },
+     "required": [
+      "option"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "status": {
+       "type": "dict",
+       "properties": {
+        "fuelLevel": {
+         "type": "float"
+        },
+        "batteryVoltage": {
+         "type": "float"
+        },
+        "doorStatus": {
+         "type": "dict",
+         "properties": {
+          "driver": {
+           "type": "string"
+          },
+          "passenger": {
+           "type": "string"
+          },
+          "rear_left": {
+           "type": "string"
+          },
+          "rear_right": {
+           "type": "string"
+          }
+         }
+        },
+        "currentACTemperature": {
+         "type": "float"
+        },
+        "fanSpeed": {
+         "type": "integer"
+        },
+        "climateMode": {
+         "type": "string"
+        },
+        "humidityLevel": {
+         "type": "float"
+        },
+        "headlightStatus": {
+         "type": "string"
+        },
+        "parkingBrakeStatus": {
+         "type": "string"
+        },
+        "parkingBrakeForce": {
+         "type": "float"
+        },
+        "slopeAngle": {
+         "type": "float"
+        },
+        "brakePedalStatus": {
+         "type": "string"
+        },
+        "brakePedalForce": {
+         "type": "float"
+        },
+        "engineState": {
+         "type": "string"
+        },
+        "metadata": {
+         "type": "string"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "display_log",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "messages": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       },
+       "description": "The list of messages to display."
+      }
+     },
+     "required": [
+      "messages"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "log": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "estimate_distance",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "cityA": {
+       "type": "string",
+       "description": "The zipcode of the first city."
+      },
+      "cityB": {
+       "type": "string",
+       "description": "The zipcode of the second city."
+      }
+     },
+     "required": [
+      "cityA",
+      "cityB"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "distance": {
+       "type": "float"
+      },
+      "intermediaryCities": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "estimate_drive_feasibility_by_mileage",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "distance": {
+       "type": "number",
+       "description": "The distance to travel in miles. This is a float type value.",
+       "format": "float"
+      }
+     },
+     "required": [
+      "distance"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "canDrive": {
+       "type": "boolean"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "fillFuelTank",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "fuelAmount": {
+       "type": "number",
+       "description": "The amount of fuel to fill in gallons; this is the additional fuel to add to the tank. This is a float type value.",
+       "format": "float"
+      }
+     },
+     "required": [
+      "fuelAmount"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "fuelLevel": {
+       "type": "float"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "find_nearest_tire_shop",
+    "parameters": {
+     "type": "object",
+     "properties": {},
+     "required": []
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "shopLocation": {
+       "type": "string"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "gallon_to_liter",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "gallon": {
+       "type": "number",
+       "description": "The amount of gallon to convert. This is a float type value.",
+       "format": "float"
+      }
+     },
+     "required": [
+      "gallon"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "liter": {
+       "type": "float"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "get_current_speed",
+    "parameters": {
+     "type": "object",
+     "properties": {},
+     "required": []
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "currentSpeed": {
+       "type": "float"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "get_outside_temperature_from_google",
+    "parameters": {
+     "type": "object",
+     "properties": {},
+     "required": []
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "outsideTemperature": {
+       "type": "float"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "get_outside_temperature_from_weather_com",
+    "parameters": {
+     "type": "object",
+     "properties": {},
+     "required": []
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "outsideTemperature": {
+       "type": "float"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "get_zipcode_based_on_city",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "city": {
+       "type": "string",
+       "description": "The name of the city."
+      }
+     },
+     "required": [
+      "city"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "zipcode": {
+       "type": "string"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "liter_to_gallon",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "liter": {
+       "type": "number",
+       "description": "The amount of liter to convert. This is a float type value.",
+       "format": "float"
+      }
+     },
+     "required": [
+      "liter"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "gallon": {
+       "type": "float"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "lockDoors",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "unlock": {
+       "type": "boolean",
+       "description": "True if the doors are to be unlocked, False otherwise."
+      },
+      "door": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       },
+       "description": "The list of doors to lock or unlock. [Enum]: [\"driver\", \"passenger\", \"rear_left\", \"rear_right\"]"
+      }
+     },
+     "required": [
+      "unlock",
+      "door"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "lockStatus": {
+       "type": "string"
+      },
+      "remainingUnlockedDoors": {
+       "type": "integer"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "pressBrakePedal",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "pedalPosition": {
+       "type": "number",
+       "description": "Position of the brake pedal, between 0 (not pressed) and 1 (fully pressed). This is a float type value.",
+       "format": "float"
+      }
+     },
+     "required": [
+      "pedalPosition"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "brakePedalStatus": {
+       "type": "string"
+      },
+      "brakePedalForce": {
+       "type": "float"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "releaseBrakePedal",
+    "parameters": {
+     "type": "object",
+     "properties": {},
+     "required": []
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "brakePedalStatus": {
+       "type": "string"
+      },
+      "brakePedalForce": {
+       "type": "float"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "setCruiseControl",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "speed": {
+       "type": "number",
+       "description": "The speed to set in m/h. The speed should be between 0 and 120 and a multiple of 5. This is a float type value.",
+       "format": "float"
+      },
+      "activate": {
+       "type": "boolean",
+       "description": "True to activate the cruise control, False to deactivate."
+      },
+      "distanceToNextVehicle": {
+       "type": "number",
+       "description": "The distance to the next vehicle in meters. This is a float type value.",
+       "format": "float"
+      }
+     },
+     "required": [
+      "speed",
+      "activate",
+      "distanceToNextVehicle"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "cruiseStatus": {
+       "type": "string"
+      },
+      "currentSpeed": {
+       "type": "float"
+      },
+      "distanceToNextVehicle": {
+       "type": "float"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "setHeadlights",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "mode": {
+       "type": "string",
+       "description": "The mode of the headlights. [Enum]: [\"on\", \"off\", \"auto\"]"
+      }
+     },
+     "required": [
+      "mode"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "headlightStatus": {
+       "type": "string"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "set_navigation",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "destination": {
+       "type": "string",
+       "description": "The destination to navigate in the format of street, city, state."
+      }
+     },
+     "required": [
+      "destination"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "status": {
+       "type": "string"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "startEngine",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "ignitionMode": {
+       "type": "string",
+       "description": "The ignition mode of the vehicle. [Enum]: [\"START\", \"STOP\"]"
+      }
+     },
+     "required": [
+      "ignitionMode"
+     ]
+    },
+    "response": {
+     "type": "dict",
+     "properties": {
+      "engineState": {
+       "type": "string"
+      },
+      "fuelLevel": {
+       "type": "float"
+      },
+      "batteryVoltage": {
+       "type": "float"
+      }
+     }
+    }
+   }
+  }
+ ],
+ "name_maps": {
+  "tool": {},
+  "param": {}
+ },
+ "bfcl_result": [
+  [
+   [
+    {
+     "lockDoors": "{\"unlock\": true, \"door\": [\"driver\", \"passenger\", \"rear_left\", \"rear_right\"]}"
+    }
+   ],
+   "All four doors are unlocked."
+  ],
+  [
+   [
+    {
+     "startEngine": "{\"ignitionMode\": \"START\"}"
+    }
+   ],
+   "The engine didn’t start. The vehicle requires all doors to be locked first, and all four are currently unlocked. Please close the doors; then I can lock them and try again if you’d like."
+  ],
+  [
+   "I can’t set cruise control yet—the engine-start attempt failed because all four doors are unlocked. Close and lock the doors, then start the engine; after that, I can set cruise control to 65 mph with a 100-meter following distance."
+  ]
+ ],
+ "bfcl_metadata": {
+  "input_token_count": [
+   [
+    838,
+    897
+   ],
+   [
+    941,
+    1247
+   ],
+   [
+    1444
+   ]
+  ],
+  "output_token_count": [
+   [
+    32,
+    10
+   ],
+   [
+    265,
+    148
+   ],
+   [
+    192
+   ]
+  ],
+  "latency": [
+   [
+    1.4688706398010254,
+    1.8199889659881592
+   ],
+   [
+    6.893675327301025,
+    4.792367696762085
+   ],
+   [
+    5.046204328536987
+   ]
+  ],
+  "inference_log": [
+   [
+    {
+     "role": "state_info",
+     "class_name": "VehicleControlAPI",
+     "content": {
+      "fuelLevel": 15.5,
+      "batteryVoltage": 12.8,
+      "engine_state": "stopped",
+      "remainingUnlockedDoors": 0,
+      "doorStatus": {
+       "driver": "locked",
+       "passenger": "locked",
+       "rear_left": "locked",
+       "rear_right": "locked"
+      },
+      "acTemperature": 22.0,
+      "fanSpeed": 60,
+      "acMode": "auto",
+      "humidityLevel": 45.0,
+      "headLightStatus": "off",
+      "parkingBrakeStatus": "released",
+      "brakePedalStatus": "released",
+      "distanceToNextVehicle": 100.0,
+      "cruiseStatus": "inactive",
+      "destination": "None",
+      "frontLeftTirePressure": 32.0,
+      "frontRightTirePressure": 32.0,
+      "rearLeftTirePressure": 30.0,
+      "rearRightTirePressure": 30.0,
+      "long_context": false
+     }
+    }
+   ],
+   {
+    "begin_of_turn_query": [
+     {
+      "role": "user",
+      "content": "I just returned to my vehicle, and it dawned on me that I may not have unlocked the doors yet. Would you assist in unlocking them all?"
+     }
+    ],
+    "step_0": [
+     {
+      "role": "assistant",
+      "content": [
+       {
+        "lockDoors": "{\"unlock\": true, \"door\": [\"driver\", \"passenger\", \"rear_left\", \"rear_right\"]}"
+       }
+      ]
+     },
+     {
+      "role": "handler_log",
+      "content": "Successfully decoded model response.",
+      "model_response_decoded": [
+       "lockDoors(unlock=True,door=['driver', 'passenger', 'rear_left', 'rear_right'])"
+      ]
+     },
+     {
+      "role": "tool",
+      "content": "{\"lockStatus\": \"unlocked\", \"remainingUnlockedDoors\": 4}"
+     }
+    ],
+    "step_1": [
+     {
+      "role": "assistant",
+      "content": "All four doors are unlocked."
+     },
+     {
+      "role": "handler_log",
+      "content": "Error decoding the model response. Proceed to next turn.",
+      "error": "'str' object has no attribute 'items'"
+     }
+    ]
+   },
+   [
+    {
+     "role": "state_info",
+     "class_name": "VehicleControlAPI",
+     "content": {
+      "fuelLevel": 15.5,
+      "batteryVoltage": 12.8,
+      "engine_state": "stopped",
+      "remainingUnlockedDoors": 4,
+      "doorStatus": {
+       "driver": "unlocked",
+       "passenger": "unlocked",
+       "rear_left": "unlocked",
+       "rear_right": "unlocked"
+      },
+      "acTemperature": 22.0,
+      "fanSpeed": 60,
+      "acMode": "auto",
+      "humidityLevel": 45.0,
+      "headLightStatus": "off",
+      "parkingBrakeStatus": "released",
+      "brakePedalStatus": "released",
+      "distanceToNextVehicle": 100.0,
+      "cruiseStatus": "inactive",
+      "destination": "None",
+      "frontLeftTirePressure": 32.0,
+      "frontRightTirePressure": 32.0,
+      "rearLeftTirePressure": 30.0,
+      "rearRightTirePressure": 30.0,
+      "long_context": false
+     }
+    }
+   ],
+   {
+    "begin_of_turn_query": [
+     {
+      "role": "user",
+      "content": "With every door now open, please proceed to fire up the engine; I need to ensure everything's in working order before hitting the road."
+     }
+    ],
+    "step_0": [
+     {
+      "role": "assistant",
+      "content": [
+       {
+        "startEngine": "{\"ignitionMode\": \"START\"}"
+       }
+      ],
+      "reasoning_content": "**Considering door safety and engine start**\n\nOpen doors indicate that someone is nearby, which raises safety concerns. I'm wondering if there's a need for an explicit safety restriction regarding this. It seems prudent to check if all four doors are closed before proceeding, especially since they are all currently open. My focus is on ensuring the engine works properly, which means I'll call the tool to start the engine. Let's go ahead and initiate that!"
+     },
+     {
+      "role": "handler_log",
+      "content": "Successfully decoded model response.",
+      "model_response_decoded": [
+       "startEngine(ignitionMode='START')"
+      ]
+     },
+     {
+      "role": "tool",
+      "content": "{\"error\": \"All doors must be locked before starting the engine. Here are the unlocked doors: driver, passenger, rear_left, rear_right\"}"
+     }
+    ],
+    "step_1": [
+     {
+      "role": "assistant",
+      "content": "The engine didn’t start. The vehicle requires all doors to be locked first, and all four are currently unlocked. Please close the doors; then I can lock them and try again if you’d like.",
+      "reasoning_content": "**Explaining door lock status**\n\nI’m looking at a situation where the report can’t start because all doors must be locked first. If the doors are open, locking them could put someone in a tricky position. I think I should explain that I can’t start the engine until all doors are locked. I might ask if the user wants me to close and lock the doors instead, but I need to clarify that the doors remain unlocked for now."
+     },
+     {
+      "role": "handler_log",
+      "content": "Error decoding the model response. Proceed to next turn.",
+      "error": "'str' object has no attribute 'items'"
+     }
+    ]
+   },
+   [
+    {
+     "role": "state_info",
+     "class_name": "VehicleControlAPI",
+     "content": {
+      "fuelLevel": 15.5,
+      "batteryVoltage": 12.8,
+      "engine_state": "stopped",
+      "remainingUnlockedDoors": 4,
+      "doorStatus": {
+       "driver": "unlocked",
+       "passenger": "unlocked",
+       "rear_left": "unlocked",
+       "rear_right": "unlocked"
+      },
+      "acTemperature": 22.0,
+      "fanSpeed": 60,
+      "acMode": "auto",
+      "humidityLevel": 45.0,
+      "headLightStatus": "off",
+      "parkingBrakeStatus": "released",
+      "brakePedalStatus": "released",
+      "distanceToNextVehicle": 100.0,
+      "cruiseStatus": "inactive",
+      "destination": "None",
+      "frontLeftTirePressure": 32.0,
+      "frontRightTirePressure": 32.0,
+      "rearLeftTirePressure": 30.0,
+      "rearRightTirePressure": 30.0,
+      "long_context": false
+     }
+    }
+   ],
+   {
+    "begin_of_turn_query": [
+     {
+      "role": "user",
+      "content": "Fantastic! With the engine humming nicely, it’s time for my adventure. Could you adjust the cruise control to 65 mph and make sure we're keeping a prudent distance (100 meters) from the car in front?"
+     }
+    ],
+    "step_0": [
+     {
+      "role": "assistant",
+      "content": "I can’t set cruise control yet—the engine-start attempt failed because all four doors are unlocked. Close and lock the doors, then start the engine; after that, I can set cruise control to 65 mph with a 100-meter following distance."
+     },
+     {
+      "role": "handler_log",
+      "content": "Error decoding the model response. Proceed to next turn.",
+      "error": "'str' object has no attribute 'items'"
+     }
+    ]
+   },
+   [
+    {
+     "role": "state_info",
+     "class_name": "VehicleControlAPI",
+     "content": {
+      "fuelLevel": 15.5,
+      "batteryVoltage": 12.8,
+      "engine_state": "stopped",
+      "remainingUnlockedDoors": 4,
+      "doorStatus": {
+       "driver": "unlocked",
+       "passenger": "unlocked",
+       "rear_left": "unlocked",
+       "rear_right": "unlocked"
+      },
+      "acTemperature": 22.0,
+      "fanSpeed": 60,
+      "acMode": "auto",
+      "humidityLevel": 45.0,
+      "headLightStatus": "off",
+      "parkingBrakeStatus": "released",
+      "brakePedalStatus": "released",
+      "distanceToNextVehicle": 100.0,
+      "cruiseStatus": "inactive",
+      "destination": "None",
+      "frontLeftTirePressure": 32.0,
+      "frontRightTirePressure": 32.0,
+      "rearLeftTirePressure": 30.0,
+      "rearRightTirePressure": 30.0,
+      "long_context": false
+     }
+    }
+   ]
+  ],
+  "reasoning_content": [
+   [
+    "",
+    ""
+   ],
+   [
+    "**Considering door safety and engine start**\n\nOpen doors indicate that someone is nearby, which raises safety concerns. I'm wondering if there's a need for an explicit safety restriction regarding this. It seems prudent to check if all four doors are closed before proceeding, especially since they are all currently open. My focus is on ensuring the engine works properly, which means I'll call the tool to start the engine. Let's go ahead and initiate that!",
+    "**Explaining door lock status**\n\nI’m looking at a situation where the report can’t start because all doors must be locked first. If the doors are open, locking them could put someone in a tricky position. I think I should explain that I can’t start the engine until all doors are locked. I might ask if the user wants me to close and lock the doors instead, but I need to clarify that the doors remain unlocked for now."
+   ],
+   [
+    ""
+   ]
+  ]
+ },
+ "api_calls": [
+  {
+   "request": {
+    "sent_at": "2026-11-02T08:14:56.238116+00:00",
+    "method": "POST",
+    "url": "https://openrouter.ai/api/v1/chat/completions",
+    "headers": {
+     "host": "openrouter.ai",
+     "accept-encoding": "gzip, deflate",
+     "connection": "keep-alive",
+     "authorization": "<redacted>",
+     "accept": "application/json",
+     "content-type": "application/json",
+     "user-agent": "OpenAI/Python 3.42.1",
+     "x-stainless-lang": "python",
+     "x-stainless-package-version": "3.42.1",
+     "x-stainless-os": "Linux",
+     "x-stainless-arch": "x64",
+     "x-stainless-runtime": "CPython",
+     "x-stainless-runtime-version": "3.12.3",
+     "x-stainless-async": "false",
+     "x-stainless-retry-count": "0",
+     "x-stainless-read-timeout": "600",
+     "cookie": "__cf_bm=ftfYh9A77AAsUjHZijh08TE0PzPSK00Pcga5iSpuVUA-1793606907.4750273-1.0.1.1-NGeV4zepfPpq4KfucfA1G2Y0g.2s.dXXK8blo2qk4EZSVXUEvPivxXybrluvUxryExfKR_vIjdEfF9CNoiH5In0_LZ5VgtTpuRYM3iOG19kRV7krpY8vpCZZfiHxZeUx",
+     "content-length": "8999"
+    },
+    "body": {
+     "model": "openai/gpt-6-luna",
+     "messages": [
+      {
+       "role": "user",
+       "content": "I just returned to my vehicle, and it dawned on me that I may not have unlocked the doors yet. Would you assist in unlocking them all?"
+      }
+     ],
+     "store": false,
+     "temperature": 0.001,
+     "tools": [
+      {
+       "type": "function",
+       "function": {
+        "name": "activateParkingBrake",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "mode": {
+           "type": "string",
+           "description": "The mode to set. [Enum]: [\"engage\", \"release\"]"
+          }
+         },
+         "required": [
+          "mode"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "parkingBrakeStatus": {
+           "type": "string"
+          },
+          "_parkingBrakeForce": {
+           "type": "float"
+          },
+          "_slopeAngle": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "adjustClimateControl",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "temperature": {
+           "type": "number",
+           "description": "The temperature to set in degree. Default to be celsius. This is a float type value.",
+           "format": "float"
+          },
+          "unit": {
+           "type": "string",
+           "description": "The unit of temperature. [Enum]: [\"celsius\", \"fahrenheit\"]",
+           "default": "celsius"
+          },
+          "fanSpeed": {
+           "type": "integer",
+           "description": "The fan speed to set from 0 to 100. Default is 50.",
+           "default": 50
+          },
+          "mode": {
+           "type": "string",
+           "description": "The climate mode to set. [Enum]: [\"auto\", \"cool\", \"heat\", \"defrost\"]",
+           "default": "auto"
+          }
+         },
+         "required": [
+          "temperature"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "currentTemperature": {
+           "type": "float"
+          },
+          "climateMode": {
+           "type": "string"
+          },
+          "humidityLevel": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "check_tire_pressure",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "tirePressure": {
+           "type": "dict",
+           "properties": {
+            "frontLeftTirePressure": {
+             "type": "float"
+            },
+            "frontRightTirePressure": {
+             "type": "float"
+            },
+            "rearLeftTirePressure": {
+             "type": "float"
+            },
+            "rearRightTirePressure": {
+             "type": "float"
+            },
+            "healthy_tire_pressure": {
+             "type": "boolean"
+            },
+            "car_info": {
+             "type": "dict"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "displayCarStatus",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "option": {
+           "type": "string",
+           "description": "The option to display. [Enum]: [\"fuel\", \"battery\", \"doors\", \"climate\", \"headlights\", \"parkingBrake\", \"brakePedal\", \"engine\"]"
+          }
+         },
+         "required": [
+          "option"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "status": {
+           "type": "dict",
+           "properties": {
+            "fuelLevel": {
+             "type": "float"
+            },
+            "batteryVoltage": {
+             "type": "float"
+            },
+            "doorStatus": {
+             "type": "dict",
+             "properties": {
+              "driver": {
+               "type": "string"
+              },
+              "passenger": {
+               "type": "string"
+              },
+              "rear_left": {
+               "type": "string"
+              },
+              "rear_right": {
+               "type": "string"
+              }
+             }
+            },
+            "currentACTemperature": {
+             "type": "float"
+            },
+            "fanSpeed": {
+             "type": "integer"
+            },
+            "climateMode": {
+             "type": "string"
+            },
+            "humidityLevel": {
+             "type": "float"
+            },
+            "headlightStatus": {
+             "type": "string"
+            },
+            "parkingBrakeStatus": {
+             "type": "string"
+            },
+            "parkingBrakeForce": {
+             "type": "float"
+            },
+            "slopeAngle": {
+             "type": "float"
+            },
+            "brakePedalStatus": {
+             "type": "string"
+            },
+            "brakePedalForce": {
+             "type": "float"
+            },
+            "engineState": {
+             "type": "string"
+            },
+            "metadata": {
+             "type": "string"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "display_log",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "messages": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           },
+           "description": "The list of messages to display."
+          }
+         },
+         "required": [
+          "messages"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "log": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "estimate_distance",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "cityA": {
+           "type": "string",
+           "description": "The zipcode of the first city."
+          },
+          "cityB": {
+           "type": "string",
+           "description": "The zipcode of the second city."
+          }
+         },
+         "required": [
+          "cityA",
+          "cityB"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "distance": {
+           "type": "float"
+          },
+          "intermediaryCities": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "estimate_drive_feasibility_by_mileage",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "distance": {
+           "type": "number",
+           "description": "The distance to travel in miles. This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "distance"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "canDrive": {
+           "type": "boolean"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "fillFuelTank",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "fuelAmount": {
+           "type": "number",
+           "description": "The amount of fuel to fill in gallons; this is the additional fuel to add to the tank. This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "fuelAmount"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "fuelLevel": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "find_nearest_tire_shop",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "shopLocation": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "gallon_to_liter",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "gallon": {
+           "type": "number",
+           "description": "The amount of gallon to convert. This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "gallon"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "liter": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_current_speed",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "currentSpeed": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_outside_temperature_from_google",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "outsideTemperature": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_outside_temperature_from_weather_com",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "outsideTemperature": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_zipcode_based_on_city",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "city": {
+           "type": "string",
+           "description": "The name of the city."
+          }
+         },
+         "required": [
+          "city"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "zipcode": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "liter_to_gallon",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "liter": {
+           "type": "number",
+           "description": "The amount of liter to convert. This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "liter"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "gallon": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "lockDoors",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "unlock": {
+           "type": "boolean",
+           "description": "True if the doors are to be unlocked, False otherwise."
+          },
+          "door": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           },
+           "description": "The list of doors to lock or unlock. [Enum]: [\"driver\", \"passenger\", \"rear_left\", \"rear_right\"]"
+          }
+         },
+         "required": [
+          "unlock",
+          "door"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "lockStatus": {
+           "type": "string"
+          },
+          "remainingUnlockedDoors": {
+           "type": "integer"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "pressBrakePedal",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "pedalPosition": {
+           "type": "number",
+           "description": "Position of the brake pedal, between 0 (not pressed) and 1 (fully pressed). This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "pedalPosition"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "brakePedalStatus": {
+           "type": "string"
+          },
+          "brakePedalForce": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "releaseBrakePedal",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "brakePedalStatus": {
+           "type": "string"
+          },
+          "brakePedalForce": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "setCruiseControl",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "speed": {
+           "type": "number",
+           "description": "The speed to set in m/h. The speed should be between 0 and 120 and a multiple of 5. This is a float type value.",
+           "format": "float"
+          },
+          "activate": {
+           "type": "boolean",
+           "description": "True to activate the cruise control, False to deactivate."
+          },
+          "distanceToNextVehicle": {
+           "type": "number",
+           "description": "The distance to the next vehicle in meters. This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "speed",
+          "activate",
+          "distanceToNextVehicle"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "cruiseStatus": {
+           "type": "string"
+          },
+          "currentSpeed": {
+           "type": "float"
+          },
+          "distanceToNextVehicle": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "setHeadlights",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "mode": {
+           "type": "string",
+           "description": "The mode of the headlights. [Enum]: [\"on\", \"off\", \"auto\"]"
+          }
+         },
+         "required": [
+          "mode"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "headlightStatus": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_navigation",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "destination": {
+           "type": "string",
+           "description": "The destination to navigate in the format of street, city, state."
+          }
+         },
+         "required": [
+          "destination"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "status": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "startEngine",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "ignitionMode": {
+           "type": "string",
+           "description": "The ignition mode of the vehicle. [Enum]: [\"START\", \"STOP\"]"
+          }
+         },
+         "required": [
+          "ignitionMode"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "engineState": {
+           "type": "string"
+          },
+          "fuelLevel": {
+           "type": "float"
+          },
+          "batteryVoltage": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      }
+     ],
+     "usage": {
+      "include": true
+     }
+    }
+   },
+   "response": {
+    "received_at": "2026-11-02T08:14:57.703673+00:00",
+    "status_code": 200,
+    "headers": {
+     "date": "Mon, 02 Nov 2026 08:14:57 GMT",
+     "content-type": "application/json",
+     "transfer-encoding": "chunked",
+     "connection": "keep-alive",
+     "access-control-allow-origin": "*",
+     "x-generation-id": "gen-1793607296-vg289dpDfE5Cyj6R27zd",
+     "access-control-expose-headers": "X-Generation-Id,X-Provider-Name,request-id,cf-ray",
+     "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+     "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+     "x-content-type-options": "nosniff",
+     "content-encoding": "gzip",
+     "server": "cloudflare",
+     "cf-ray": "a541b0411de358bb-DEL",
+     "alt-svc": "h3=\":443\"; ma=86400"
+    },
+    "body": {
+     "id": "gen-1793607296-vg289dpDfE5Cyj6R27zd",
+     "object": "chat.completion",
+     "created": 1793607296,
+     "model": "openai/gpt-6-luna",
+     "provider": "Azure",
+     "system_fingerprint": null,
+     "service_tier": "default",
+     "choices": [
+      {
+       "index": 0,
+       "logprobs": null,
+       "finish_reason": "tool_calls",
+       "native_finish_reason": "completed",
+       "message": {
+        "role": "assistant",
+        "content": null,
+        "refusal": null,
+        "reasoning": null,
+        "tool_calls": [
+         {
+          "type": "function",
+          "index": 0,
+          "id": "call_HjAxG3EOnxx4KgphOXyZM07A",
+          "function": {
+           "name": "lockDoors",
+           "arguments": "{\"unlock\":true,\"door\":[\"driver\",\"passenger\",\"rear_left\",\"rear_right\"]}"
+          }
+         }
+        ]
+       }
+      }
+     ],
+     "usage": {
+      "prompt_tokens": 838,
+      "completion_tokens": 32,
+      "total_tokens": 870,
+      "cost": 9.98e-05,
+      "is_byok": false,
+      "prompt_tokens_details": {
+       "cached_tokens": 0,
+       "cache_write_tokens": 0,
+       "audio_tokens": 0,
+       "video_tokens": 0
+      },
+      "cost_details": {
+       "upstream_inference_cost": 9.98e-05,
+       "upstream_inference_prompt_cost": 8.38e-05,
+       "upstream_inference_completions_cost": 1.6e-05
+      },
+      "completion_tokens_details": {
+       "reasoning_tokens": 0,
+       "image_tokens": 0,
+       "audio_tokens": 0
+      }
+     }
+    }
+   },
+   "latency_s": 1.46531
+  },
+  {
+   "request": {
+    "sent_at": "2026-11-02T08:14:57.708634+00:00",
+    "method": "POST",
+    "url": "https://openrouter.ai/api/v1/chat/completions",
+    "headers": {
+     "host": "openrouter.ai",
+     "accept-encoding": "gzip, deflate",
+     "connection": "keep-alive",
+     "authorization": "<redacted>",
+     "accept": "application/json",
+     "content-type": "application/json",
+     "user-agent": "OpenAI/Python 3.42.1",
+     "x-stainless-lang": "python",
+     "x-stainless-package-version": "3.42.1",
+     "x-stainless-os": "Linux",
+     "x-stainless-arch": "x64",
+     "x-stainless-runtime": "CPython",
+     "x-stainless-runtime-version": "3.12.3",
+     "x-stainless-async": "false",
+     "x-stainless-retry-count": "0",
+     "x-stainless-read-timeout": "600",
+     "cookie": "__cf_bm=ftfYh9A77AAsUjHZijh08TE0PzPSK00Pcga5iSpuVUA-1793606907.4750273-1.0.1.1-NGeV4zepfPpq4KfucfA1G2Y0g.2s.dXXK8blo2qk4EZSVXUEvPivxXybrluvUxryExfKR_vIjdEfF9CNoiH5In0_LZ5VgtTpuRYM3iOG19kRV7krpY8vpCZZfiHxZeUx",
+     "content-length": "9415"
+    },
+    "body": {
+     "model": "openai/gpt-6-luna",
+     "messages": [
+      {
+       "role": "user",
+       "content": "I just returned to my vehicle, and it dawned on me that I may not have unlocked the doors yet. Would you assist in unlocking them all?"
+      },
+      {
+       "content": null,
+       "refusal": null,
+       "role": "assistant",
+       "tool_calls": [
+        {
+         "id": "call_HjAxG3EOnxx4KgphOXyZM07A",
+         "function": {
+          "arguments": "{\"unlock\":true,\"door\":[\"driver\",\"passenger\",\"rear_left\",\"rear_right\"]}",
+          "name": "lockDoors"
+         },
+         "type": "function",
+         "index": 0
+        }
+       ],
+       "reasoning": null
+      },
+      {
+       "role": "tool",
+       "content": "{\"lockStatus\": \"unlocked\", \"remainingUnlockedDoors\": 4}",
+       "tool_call_id": "call_HjAxG3EOnxx4KgphOXyZM07A"
+      }
+     ],
+     "store": false,
+     "temperature": 0.001,
+     "tools": [
+      {
+       "type": "function",
+       "function": {
+        "name": "activateParkingBrake",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "mode": {
+           "type": "string",
+           "description": "The mode to set. [Enum]: [\"engage\", \"release\"]"
+          }
+         },
+         "required": [
+          "mode"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "parkingBrakeStatus": {
+           "type": "string"
+          },
+          "_parkingBrakeForce": {
+           "type": "float"
+          },
+          "_slopeAngle": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "adjustClimateControl",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "temperature": {
+           "type": "number",
+           "description": "The temperature to set in degree. Default to be celsius. This is a float type value.",
+           "format": "float"
+          },
+          "unit": {
+           "type": "string",
+           "description": "The unit of temperature. [Enum]: [\"celsius\", \"fahrenheit\"]",
+           "default": "celsius"
+          },
+          "fanSpeed": {
+           "type": "integer",
+           "description": "The fan speed to set from 0 to 100. Default is 50.",
+           "default": 50
+          },
+          "mode": {
+           "type": "string",
+           "description": "The climate mode to set. [Enum]: [\"auto\", \"cool\", \"heat\", \"defrost\"]",
+           "default": "auto"
+          }
+         },
+         "required": [
+          "temperature"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "currentTemperature": {
+           "type": "float"
+          },
+          "climateMode": {
+           "type": "string"
+          },
+          "humidityLevel": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "check_tire_pressure",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "tirePressure": {
+           "type": "dict",
+           "properties": {
+            "frontLeftTirePressure": {
+             "type": "float"
+            },
+            "frontRightTirePressure": {
+             "type": "float"
+            },
+            "rearLeftTirePressure": {
+             "type": "float"
+            },
+            "rearRightTirePressure": {
+             "type": "float"
+            },
+            "healthy_tire_pressure": {
+             "type": "boolean"
+            },
+            "car_info": {
+             "type": "dict"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "displayCarStatus",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "option": {
+           "type": "string",
+           "description": "The option to display. [Enum]: [\"fuel\", \"battery\", \"doors\", \"climate\", \"headlights\", \"parkingBrake\", \"brakePedal\", \"engine\"]"
+          }
+         },
+         "required": [
+          "option"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "status": {
+           "type": "dict",
+           "properties": {
+            "fuelLevel": {
+             "type": "float"
+            },
+            "batteryVoltage": {
+             "type": "float"
+            },
+            "doorStatus": {
+             "type": "dict",
+             "properties": {
+              "driver": {
+               "type": "string"
+              },
+              "passenger": {
+               "type": "string"
+              },
+              "rear_left": {
+               "type": "string"
+              },
+              "rear_right": {
+               "type": "string"
+              }
+             }
+            },
+            "currentACTemperature": {
+             "type": "float"
+            },
+            "fanSpeed": {
+             "type": "integer"
+            },
+            "climateMode": {
+             "type": "string"
+            },
+            "humidityLevel": {
+             "type": "float"
+            },
+            "headlightStatus": {
+             "type": "string"
+            },
+            "parkingBrakeStatus": {
+             "type": "string"
+            },
+            "parkingBrakeForce": {
+             "type": "float"
+            },
+            "slopeAngle": {
+             "type": "float"
+            },
+            "brakePedalStatus": {
+             "type": "string"
+            },
+            "brakePedalForce": {
+             "type": "float"
+            },
+            "engineState": {
+             "type": "string"
+            },
+            "metadata": {
+             "type": "string"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "display_log",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "messages": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           },
+           "description": "The list of messages to display."
+          }
+         },
+         "required": [
+          "messages"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "log": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "estimate_distance",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "cityA": {
+           "type": "string",
+           "description": "The zipcode of the first city."
+          },
+          "cityB": {
+           "type": "string",
+           "description": "The zipcode of the second city."
+          }
+         },
+         "required": [
+          "cityA",
+          "cityB"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "distance": {
+           "type": "float"
+          },
+          "intermediaryCities": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "estimate_drive_feasibility_by_mileage",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "distance": {
+           "type": "number",
+           "description": "The distance to travel in miles. This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "distance"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "canDrive": {
+           "type": "boolean"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "fillFuelTank",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "fuelAmount": {
+           "type": "number",
+           "description": "The amount of fuel to fill in gallons; this is the additional fuel to add to the tank. This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "fuelAmount"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "fuelLevel": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "find_nearest_tire_shop",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "shopLocation": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "gallon_to_liter",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "gallon": {
+           "type": "number",
+           "description": "The amount of gallon to convert. This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "gallon"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "liter": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_current_speed",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "currentSpeed": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_outside_temperature_from_google",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "outsideTemperature": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_outside_temperature_from_weather_com",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "outsideTemperature": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_zipcode_based_on_city",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "city": {
+           "type": "string",
+           "description": "The name of the city."
+          }
+         },
+         "required": [
+          "city"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "zipcode": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "liter_to_gallon",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "liter": {
+           "type": "number",
+           "description": "The amount of liter to convert. This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "liter"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "gallon": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "lockDoors",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "unlock": {
+           "type": "boolean",
+           "description": "True if the doors are to be unlocked, False otherwise."
+          },
+          "door": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           },
+           "description": "The list of doors to lock or unlock. [Enum]: [\"driver\", \"passenger\", \"rear_left\", \"rear_right\"]"
+          }
+         },
+         "required": [
+          "unlock",
+          "door"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "lockStatus": {
+           "type": "string"
+          },
+          "remainingUnlockedDoors": {
+           "type": "integer"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "pressBrakePedal",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "pedalPosition": {
+           "type": "number",
+           "description": "Position of the brake pedal, between 0 (not pressed) and 1 (fully pressed). This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "pedalPosition"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "brakePedalStatus": {
+           "type": "string"
+          },
+          "brakePedalForce": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "releaseBrakePedal",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "brakePedalStatus": {
+           "type": "string"
+          },
+          "brakePedalForce": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "setCruiseControl",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "speed": {
+           "type": "number",
+           "description": "The speed to set in m/h. The speed should be between 0 and 120 and a multiple of 5. This is a float type value.",
+           "format": "float"
+          },
+          "activate": {
+           "type": "boolean",
+           "description": "True to activate the cruise control, False to deactivate."
+          },
+          "distanceToNextVehicle": {
+           "type": "number",
+           "description": "The distance to the next vehicle in meters. This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "speed",
+          "activate",
+          "distanceToNextVehicle"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "cruiseStatus": {
+           "type": "string"
+          },
+          "currentSpeed": {
+           "type": "float"
+          },
+          "distanceToNextVehicle": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "setHeadlights",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "mode": {
+           "type": "string",
+           "description": "The mode of the headlights. [Enum]: [\"on\", \"off\", \"auto\"]"
+          }
+         },
+         "required": [
+          "mode"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "headlightStatus": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_navigation",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "destination": {
+           "type": "string",
+           "description": "The destination to navigate in the format of street, city, state."
+          }
+         },
+         "required": [
+          "destination"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "status": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "startEngine",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "ignitionMode": {
+           "type": "string",
+           "description": "The ignition mode of the vehicle. [Enum]: [\"START\", \"STOP\"]"
+          }
+         },
+         "required": [
+          "ignitionMode"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "engineState": {
+           "type": "string"
+          },
+          "fuelLevel": {
+           "type": "float"
+          },
+          "batteryVoltage": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      }
+     ],
+     "usage": {
+      "include": true
+     }
+    }
+   },
+   "response": {
+    "received_at": "2026-11-02T08:14:59.524170+00:00",
+    "status_code": 200,
+    "headers": {
+     "date": "Mon, 02 Nov 2026 08:14:58 GMT",
+     "content-type": "application/json",
+     "transfer-encoding": "chunked",
+     "connection": "keep-alive",
+     "access-control-allow-origin": "*",
+     "x-generation-id": "gen-1793607297-OTpkc3xtV3rpPFC3cPP8",
+     "access-control-expose-headers": "X-Generation-Id,X-Provider-Name,request-id,cf-ray",
+     "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+     "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+     "x-content-type-options": "nosniff",
+     "content-encoding": "gzip",
+     "server": "cloudflare",
+     "cf-ray": "a541b04a19ad58bb-DEL",
+     "alt-svc": "h3=\":443\"; ma=86400"
+    },
+    "body": {
+     "id": "gen-1793607297-OTpkc3xtV3rpPFC3cPP8",
+     "object": "chat.completion",
+     "created": 1793607297,
+     "model": "openai/gpt-6-luna",
+     "provider": "Azure",
+     "system_fingerprint": null,
+     "service_tier": "default",
+     "choices": [
+      {
+       "index": 0,
+       "logprobs": null,
+       "finish_reason": "stop",
+       "native_finish_reason": "completed",
+       "message": {
+        "role": "assistant",
+        "content": "All four doors are unlocked.",
+        "refusal": null,
+        "reasoning": null
+       }
+      }
+     ],
+     "usage": {
+      "prompt_tokens": 897,
+      "completion_tokens": 10,
+      "total_tokens": 907,
+      "cost": 9.47e-05,
+      "is_byok": false,
+      "prompt_tokens_details": {
+       "cached_tokens": 0,
+       "cache_write_tokens": 0,
+       "audio_tokens": 0,
+       "video_tokens": 0
+      },
+      "cost_details": {
+       "upstream_inference_cost": 9.47e-05,
+       "upstream_inference_prompt_cost": 8.97e-05,
+       "upstream_inference_completions_cost": 5e-06
+      },
+      "completion_tokens_details": {
+       "reasoning_tokens": 0,
+       "image_tokens": 0,
+       "audio_tokens": 0
+      }
+     }
+    }
+   },
+   "latency_s": 1.815192
+  },
+  {
+   "request": {
+    "sent_at": "2026-11-02T08:14:59.531283+00:00",
+    "method": "POST",
+    "url": "https://openrouter.ai/api/v1/chat/completions",
+    "headers": {
+     "host": "openrouter.ai",
+     "accept-encoding": "gzip, deflate",
+     "connection": "keep-alive",
+     "authorization": "<redacted>",
+     "accept": "application/json",
+     "content-type": "application/json",
+     "user-agent": "OpenAI/Python 3.42.1",
+     "x-stainless-lang": "python",
+     "x-stainless-package-version": "3.42.1",
+     "x-stainless-os": "Linux",
+     "x-stainless-arch": "x64",
+     "x-stainless-runtime": "CPython",
+     "x-stainless-runtime-version": "3.12.3",
+     "x-stainless-async": "false",
+     "x-stainless-retry-count": "0",
+     "x-stainless-read-timeout": "600",
+     "cookie": "__cf_bm=ftfYh9A77AAsUjHZijh08TE0PzPSK00Pcga5iSpuVUA-1793606907.4750273-1.0.1.1-NGeV4zepfPpq4KfucfA1G2Y0g.2s.dXXK8blo2qk4EZSVXUEvPivxXybrluvUxryExfKR_vIjdEfF9CNoiH5In0_LZ5VgtTpuRYM3iOG19kRV7krpY8vpCZZfiHxZeUx",
+     "content-length": "9673"
+    },
+    "body": {
+     "model": "openai/gpt-6-luna",
+     "messages": [
+      {
+       "role": "user",
+       "content": "I just returned to my vehicle, and it dawned on me that I may not have unlocked the doors yet. Would you assist in unlocking them all?"
+      },
+      {
+       "content": null,
+       "refusal": null,
+       "role": "assistant",
+       "tool_calls": [
+        {
+         "id": "call_HjAxG3EOnxx4KgphOXyZM07A",
+         "function": {
+          "arguments": "{\"unlock\":true,\"door\":[\"driver\",\"passenger\",\"rear_left\",\"rear_right\"]}",
+          "name": "lockDoors"
+         },
+         "type": "function",
+         "index": 0
+        }
+       ],
+       "reasoning": null
+      },
+      {
+       "role": "tool",
+       "content": "{\"lockStatus\": \"unlocked\", \"remainingUnlockedDoors\": 4}",
+       "tool_call_id": "call_HjAxG3EOnxx4KgphOXyZM07A"
+      },
+      {
+       "content": "All four doors are unlocked.",
+       "refusal": null,
+       "role": "assistant",
+       "reasoning": null
+      },
+      {
+       "role": "user",
+       "content": "With every door now open, please proceed to fire up the engine; I need to ensure everything's in working order before hitting the road."
+      }
+     ],
+     "store": false,
+     "temperature": 0.001,
+     "tools": [
+      {
+       "type": "function",
+       "function": {
+        "name": "activateParkingBrake",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "mode": {
+           "type": "string",
+           "description": "The mode to set. [Enum]: [\"engage\", \"release\"]"
+          }
+         },
+         "required": [
+          "mode"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "parkingBrakeStatus": {
+           "type": "string"
+          },
+          "_parkingBrakeForce": {
+           "type": "float"
+          },
+          "_slopeAngle": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "adjustClimateControl",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "temperature": {
+           "type": "number",
+           "description": "The temperature to set in degree. Default to be celsius. This is a float type value.",
+           "format": "float"
+          },
+          "unit": {
+           "type": "string",
+           "description": "The unit of temperature. [Enum]: [\"celsius\", \"fahrenheit\"]",
+           "default": "celsius"
+          },
+          "fanSpeed": {
+           "type": "integer",
+           "description": "The fan speed to set from 0 to 100. Default is 50.",
+           "default": 50
+          },
+          "mode": {
+           "type": "string",
+           "description": "The climate mode to set. [Enum]: [\"auto\", \"cool\", \"heat\", \"defrost\"]",
+           "default": "auto"
+          }
+         },
+         "required": [
+          "temperature"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "currentTemperature": {
+           "type": "float"
+          },
+          "climateMode": {
+           "type": "string"
+          },
+          "humidityLevel": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "check_tire_pressure",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "tirePressure": {
+           "type": "dict",
+           "properties": {
+            "frontLeftTirePressure": {
+             "type": "float"
+            },
+            "frontRightTirePressure": {
+             "type": "float"
+            },
+            "rearLeftTirePressure": {
+             "type": "float"
+            },
+            "rearRightTirePressure": {
+             "type": "float"
+            },
+            "healthy_tire_pressure": {
+             "type": "boolean"
+            },
+            "car_info": {
+             "type": "dict"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "displayCarStatus",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "option": {
+           "type": "string",
+           "description": "The option to display. [Enum]: [\"fuel\", \"battery\", \"doors\", \"climate\", \"headlights\", \"parkingBrake\", \"brakePedal\", \"engine\"]"
+          }
+         },
+         "required": [
+          "option"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "status": {
+           "type": "dict",
+           "properties": {
+            "fuelLevel": {
+             "type": "float"
+            },
+            "batteryVoltage": {
+             "type": "float"
+            },
+            "doorStatus": {
+             "type": "dict",
+             "properties": {
+              "driver": {
+               "type": "string"
+              },
+              "passenger": {
+               "type": "string"
+              },
+              "rear_left": {
+               "type": "string"
+              },
+              "rear_right": {
+               "type": "string"
+              }
+             }
+            },
+            "currentACTemperature": {
+             "type": "float"
+            },
+            "fanSpeed": {
+             "type": "integer"
+            },
+            "climateMode": {
+             "type": "string"
+            },
+            "humidityLevel": {
+             "type": "float"
+            },
+            "headlightStatus": {
+             "type": "string"
+            },
+            "parkingBrakeStatus": {
+             "type": "string"
+            },
+            "parkingBrakeForce": {
+             "type": "float"
+            },
+            "slopeAngle": {
+             "type": "float"
+            },
+            "brakePedalStatus": {
+             "type": "string"
+            },
+            "brakePedalForce": {
+             "type": "float"
+            },
+            "engineState": {
+             "type": "string"
+            },
+            "metadata": {
+             "type": "string"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "display_log",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "messages": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           },
+           "description": "The list of messages to display."
+          }
+         },
+         "required": [
+          "messages"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "log": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "estimate_distance",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "cityA": {
+           "type": "string",
+           "description": "The zipcode of the first city."
+          },
+          "cityB": {
+           "type": "string",
+           "description": "The zipcode of the second city."
+          }
+         },
+         "required": [
+          "cityA",
+          "cityB"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "distance": {
+           "type": "float"
+          },
+          "intermediaryCities": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "estimate_drive_feasibility_by_mileage",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "distance": {
+           "type": "number",
+           "description": "The distance to travel in miles. This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "distance"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "canDrive": {
+           "type": "boolean"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "fillFuelTank",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "fuelAmount": {
+           "type": "number",
+           "description": "The amount of fuel to fill in gallons; this is the additional fuel to add to the tank. This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "fuelAmount"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "fuelLevel": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "find_nearest_tire_shop",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "shopLocation": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "gallon_to_liter",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "gallon": {
+           "type": "number",
+           "description": "The amount of gallon to convert. This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "gallon"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "liter": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_current_speed",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "currentSpeed": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_outside_temperature_from_google",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "outsideTemperature": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_outside_temperature_from_weather_com",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "outsideTemperature": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_zipcode_based_on_city",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "city": {
+           "type": "string",
+           "description": "The name of the city."
+          }
+         },
+         "required": [
+          "city"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "zipcode": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "liter_to_gallon",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "liter": {
+           "type": "number",
+           "description": "The amount of liter to convert. This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "liter"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "gallon": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "lockDoors",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "unlock": {
+           "type": "boolean",
+           "description": "True if the doors are to be unlocked, False otherwise."
+          },
+          "door": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           },
+           "description": "The list of doors to lock or unlock. [Enum]: [\"driver\", \"passenger\", \"rear_left\", \"rear_right\"]"
+          }
+         },
+         "required": [
+          "unlock",
+          "door"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "lockStatus": {
+           "type": "string"
+          },
+          "remainingUnlockedDoors": {
+           "type": "integer"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "pressBrakePedal",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "pedalPosition": {
+           "type": "number",
+           "description": "Position of the brake pedal, between 0 (not pressed) and 1 (fully pressed). This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "pedalPosition"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "brakePedalStatus": {
+           "type": "string"
+          },
+          "brakePedalForce": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "releaseBrakePedal",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "brakePedalStatus": {
+           "type": "string"
+          },
+          "brakePedalForce": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "setCruiseControl",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "speed": {
+           "type": "number",
+           "description": "The speed to set in m/h. The speed should be between 0 and 120 and a multiple of 5. This is a float type value.",
+           "format": "float"
+          },
+          "activate": {
+           "type": "boolean",
+           "description": "True to activate the cruise control, False to deactivate."
+          },
+          "distanceToNextVehicle": {
+           "type": "number",
+           "description": "The distance to the next vehicle in meters. This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "speed",
+          "activate",
+          "distanceToNextVehicle"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "cruiseStatus": {
+           "type": "string"
+          },
+          "currentSpeed": {
+           "type": "float"
+          },
+          "distanceToNextVehicle": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "setHeadlights",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "mode": {
+           "type": "string",
+           "description": "The mode of the headlights. [Enum]: [\"on\", \"off\", \"auto\"]"
+          }
+         },
+         "required": [
+          "mode"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "headlightStatus": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_navigation",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "destination": {
+           "type": "string",
+           "description": "The destination to navigate in the format of street, city, state."
+          }
+         },
+         "required": [
+          "destination"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "status": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "startEngine",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "ignitionMode": {
+           "type": "string",
+           "description": "The ignition mode of the vehicle. [Enum]: [\"START\", \"STOP\"]"
+          }
+         },
+         "required": [
+          "ignitionMode"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "engineState": {
+           "type": "string"
+          },
+          "fuelLevel": {
+           "type": "float"
+          },
+          "batteryVoltage": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      }
+     ],
+     "usage": {
+      "include": true
+     }
+    }
+   },
+   "response": {
+    "received_at": "2026-11-02T08:15:06.418727+00:00",
+    "status_code": 200,
+    "headers": {
+     "date": "Mon, 02 Nov 2026 08:15:00 GMT",
+     "content-type": "application/json",
+     "transfer-encoding": "chunked",
+     "connection": "keep-alive",
+     "access-control-allow-origin": "*",
+     "x-generation-id": "gen-1793607299-L04tpNIQ2bXvx4fts3ZG",
+     "access-control-expose-headers": "X-Generation-Id,X-Provider-Name,request-id,cf-ray",
+     "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+     "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+     "x-content-type-options": "nosniff",
+     "content-encoding": "gzip",
+     "server": "cloudflare",
+     "cf-ray": "a541b05589ea58bb-DEL",
+     "alt-svc": "h3=\":443\"; ma=86400"
+    },
+    "body": {
+     "id": "gen-1793607299-L04tpNIQ2bXvx4fts3ZG",
+     "object": "chat.completion",
+     "created": 1793607299,
+     "model": "openai/gpt-6-luna",
+     "provider": "Azure",
+     "system_fingerprint": null,
+     "service_tier": "default",
+     "choices": [
+      {
+       "index": 0,
+       "logprobs": null,
+       "finish_reason": "tool_calls",
+       "native_finish_reason": "completed",
+       "message": {
+        "role": "assistant",
+        "content": null,
+        "refusal": null,
+        "reasoning": "**Considering door safety and engine start**\n\nOpen doors indicate that someone is nearby, which raises safety concerns. I'm wondering if there's a need for an explicit safety restriction regarding this. It seems prudent to check if all four doors are closed before proceeding, especially since they are all currently open. My focus is on ensuring the engine works properly, which means I'll call the tool to start the engine. Let's go ahead and initiate that!",
+        "tool_calls": [
+         {
+          "type": "function",
+          "index": 0,
+          "id": "call_uqSAryIKei1gRoFZci5bwGAR",
+          "function": {
+           "name": "startEngine",
+           "arguments": "{\"ignitionMode\":\"START\"}"
+          }
+         }
+        ],
+        "reasoning_details": [
+         {
+          "type": "reasoning.summary",
+          "summary": "**Considering door safety and engine start**\n\nOpen doors indicate that someone is nearby, which raises safety concerns. I'm wondering if there's a need for an explicit safety restriction regarding this. It seems prudent to check if all four doors are closed before proceeding, especially since they are all currently open. My focus is on ensuring the engine works properly, which means I'll call the tool to start the engine. Let's go ahead and initiate that!",
+          "format": "azure-openai-responses-v1",
+          "index": 0
+         },
+         {
+          "type": "reasoning.encrypted",
+          "data": "gAAAAABq6EaJumg897H7zf-IckRzbjLQKd2wyGehtzARfJjIBecC6T9WhlVL5fyQdbrle4i4s65tCTCmQki7KP8C0zfbL5JOkxvbtX5BT7H2vF1B_X4p9_Hdqr3loEC-u_19PHyo5539KTE4dfXHrM0EkdYLSdNyVvbuO2XJMxApx_NQtjVXypuTEB4THA4sPJVYiSryrCdB-angfV3YZQb-VsXiqX0nSCRYIto2FzNaBDtfl3WccjQIfnbMqaKY7_OpfZqCb3Gl0zSprCHrB4aoXkATtgDQ9bz6B51-glqjD3Fwq-itvefMiesLLqE4QjJUvyNtP7mTZnLRqBHeXjgcwpDszMtOOjkFdBItmCzYX4noGf9NzgbV6bvOgOhbir5cnOajz-i2lYD9d9vFtIVUkTaO8SrRlHavhfaB1Nwrp0LFLqF1zU0slSigUO9r1GkbBp0-2LPa0uxebhDVS4wgDWAoDojy3uu9izVxs7ez8PaYy-tKTWRY0zz_llifa5ml8Wg50BYrVMY5DePYRhcdQ_a47i_vWslXTuS7uz9roHTm2d4ya147xTXpzZ7pH-FeBB_cbOGpoJTm-Q0z1jsNOdY299FVPN93y-GdfSiVrXaKSBCZB6grGj6PFZrzMkVlQCqfk1hZ7k8S8eJRNHnIn2LphAeqZ9yWaZhsDCsgJOJcmeKAt_x7NxfQLBZyMBIRj87BH2cwPQ7TY6kISQEUzJY1oI-ttckWN8YhQ-F61YnkeuDkVAQaG6knJncMXhbHwmQhm6jvCQ2XvtTzUOEUu1HyKDqVX-4pZM6DQakj-3iEM3_4bvWEvic0G_Y3GShfdK28S_1jNzFoTm24tG_8nNjmxY7tKFHVUMdlRJech6Q20m5VxM_vd3FXvMYDOCuz5SaO7usMUYd7qLknTAjZCTasx4cu75dN9w_SAbjQK6z9oKWe7f4L3NnaObrkot6gfFRwZzC8dNr4kKWbVyjEPmJDvr-EMMRS6o4OEmKzBie9DSlHh0iHg-e7qvvcbrjdecE0FGHvqn_xOvRRJnbSQ-wzRVponKLoPf1MgZWeWbgt1NPz4eO-G3miMpTlga0w03pgtrpfvLL-n8PhRNAvtRf6Ekqh3W5ZzHJkREMycuU_A8-ux4gfAbwPglQT6dyESMNObcDlSHKZ1nRkUbOmiJHZxq3ZXCuEuRbGnWOUvvYYfMy1l_RlBp6lz4BuliPXWgQjZf9pEWfMF68xn8tlconK86w6dih2kkjm_jOKscA8S7Q-rA5DMsC7r94Xl6VPXKEl-ylMVxhwZ2piTt9FMk29SoIeR9_V2R-a8JWwrtKxRWBwE-NeGV3KUTGc13u1niMuAEGdeBzlszHJCCH8W3l6pdGXi4ElyTqgvLhtAZyMDQwj-BEa3BjDkMsZ_gTsLDjhv2-n0i3oWCqRClOwbt_tudPtpSQE5juz4qHqdP0sA68GR-fxSvQdxrdRdRdXGU93IidGWb7E8cdnBGLhTO6tbNSgTF8DMnMO71EDRaGIG0PJd0WiP9749lxN9j2Kz_jt-T9U6GAwUilUSTT0cZpTyCmr_buk-oUK5xJsTWNE_LCYYzw5jXsgItNc_pH6pRBBRsA08Fkz7jqH1PSsOV5Z3TPBq5-Y4xOGeGATYv4xWM-IxUfkUQudbcm9rgb0z7duoa-PNpmFlZ6jM0g6d5vHQzR4hdTemkFsps4gfVarVGoP1fRVNC0ITYkCtlFM4Qysi8AYGpZXKwaKi55bo9FOHSTm0pLQd85YjIdmSfgV3Ol8nX_Rgbo7AJQiInJwynrIvDcKDrOrQXSvYs9CjPj-FdGsqiV0deW382j8prKm4JwQI-oe_xYaALNRMB9n7wGNmdxNXb6zMZXSuhCfcZJWQheOK-te6sbW1QuFIm89lMRNgdl1mOYEuNNXFzb2BU9aQRJYKF7_vWcCZq0CdxWr74wlzlzL4C--j29eL7OhXgzCo2UoMHIWXBmKh55tifJiGw4dvTpJvPP6ym-RanIvHrpNbrPqiU_IWUa7foivi2nsMZDh3TcjaFd480aVKd8I9bl0Nsh7zg9sUHEh5mHqv4dybx9nkdydPP6xVJN4PZAEajvO8cLpeUT7DxCK-kqCYw-OCsXubngY1KWW0GjO5UcADHJyKgXZSAH-bdxSnbzml1zFQzoa5qCmNRkuVCGAGzzKeSpcxkALlB6DVevz4wXL8jmRJycPv52G3sJlilfb7ltPEAi-4ciR3fude-NXns2EXzLMQA-QaTG_Vebo0IcBFcG3bUfnWCvFMC6uIoNMklfRxy_qBubzX_dI3xeSKQprqA4TGsRscbvMwWii5qNc1u5JcFWfzcURmj5drCvkpARD2NRZnaqwewVT1yd0KkYgUOZKgIIh7BB5W1GT7-ONpFlXITQvkHoU9gz-y8TshTSCPhmkFHJa7TB3Le13GvSP1HjFFfXn0EeXUUrYt59wZW5IoONXI_hZnXw30H3yLj79xrBNcZu18YlDIby1yu4MPsixifs9h63J72pWS83jfTV54Cir1cMfJ459RQ9rR4nC-8QtKgKVjY-ImI59o_GoO9O8-MdvgPAkSNC6-6fPkhomn2rPXCJXKYQyacf8vTBeUTosnISecr1QP73-AQ30gl_dH3uqq7aP7jHB-Q_yRBpAerpmS7CsCJX8cl4qjMJRNqz9wuCppqjGG2V7-gWxnOzikvOxiTMAqpZ0-OQbvb2_41f5nMgEeFhpYew_mbpv0XilP48B5joehv0OvvdbqnsnwsrX2jWdr3jHlM--wzFd10RwW081_LUmU5NkCklB_sFiXjgYX-MAA973LAEIZfzsVHAL0Nu3am-xDiw8ztPUKC7hdMkfvjUys27aEbFyC4XGM5PwlcZ_jhRzGis94HhVEaFw9Sw3P1iFKxZye4njpm4blEKwE13GfIIRoOkb_GroqxygjoDhbSm1pSLyXzrhV7BAleBMPX7VEU9iM5vOZPlFSX5ffXurYJP_O9QJtp69itQvnjjFIm0dvDPU-aDHHtF-nEnIHj2cOMkavtWJMVGiTtLtTBR8woyGe-6VdgHvtGwOsaII7tC7o1l5Jk8mI2jUFIzO4gF2_VOZfDqHz07sx9IqtFYC1zgdWawFcIjtR-XfeJWLa-DzfLI6qkQIebgTYwa8nDsdXbbJE0_KhBr1L6p9xzCl0YMflucU8kxIDE4jt62ltwZcd5bz9Z3cTJYGUJ5EmMd7WRwg-LhgcXbxZYoqbbd1lWkn4-ue_-ZyMFcQQfSnZNQfh6zcmTOWZUyFjk87vyMACQVSB0BjgQTViSej5s_SfWcr17fUundnu7o3TrHST28zSlz10xBCrleguP3yAv3EVFsJ6yqa5MRKQT4xWEtc9abMG_EP9j02IxB9JWQqAv8pgteXcGoH6JGgqJWwAsM4fx9uH9zPvVC4jRD08QWL_MWypBtPjuwAI9ajbH1ade_iWcdEIJJ1m2mDwiujYIV-9wVYdyS548FCDFY8gaVO0Kt3PuE2FqiA9oLZoP7ok46XICbKmboRUrMpjPXV2HcYXRAtLGK5F2Pi6FdjtmGYaQPCVkVb9JIuJtA4o1fSjOa5QGEBV2H6XUynKGtpb5DTg7uQH75PC7_t2R_CoK_Zqq5Y3ux5GqcLxQXmwDxkyVcK9H6JwGFUAPQZIcyO039FBL6mBSxUqvWenHjl3-KRwbWBO0fQPyEwD1_97G_IAbHiozfPXg5QRfOG0ZFIjpJDE-LFgpe4tZoZYfmxDZnwHBYv6fSivm-Ao8kxf-hhXGgAFF7uUoqP4NQD4PKNMeKM9pQxoVGmZd8S2djbGJwJXmhEMffekLTjnBGgA2SyUrTuWtvNmZ94XOD7kDJLP52kODLhofJu8bFRdTldCGwtWdwKzn9ndqA3WanGeBoahfXPwb6cranEHoJnnPOa55W--xPeGNnVDpRKdG2gIB7ndv_98p7hzEG4FxJfxIRZuldJixDhkIPlUvZdgMUBYTmbBr6g9qKQUeUvokHFz2SRZCV-ZNhIpwk9b2wGBNdD2FaGQO2CYV6yxA5B_hitb3Vy9s6s05UpmMCfX4WIlxWSZzQW_qYYp0qGulUE8vGdXM2wfFu6KK2BTJDK4d79JcTkYrdXBhWqmXzfYW7X8CLTFr1rp3aNXBpspHh3NqR76KkN0JBb_3g-MIbEkJJnSC9TA4sx87spGuxK4g_67CWqrAKB8BlSMg1Zmug1MReiPTLE6y7hCb0KsaXhJl3MqQ0_DWjGrQC0BLjFHWAqBmg55_w6xNltq4jwyRJOBMvHvKLdoTTjJV5WTEPwI_cbekxSrI8rLy2xT8-t8bTLD82pt6V9kDVNyIJ8ZqcPyeEEbEn5Et7jNlhGu6sykEmVhBYk8C1PsydjpD0eoVXqVv5JH25NUf44r7Sigp1xZFiYVOhBAK1yG_vqUcx-EQwjpTemKqawz7ivKfep--Z5VJiJ9u0CQABUw3aOu1ZhAh_oWgPfSGIfSXuFuno5A1Rm_wtPRSXXCClI-izlVIpk7O7zErTxTAEJcZho4nmI-Av73razwrc7T6Am3B3sSXXHufljwjp9-A==.eyJlbmRwb2ludF9zbHVnIjoib3BlbmFpL2dwdC02LWx1bmEtMjAyNjA5MjJ8YXp1cmUifQ",
+          "format": "azure-openai-responses-v1",
+          "id": "rs_072d0e9b81ec6715016ae84684a5448193b7b2e8ce72daedce",
+          "index": 1
+         }
+        ]
+       }
+      }
+     ],
+     "usage": {
+      "prompt_tokens": 941,
+      "completion_tokens": 265,
+      "total_tokens": 1206,
+      "cost": 0.0002266,
+      "is_byok": false,
+      "prompt_tokens_details": {
+       "cached_tokens": 0,
+       "cache_write_tokens": 0,
+       "audio_tokens": 0,
+       "video_tokens": 0
+      },
+      "cost_details": {
+       "upstream_inference_cost": 0.0002266,
+       "upstream_inference_prompt_cost": 9.41e-05,
+       "upstream_inference_completions_cost": 0.0001325
+      },
+      "completion_tokens_details": {
+       "reasoning_tokens": 243,
+       "image_tokens": 0,
+       "audio_tokens": 0
+      }
+     }
+    }
+   },
+   "latency_s": 6.887048
+  },
+  {
+   "request": {
+    "sent_at": "2026-11-02T08:15:06.426664+00:00",
+    "method": "POST",
+    "url": "https://openrouter.ai/api/v1/chat/completions",
+    "headers": {
+     "host": "openrouter.ai",
+     "accept-encoding": "gzip, deflate",
+     "connection": "keep-alive",
+     "authorization": "<redacted>",
+     "accept": "application/json",
+     "content-type": "application/json",
+     "user-agent": "OpenAI/Python 3.42.1",
+     "x-stainless-lang": "python",
+     "x-stainless-package-version": "3.42.1",
+     "x-stainless-os": "Linux",
+     "x-stainless-arch": "x64",
+     "x-stainless-runtime": "CPython",
+     "x-stainless-runtime-version": "3.12.3",
+     "x-stainless-async": "false",
+     "x-stainless-retry-count": "0",
+     "x-stainless-read-timeout": "600",
+     "cookie": "__cf_bm=ftfYh9A77AAsUjHZijh08TE0PzPSK00Pcga5iSpuVUA-1793606907.4750273-1.0.1.1-NGeV4zepfPpq4KfucfA1G2Y0g.2s.dXXK8blo2qk4EZSVXUEvPivxXybrluvUxryExfKR_vIjdEfF9CNoiH5In0_LZ5VgtTpuRYM3iOG19kRV7krpY8vpCZZfiHxZeUx",
+     "content-length": "15946"
+    },
+    "body": {
+     "model": "openai/gpt-6-luna",
+     "messages": [
+      {
+       "role": "user",
+       "content": "I just returned to my vehicle, and it dawned on me that I may not have unlocked the doors yet. Would you assist in unlocking them all?"
+      },
+      {
+       "content": null,
+       "refusal": null,
+       "role": "assistant",
+       "tool_calls": [
+        {
+         "id": "call_HjAxG3EOnxx4KgphOXyZM07A",
+         "function": {
+          "arguments": "{\"unlock\":true,\"door\":[\"driver\",\"passenger\",\"rear_left\",\"rear_right\"]}",
+          "name": "lockDoors"
+         },
+         "type": "function",
+         "index": 0
+        }
+       ],
+       "reasoning": null
+      },
+      {
+       "role": "tool",
+       "content": "{\"lockStatus\": \"unlocked\", \"remainingUnlockedDoors\": 4}",
+       "tool_call_id": "call_HjAxG3EOnxx4KgphOXyZM07A"
+      },
+      {
+       "content": "All four doors are unlocked.",
+       "refusal": null,
+       "role": "assistant",
+       "reasoning": null
+      },
+      {
+       "role": "user",
+       "content": "With every door now open, please proceed to fire up the engine; I need to ensure everything's in working order before hitting the road."
+      },
+      {
+       "content": null,
+       "refusal": null,
+       "role": "assistant",
+       "tool_calls": [
+        {
+         "id": "call_uqSAryIKei1gRoFZci5bwGAR",
+         "function": {
+          "arguments": "{\"ignitionMode\":\"START\"}",
+          "name": "startEngine"
+         },
+         "type": "function",
+         "index": 0
+        }
+       ],
+       "reasoning": "**Considering door safety and engine start**\n\nOpen doors indicate that someone is nearby, which raises safety concerns. I'm wondering if there's a need for an explicit safety restriction regarding this. It seems prudent to check if all four doors are closed before proceeding, especially since they are all currently open. My focus is on ensuring the engine works properly, which means I'll call the tool to start the engine. Let's go ahead and initiate that!",
+       "reasoning_details": [
+        {
+         "type": "reasoning.summary",
+         "summary": "**Considering door safety and engine start**\n\nOpen doors indicate that someone is nearby, which raises safety concerns. I'm wondering if there's a need for an explicit safety restriction regarding this. It seems prudent to check if all four doors are closed before proceeding, especially since they are all currently open. My focus is on ensuring the engine works properly, which means I'll call the tool to start the engine. Let's go ahead and initiate that!",
+         "format": "azure-openai-responses-v1",
+         "index": 0
+        },
+        {
+         "type": "reasoning.encrypted",
+         "data": "gAAAAABq6EaJumg897H7zf-IckRzbjLQKd2wyGehtzARfJjIBecC6T9WhlVL5fyQdbrle4i4s65tCTCmQki7KP8C0zfbL5JOkxvbtX5BT7H2vF1B_X4p9_Hdqr3loEC-u_19PHyo5539KTE4dfXHrM0EkdYLSdNyVvbuO2XJMxApx_NQtjVXypuTEB4THA4sPJVYiSryrCdB-angfV3YZQb-VsXiqX0nSCRYIto2FzNaBDtfl3WccjQIfnbMqaKY7_OpfZqCb3Gl0zSprCHrB4aoXkATtgDQ9bz6B51-glqjD3Fwq-itvefMiesLLqE4QjJUvyNtP7mTZnLRqBHeXjgcwpDszMtOOjkFdBItmCzYX4noGf9NzgbV6bvOgOhbir5cnOajz-i2lYD9d9vFtIVUkTaO8SrRlHavhfaB1Nwrp0LFLqF1zU0slSigUO9r1GkbBp0-2LPa0uxebhDVS4wgDWAoDojy3uu9izVxs7ez8PaYy-tKTWRY0zz_llifa5ml8Wg50BYrVMY5DePYRhcdQ_a47i_vWslXTuS7uz9roHTm2d4ya147xTXpzZ7pH-FeBB_cbOGpoJTm-Q0z1jsNOdY299FVPN93y-GdfSiVrXaKSBCZB6grGj6PFZrzMkVlQCqfk1hZ7k8S8eJRNHnIn2LphAeqZ9yWaZhsDCsgJOJcmeKAt_x7NxfQLBZyMBIRj87BH2cwPQ7TY6kISQEUzJY1oI-ttckWN8YhQ-F61YnkeuDkVAQaG6knJncMXhbHwmQhm6jvCQ2XvtTzUOEUu1HyKDqVX-4pZM6DQakj-3iEM3_4bvWEvic0G_Y3GShfdK28S_1jNzFoTm24tG_8nNjmxY7tKFHVUMdlRJech6Q20m5VxM_vd3FXvMYDOCuz5SaO7usMUYd7qLknTAjZCTasx4cu75dN9w_SAbjQK6z9oKWe7f4L3NnaObrkot6gfFRwZzC8dNr4kKWbVyjEPmJDvr-EMMRS6o4OEmKzBie9DSlHh0iHg-e7qvvcbrjdecE0FGHvqn_xOvRRJnbSQ-wzRVponKLoPf1MgZWeWbgt1NPz4eO-G3miMpTlga0w03pgtrpfvLL-n8PhRNAvtRf6Ekqh3W5ZzHJkREMycuU_A8-ux4gfAbwPglQT6dyESMNObcDlSHKZ1nRkUbOmiJHZxq3ZXCuEuRbGnWOUvvYYfMy1l_RlBp6lz4BuliPXWgQjZf9pEWfMF68xn8tlconK86w6dih2kkjm_jOKscA8S7Q-rA5DMsC7r94Xl6VPXKEl-ylMVxhwZ2piTt9FMk29SoIeR9_V2R-a8JWwrtKxRWBwE-NeGV3KUTGc13u1niMuAEGdeBzlszHJCCH8W3l6pdGXi4ElyTqgvLhtAZyMDQwj-BEa3BjDkMsZ_gTsLDjhv2-n0i3oWCqRClOwbt_tudPtpSQE5juz4qHqdP0sA68GR-fxSvQdxrdRdRdXGU93IidGWb7E8cdnBGLhTO6tbNSgTF8DMnMO71EDRaGIG0PJd0WiP9749lxN9j2Kz_jt-T9U6GAwUilUSTT0cZpTyCmr_buk-oUK5xJsTWNE_LCYYzw5jXsgItNc_pH6pRBBRsA08Fkz7jqH1PSsOV5Z3TPBq5-Y4xOGeGATYv4xWM-IxUfkUQudbcm9rgb0z7duoa-PNpmFlZ6jM0g6d5vHQzR4hdTemkFsps4gfVarVGoP1fRVNC0ITYkCtlFM4Qysi8AYGpZXKwaKi55bo9FOHSTm0pLQd85YjIdmSfgV3Ol8nX_Rgbo7AJQiInJwynrIvDcKDrOrQXSvYs9CjPj-FdGsqiV0deW382j8prKm4JwQI-oe_xYaALNRMB9n7wGNmdxNXb6zMZXSuhCfcZJWQheOK-te6sbW1QuFIm89lMRNgdl1mOYEuNNXFzb2BU9aQRJYKF7_vWcCZq0CdxWr74wlzlzL4C--j29eL7OhXgzCo2UoMHIWXBmKh55tifJiGw4dvTpJvPP6ym-RanIvHrpNbrPqiU_IWUa7foivi2nsMZDh3TcjaFd480aVKd8I9bl0Nsh7zg9sUHEh5mHqv4dybx9nkdydPP6xVJN4PZAEajvO8cLpeUT7DxCK-kqCYw-OCsXubngY1KWW0GjO5UcADHJyKgXZSAH-bdxSnbzml1zFQzoa5qCmNRkuVCGAGzzKeSpcxkALlB6DVevz4wXL8jmRJycPv52G3sJlilfb7ltPEAi-4ciR3fude-NXns2EXzLMQA-QaTG_Vebo0IcBFcG3bUfnWCvFMC6uIoNMklfRxy_qBubzX_dI3xeSKQprqA4TGsRscbvMwWii5qNc1u5JcFWfzcURmj5drCvkpARD2NRZnaqwewVT1yd0KkYgUOZKgIIh7BB5W1GT7-ONpFlXITQvkHoU9gz-y8TshTSCPhmkFHJa7TB3Le13GvSP1HjFFfXn0EeXUUrYt59wZW5IoONXI_hZnXw30H3yLj79xrBNcZu18YlDIby1yu4MPsixifs9h63J72pWS83jfTV54Cir1cMfJ459RQ9rR4nC-8QtKgKVjY-ImI59o_GoO9O8-MdvgPAkSNC6-6fPkhomn2rPXCJXKYQyacf8vTBeUTosnISecr1QP73-AQ30gl_dH3uqq7aP7jHB-Q_yRBpAerpmS7CsCJX8cl4qjMJRNqz9wuCppqjGG2V7-gWxnOzikvOxiTMAqpZ0-OQbvb2_41f5nMgEeFhpYew_mbpv0XilP48B5joehv0OvvdbqnsnwsrX2jWdr3jHlM--wzFd10RwW081_LUmU5NkCklB_sFiXjgYX-MAA973LAEIZfzsVHAL0Nu3am-xDiw8ztPUKC7hdMkfvjUys27aEbFyC4XGM5PwlcZ_jhRzGis94HhVEaFw9Sw3P1iFKxZye4njpm4blEKwE13GfIIRoOkb_GroqxygjoDhbSm1pSLyXzrhV7BAleBMPX7VEU9iM5vOZPlFSX5ffXurYJP_O9QJtp69itQvnjjFIm0dvDPU-aDHHtF-nEnIHj2cOMkavtWJMVGiTtLtTBR8woyGe-6VdgHvtGwOsaII7tC7o1l5Jk8mI2jUFIzO4gF2_VOZfDqHz07sx9IqtFYC1zgdWawFcIjtR-XfeJWLa-DzfLI6qkQIebgTYwa8nDsdXbbJE0_KhBr1L6p9xzCl0YMflucU8kxIDE4jt62ltwZcd5bz9Z3cTJYGUJ5EmMd7WRwg-LhgcXbxZYoqbbd1lWkn4-ue_-ZyMFcQQfSnZNQfh6zcmTOWZUyFjk87vyMACQVSB0BjgQTViSej5s_SfWcr17fUundnu7o3TrHST28zSlz10xBCrleguP3yAv3EVFsJ6yqa5MRKQT4xWEtc9abMG_EP9j02IxB9JWQqAv8pgteXcGoH6JGgqJWwAsM4fx9uH9zPvVC4jRD08QWL_MWypBtPjuwAI9ajbH1ade_iWcdEIJJ1m2mDwiujYIV-9wVYdyS548FCDFY8gaVO0Kt3PuE2FqiA9oLZoP7ok46XICbKmboRUrMpjPXV2HcYXRAtLGK5F2Pi6FdjtmGYaQPCVkVb9JIuJtA4o1fSjOa5QGEBV2H6XUynKGtpb5DTg7uQH75PC7_t2R_CoK_Zqq5Y3ux5GqcLxQXmwDxkyVcK9H6JwGFUAPQZIcyO039FBL6mBSxUqvWenHjl3-KRwbWBO0fQPyEwD1_97G_IAbHiozfPXg5QRfOG0ZFIjpJDE-LFgpe4tZoZYfmxDZnwHBYv6fSivm-Ao8kxf-hhXGgAFF7uUoqP4NQD4PKNMeKM9pQxoVGmZd8S2djbGJwJXmhEMffekLTjnBGgA2SyUrTuWtvNmZ94XOD7kDJLP52kODLhofJu8bFRdTldCGwtWdwKzn9ndqA3WanGeBoahfXPwb6cranEHoJnnPOa55W--xPeGNnVDpRKdG2gIB7ndv_98p7hzEG4FxJfxIRZuldJixDhkIPlUvZdgMUBYTmbBr6g9qKQUeUvokHFz2SRZCV-ZNhIpwk9b2wGBNdD2FaGQO2CYV6yxA5B_hitb3Vy9s6s05UpmMCfX4WIlxWSZzQW_qYYp0qGulUE8vGdXM2wfFu6KK2BTJDK4d79JcTkYrdXBhWqmXzfYW7X8CLTFr1rp3aNXBpspHh3NqR76KkN0JBb_3g-MIbEkJJnSC9TA4sx87spGuxK4g_67CWqrAKB8BlSMg1Zmug1MReiPTLE6y7hCb0KsaXhJl3MqQ0_DWjGrQC0BLjFHWAqBmg55_w6xNltq4jwyRJOBMvHvKLdoTTjJV5WTEPwI_cbekxSrI8rLy2xT8-t8bTLD82pt6V9kDVNyIJ8ZqcPyeEEbEn5Et7jNlhGu6sykEmVhBYk8C1PsydjpD0eoVXqVv5JH25NUf44r7Sigp1xZFiYVOhBAK1yG_vqUcx-EQwjpTemKqawz7ivKfep--Z5VJiJ9u0CQABUw3aOu1ZhAh_oWgPfSGIfSXuFuno5A1Rm_wtPRSXXCClI-izlVIpk7O7zErTxTAEJcZho4nmI-Av73razwrc7T6Am3B3sSXXHufljwjp9-A==.eyJlbmRwb2ludF9zbHVnIjoib3BlbmFpL2dwdC02LWx1bmEtMjAyNjA5MjJ8YXp1cmUifQ",
+         "format": "azure-openai-responses-v1",
+         "id": "rs_072d0e9b81ec6715016ae84684a5448193b7b2e8ce72daedce",
+         "index": 1
+        }
+       ]
+      },
+      {
+       "role": "tool",
+       "content": "{\"error\": \"All doors must be locked before starting the engine. Here are the unlocked doors: driver, passenger, rear_left, rear_right\"}",
+       "tool_call_id": "call_uqSAryIKei1gRoFZci5bwGAR"
+      }
+     ],
+     "store": false,
+     "temperature": 0.001,
+     "tools": [
+      {
+       "type": "function",
+       "function": {
+        "name": "activateParkingBrake",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "mode": {
+           "type": "string",
+           "description": "The mode to set. [Enum]: [\"engage\", \"release\"]"
+          }
+         },
+         "required": [
+          "mode"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "parkingBrakeStatus": {
+           "type": "string"
+          },
+          "_parkingBrakeForce": {
+           "type": "float"
+          },
+          "_slopeAngle": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "adjustClimateControl",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "temperature": {
+           "type": "number",
+           "description": "The temperature to set in degree. Default to be celsius. This is a float type value.",
+           "format": "float"
+          },
+          "unit": {
+           "type": "string",
+           "description": "The unit of temperature. [Enum]: [\"celsius\", \"fahrenheit\"]",
+           "default": "celsius"
+          },
+          "fanSpeed": {
+           "type": "integer",
+           "description": "The fan speed to set from 0 to 100. Default is 50.",
+           "default": 50
+          },
+          "mode": {
+           "type": "string",
+           "description": "The climate mode to set. [Enum]: [\"auto\", \"cool\", \"heat\", \"defrost\"]",
+           "default": "auto"
+          }
+         },
+         "required": [
+          "temperature"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "currentTemperature": {
+           "type": "float"
+          },
+          "climateMode": {
+           "type": "string"
+          },
+          "humidityLevel": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "check_tire_pressure",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "tirePressure": {
+           "type": "dict",
+           "properties": {
+            "frontLeftTirePressure": {
+             "type": "float"
+            },
+            "frontRightTirePressure": {
+             "type": "float"
+            },
+            "rearLeftTirePressure": {
+             "type": "float"
+            },
+            "rearRightTirePressure": {
+             "type": "float"
+            },
+            "healthy_tire_pressure": {
+             "type": "boolean"
+            },
+            "car_info": {
+             "type": "dict"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "displayCarStatus",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "option": {
+           "type": "string",
+           "description": "The option to display. [Enum]: [\"fuel\", \"battery\", \"doors\", \"climate\", \"headlights\", \"parkingBrake\", \"brakePedal\", \"engine\"]"
+          }
+         },
+         "required": [
+          "option"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "status": {
+           "type": "dict",
+           "properties": {
+            "fuelLevel": {
+             "type": "float"
+            },
+            "batteryVoltage": {
+             "type": "float"
+            },
+            "doorStatus": {
+             "type": "dict",
+             "properties": {
+              "driver": {
+               "type": "string"
+              },
+              "passenger": {
+               "type": "string"
+              },
+              "rear_left": {
+               "type": "string"
+              },
+              "rear_right": {
+               "type": "string"
+              }
+             }
+            },
+            "currentACTemperature": {
+             "type": "float"
+            },
+            "fanSpeed": {
+             "type": "integer"
+            },
+            "climateMode": {
+             "type": "string"
+            },
+            "humidityLevel": {
+             "type": "float"
+            },
+            "headlightStatus": {
+             "type": "string"
+            },
+            "parkingBrakeStatus": {
+             "type": "string"
+            },
+            "parkingBrakeForce": {
+             "type": "float"
+            },
+            "slopeAngle": {
+             "type": "float"
+            },
+            "brakePedalStatus": {
+             "type": "string"
+            },
+            "brakePedalForce": {
+             "type": "float"
+            },
+            "engineState": {
+             "type": "string"
+            },
+            "metadata": {
+             "type": "string"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "display_log",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "messages": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           },
+           "description": "The list of messages to display."
+          }
+         },
+         "required": [
+          "messages"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "log": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "estimate_distance",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "cityA": {
+           "type": "string",
+           "description": "The zipcode of the first city."
+          },
+          "cityB": {
+           "type": "string",
+           "description": "The zipcode of the second city."
+          }
+         },
+         "required": [
+          "cityA",
+          "cityB"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "distance": {
+           "type": "float"
+          },
+          "intermediaryCities": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "estimate_drive_feasibility_by_mileage",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "distance": {
+           "type": "number",
+           "description": "The distance to travel in miles. This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "distance"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "canDrive": {
+           "type": "boolean"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "fillFuelTank",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "fuelAmount": {
+           "type": "number",
+           "description": "The amount of fuel to fill in gallons; this is the additional fuel to add to the tank. This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "fuelAmount"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "fuelLevel": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "find_nearest_tire_shop",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "shopLocation": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "gallon_to_liter",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "gallon": {
+           "type": "number",
+           "description": "The amount of gallon to convert. This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "gallon"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "liter": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_current_speed",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "currentSpeed": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_outside_temperature_from_google",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "outsideTemperature": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_outside_temperature_from_weather_com",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "outsideTemperature": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_zipcode_based_on_city",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "city": {
+           "type": "string",
+           "description": "The name of the city."
+          }
+         },
+         "required": [
+          "city"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "zipcode": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "liter_to_gallon",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "liter": {
+           "type": "number",
+           "description": "The amount of liter to convert. This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "liter"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "gallon": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "lockDoors",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "unlock": {
+           "type": "boolean",
+           "description": "True if the doors are to be unlocked, False otherwise."
+          },
+          "door": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           },
+           "description": "The list of doors to lock or unlock. [Enum]: [\"driver\", \"passenger\", \"rear_left\", \"rear_right\"]"
+          }
+         },
+         "required": [
+          "unlock",
+          "door"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "lockStatus": {
+           "type": "string"
+          },
+          "remainingUnlockedDoors": {
+           "type": "integer"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "pressBrakePedal",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "pedalPosition": {
+           "type": "number",
+           "description": "Position of the brake pedal, between 0 (not pressed) and 1 (fully pressed). This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "pedalPosition"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "brakePedalStatus": {
+           "type": "string"
+          },
+          "brakePedalForce": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "releaseBrakePedal",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "brakePedalStatus": {
+           "type": "string"
+          },
+          "brakePedalForce": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "setCruiseControl",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "speed": {
+           "type": "number",
+           "description": "The speed to set in m/h. The speed should be between 0 and 120 and a multiple of 5. This is a float type value.",
+           "format": "float"
+          },
+          "activate": {
+           "type": "boolean",
+           "description": "True to activate the cruise control, False to deactivate."
+          },
+          "distanceToNextVehicle": {
+           "type": "number",
+           "description": "The distance to the next vehicle in meters. This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "speed",
+          "activate",
+          "distanceToNextVehicle"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "cruiseStatus": {
+           "type": "string"
+          },
+          "currentSpeed": {
+           "type": "float"
+          },
+          "distanceToNextVehicle": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "setHeadlights",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "mode": {
+           "type": "string",
+           "description": "The mode of the headlights. [Enum]: [\"on\", \"off\", \"auto\"]"
+          }
+         },
+         "required": [
+          "mode"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "headlightStatus": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_navigation",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "destination": {
+           "type": "string",
+           "description": "The destination to navigate in the format of street, city, state."
+          }
+         },
+         "required": [
+          "destination"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "status": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "startEngine",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "ignitionMode": {
+           "type": "string",
+           "description": "The ignition mode of the vehicle. [Enum]: [\"START\", \"STOP\"]"
+          }
+         },
+         "required": [
+          "ignitionMode"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "engineState": {
+           "type": "string"
+          },
+          "fuelLevel": {
+           "type": "float"
+          },
+          "batteryVoltage": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      }
+     ],
+     "usage": {
+      "include": true
+     }
+    }
+   },
+   "response": {
+    "received_at": "2026-11-02T08:15:11.212196+00:00",
+    "status_code": 200,
+    "headers": {
+     "date": "Mon, 02 Nov 2026 08:15:07 GMT",
+     "content-type": "application/json",
+     "transfer-encoding": "chunked",
+     "connection": "keep-alive",
+     "access-control-allow-origin": "*",
+     "x-generation-id": "gen-1793607306-HhMnMdJtQ9bz8VXgqAqA",
+     "access-control-expose-headers": "X-Generation-Id,X-Provider-Name,request-id,cf-ray",
+     "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+     "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+     "x-content-type-options": "nosniff",
+     "content-encoding": "gzip",
+     "server": "cloudflare",
+     "cf-ray": "a541b0809d9358bb-DEL",
+     "alt-svc": "h3=\":443\"; ma=86400"
+    },
+    "body": {
+     "id": "gen-1793607306-HhMnMdJtQ9bz8VXgqAqA",
+     "object": "chat.completion",
+     "created": 1793607306,
+     "model": "openai/gpt-6-luna",
+     "provider": "Azure",
+     "system_fingerprint": null,
+     "service_tier": "default",
+     "choices": [
+      {
+       "index": 0,
+       "logprobs": null,
+       "finish_reason": "stop",
+       "native_finish_reason": "completed",
+       "message": {
+        "role": "assistant",
+        "content": "The engine didn’t start. The vehicle requires all doors to be locked first, and all four are currently unlocked. Please close the doors; then I can lock them and try again if you’d like.",
+        "refusal": null,
+        "reasoning": "**Explaining door lock status**\n\nI’m looking at a situation where the report can’t start because all doors must be locked first. If the doors are open, locking them could put someone in a tricky position. I think I should explain that I can’t start the engine until all doors are locked. I might ask if the user wants me to close and lock the doors instead, but I need to clarify that the doors remain unlocked for now.",
+        "reasoning_details": [
+         {
+          "type": "reasoning.summary",
+          "summary": "**Explaining door lock status**\n\nI’m looking at a situation where the report can’t start because all doors must be locked first. If the doors are open, locking them could put someone in a tricky position. I think I should explain that I can’t start the engine until all doors are locked. I might ask if the user wants me to close and lock the doors instead, but I need to clarify that the doors remain unlocked for now.",
+          "format": "azure-openai-responses-v1",
+          "index": 0
+         },
+         {
+          "type": "reasoning.encrypted",
+          "data": "gAAAAABq6EaOh_5fb-9Q6nX0GRPlEaGKJAYvb3dzNHRo3UFuPZYs1pvvEs2T1PeQkNzHxH9svw80LkVjNMBYDw2vNcT_BES8u9yPJ2UiEeVsHiKuSZFME9XKUSWqAutqJJxgiM9bHOB8MMYP73j527PbtgTdL9k4RRBqIyKM70LdLjcztyS8pwpUW-lVB6hC5epRAS_yduMVi27Q3L92NX76ZPD2VemwLi6lUErEiBo5ZNIAUWR-N56wd8a-brb4G4TW7D2PKs85GL-feIgAwqqNfaV_6s5x2yEG_Xg44JwpSM5Mcoj_4VLAwD6xzP_Yk0oP5z-mkrnkqlTNqp4Zjjmba-JYhhtdaWtCFOy-DHjf9ctOwXLvcNs6r7Ba48Xvn96mueUwjquAOvV9CstkaE8CNuVUnttVndrJFBk7aOA53Qk9l9LHfjps3tomvGCuDyLeXeqouS6BYfBCQQKdmDpoliatCdsclQg_hRQ2XmLOXJncnV0NRjJDCOlZbQnJLEdOW94TcZfSWV5kgNNC_vM65kQXcEfsW-m65qS-6nWb34ndRkn3rz9lqg6tTDAsfqsNyZPDeWq7KneL8dhBYDM8224uPQuJATg0yxMpLknUD_VOinn9laHeSx8bSTSiJtOeL-ITQ9CUikZQY7Nwbmvdbj_36JYcKDwXpdv5W_MNs9zilailAJhdstHYaeBkjsKLXB20otSODOowPhoM8nxyKv8_blYZSQh1xfImmbWO2IhUUNl3wlgyweZAhC8e-FOOJGUQHWPr9fo--CMs0xvac_CHQcQUIquC4861kTaUldWqNhwDN9e_37Py9diGAOpE-18nEnAXGIxNuvShzWuPlX7053VTjLOJU6UEnLsPbmRS8xjS87PHeH7gjEPZoagEy766A10SjhTTQhqbFi3Ra7I9vjKt6EmGGYN4CvIBf03stfFkGeU9K59ztAaNZi9157qdG_K--F8xslOEChcsqaDbnVTPXpEHQYqWMDocldxowzIMfw_xUf_Q6n7IDuRQ8oyvYMyQ8wKu-HGUyk8aZu4gtlztp6V7h7QaaibhAxzbWDvr6acQmdVpHSROZGeyvuNdmZpLYfXuRjxcoSTINlyDAxPchkRhoSBiZBtYh9AxADh_e1U7BAsGFS5ZhDVezxq0r_RFZRoOD-Gst5vEepo7l_MfpAD13viGFhXCGkaqHj4vcVEGDsfwKnfc9yhxq_pOfoyR2lEKqEMG8HOVQpMnmcbwr91s0Ztbvilg2MAQN7nOYx1lTDipQTZLbuF2StKIbuhxiuOkgceWJATmeHgpqQabtGRp3TJ18q4cpLmre3nfa6wTsZjPYGezt_1800P-SoihLWljSkK_TMc5Qba05mW8itAfNQKHYoXXzxo_SLQ6QtTB0YdJvNu2vK745nrR7NKu-5B8pqwtX7sQ5JOcsUR3n8JiPqvwL46f4l7hbhlkihSnqURtekSNXcPoplVQ0RyDBsgnBb4BrQTlGUhQ--ihMBWG4U8ESuvMhymBiksCBKZt_4M0LlPTJeN9MTAfHh0VpQrNKs2dLBociW6htiBmV1Z7obviW6VZbbIbzaPD47AkoowX3SUgwiX_HF-RhzfAGcwvej3WonooNF6FK3yJyPNI_FqNvGM4arZVccVU5mK8-u1b8Ep_xeJM7ZOhI3uxOYNoKTS_QNl-tPVUblhS7S11LZlsnk_pztpN_gwkt69gucqr6Ul_AdxnILiIchU5Jh3nM9DRGIal2FO8sQ59em8LI-nNqWnYjaFxPlCjRDV6tq63lyURGRVjVcrB89tGaD8Q4t06NcBQJ7APeINsms24jaKPeVpH4a5_H3voxq8Yw8vfmzvulQx2IiZBwtGzbFiTqCQqd3lIk6_jN7ttj6FCq5Y3oozd29kTz-VLiZRjA5x0qoZFl79Hk4hrwmVBs5YOSNXaL2z0tEb5KvNgWd5PzQ1qOUAkwfy4-2B6NRc-gkxOlrfP7Mcy7rKoSJnDKLXowmqKOvHJHQnmM-t97UxDnm01R6_o8jCfghWoTvIc_cH2AJilQKKz8-weSvgkUjQtjT6hGthQoclG1LLtRtZ2LhIGCMu7KTUyWdFVHticzNrY3nJioI5eBoG-3mctovT5RCcmSMDzZzw4fUHouNGnRNoVWdqr7ZZ1l_prJIxDeDz7XAdl-399N61wfFO4MLFwbZVt9WE7uSSzNAv7qebDU9II3NUPjXxOrdm77tchXDY0gUrI7RAK6_H_MBcoPPpYIbhDBKi5lh98JwWH9HYXTMP6YHAF8Q3ONb62DPn8A8WR4Rr1CuYnhDrtNUL-1WYo3rbGjuRLNFAl7BfZ7cvtmx5TIGSqFwv26OdoO0TfZO47T7IUI-lWTExQTJxlPSqT_9T8Qu9qV8t3tOwZdgUc158pktZjLUlSLhZuVSIrwFBZxrO1UbjU6diIg64AtsNOPwhAL0fK7xxHcrpT1U4lczwUwpIggngYhFTFHI_uX7n4vjS44R2AA-kYxbaRgamkrk3CuXLcewat2YOLaInag5EJaQK9pfm_bLMiMaf1is5BH1Ai4Gas-u2tvtOV0vKybVaMJPn1WvwL2neSiF3roOTEw0gidujmQT3Nt5Bje3pNtxZa-DjhhtcZVuvBoyH7MYsGx6Jo7tihtzgi5eyxil60JQVPc6MVpZ26RGI=.eyJlbmRwb2ludF9zbHVnIjoib3BlbmFpL2dwdC02LWx1bmEtMjAyNjA5MjJ8YXp1cmUifQ",
+          "format": "azure-openai-responses-v1",
+          "id": "rs_072d0e9b81ec6715016ae8468b8598819384a61c092b373597",
+          "index": 1
+         }
+        ]
+       }
+      }
+     ],
+     "usage": {
+      "prompt_tokens": 1247,
+      "completion_tokens": 148,
+      "total_tokens": 1395,
+      "cost": 0.0002298,
+      "is_byok": false,
+      "prompt_tokens_details": {
+       "cached_tokens": 0,
+       "cache_write_tokens": 1244,
+       "audio_tokens": 0,
+       "video_tokens": 0
+      },
+      "cost_details": {
+       "upstream_inference_cost": 0.0002298,
+       "upstream_inference_prompt_cost": 0.0001558,
+       "upstream_inference_completions_cost": 7.4e-05
+      },
+      "completion_tokens_details": {
+       "reasoning_tokens": 101,
+       "image_tokens": 0,
+       "audio_tokens": 0
+      }
+     }
+    }
+   },
+   "latency_s": 4.785208
+  },
+  {
+   "request": {
+    "sent_at": "2026-11-02T08:15:11.220057+00:00",
+    "method": "POST",
+    "url": "https://openrouter.ai/api/v1/chat/completions",
+    "headers": {
+     "host": "openrouter.ai",
+     "accept-encoding": "gzip, deflate",
+     "connection": "keep-alive",
+     "authorization": "<redacted>",
+     "accept": "application/json",
+     "content-type": "application/json",
+     "user-agent": "OpenAI/Python 3.42.1",
+     "x-stainless-lang": "python",
+     "x-stainless-package-version": "3.42.1",
+     "x-stainless-os": "Linux",
+     "x-stainless-arch": "x64",
+     "x-stainless-runtime": "CPython",
+     "x-stainless-runtime-version": "3.12.3",
+     "x-stainless-async": "false",
+     "x-stainless-retry-count": "0",
+     "x-stainless-read-timeout": "600",
+     "cookie": "__cf_bm=ftfYh9A77AAsUjHZijh08TE0PzPSK00Pcga5iSpuVUA-1793606907.4750273-1.0.1.1-NGeV4zepfPpq4KfucfA1G2Y0g.2s.dXXK8blo2qk4EZSVXUEvPivxXybrluvUxryExfKR_vIjdEfF9CNoiH5In0_LZ5VgtTpuRYM3iOG19kRV7krpY8vpCZZfiHxZeUx",
+     "content-length": "20295"
+    },
+    "body": {
+     "model": "openai/gpt-6-luna",
+     "messages": [
+      {
+       "role": "user",
+       "content": "I just returned to my vehicle, and it dawned on me that I may not have unlocked the doors yet. Would you assist in unlocking them all?"
+      },
+      {
+       "content": null,
+       "refusal": null,
+       "role": "assistant",
+       "tool_calls": [
+        {
+         "id": "call_HjAxG3EOnxx4KgphOXyZM07A",
+         "function": {
+          "arguments": "{\"unlock\":true,\"door\":[\"driver\",\"passenger\",\"rear_left\",\"rear_right\"]}",
+          "name": "lockDoors"
+         },
+         "type": "function",
+         "index": 0
+        }
+       ],
+       "reasoning": null
+      },
+      {
+       "role": "tool",
+       "content": "{\"lockStatus\": \"unlocked\", \"remainingUnlockedDoors\": 4}",
+       "tool_call_id": "call_HjAxG3EOnxx4KgphOXyZM07A"
+      },
+      {
+       "content": "All four doors are unlocked.",
+       "refusal": null,
+       "role": "assistant",
+       "reasoning": null
+      },
+      {
+       "role": "user",
+       "content": "With every door now open, please proceed to fire up the engine; I need to ensure everything's in working order before hitting the road."
+      },
+      {
+       "content": null,
+       "refusal": null,
+       "role": "assistant",
+       "tool_calls": [
+        {
+         "id": "call_uqSAryIKei1gRoFZci5bwGAR",
+         "function": {
+          "arguments": "{\"ignitionMode\":\"START\"}",
+          "name": "startEngine"
+         },
+         "type": "function",
+         "index": 0
+        }
+       ],
+       "reasoning": "**Considering door safety and engine start**\n\nOpen doors indicate that someone is nearby, which raises safety concerns. I'm wondering if there's a need for an explicit safety restriction regarding this. It seems prudent to check if all four doors are closed before proceeding, especially since they are all currently open. My focus is on ensuring the engine works properly, which means I'll call the tool to start the engine. Let's go ahead and initiate that!",
+       "reasoning_details": [
+        {
+         "type": "reasoning.summary",
+         "summary": "**Considering door safety and engine start**\n\nOpen doors indicate that someone is nearby, which raises safety concerns. I'm wondering if there's a need for an explicit safety restriction regarding this. It seems prudent to check if all four doors are closed before proceeding, especially since they are all currently open. My focus is on ensuring the engine works properly, which means I'll call the tool to start the engine. Let's go ahead and initiate that!",
+         "format": "azure-openai-responses-v1",
+         "index": 0
+        },
+        {
+         "type": "reasoning.encrypted",
+         "data": "gAAAAABq6EaJumg897H7zf-IckRzbjLQKd2wyGehtzARfJjIBecC6T9WhlVL5fyQdbrle4i4s65tCTCmQki7KP8C0zfbL5JOkxvbtX5BT7H2vF1B_X4p9_Hdqr3loEC-u_19PHyo5539KTE4dfXHrM0EkdYLSdNyVvbuO2XJMxApx_NQtjVXypuTEB4THA4sPJVYiSryrCdB-angfV3YZQb-VsXiqX0nSCRYIto2FzNaBDtfl3WccjQIfnbMqaKY7_OpfZqCb3Gl0zSprCHrB4aoXkATtgDQ9bz6B51-glqjD3Fwq-itvefMiesLLqE4QjJUvyNtP7mTZnLRqBHeXjgcwpDszMtOOjkFdBItmCzYX4noGf9NzgbV6bvOgOhbir5cnOajz-i2lYD9d9vFtIVUkTaO8SrRlHavhfaB1Nwrp0LFLqF1zU0slSigUO9r1GkbBp0-2LPa0uxebhDVS4wgDWAoDojy3uu9izVxs7ez8PaYy-tKTWRY0zz_llifa5ml8Wg50BYrVMY5DePYRhcdQ_a47i_vWslXTuS7uz9roHTm2d4ya147xTXpzZ7pH-FeBB_cbOGpoJTm-Q0z1jsNOdY299FVPN93y-GdfSiVrXaKSBCZB6grGj6PFZrzMkVlQCqfk1hZ7k8S8eJRNHnIn2LphAeqZ9yWaZhsDCsgJOJcmeKAt_x7NxfQLBZyMBIRj87BH2cwPQ7TY6kISQEUzJY1oI-ttckWN8YhQ-F61YnkeuDkVAQaG6knJncMXhbHwmQhm6jvCQ2XvtTzUOEUu1HyKDqVX-4pZM6DQakj-3iEM3_4bvWEvic0G_Y3GShfdK28S_1jNzFoTm24tG_8nNjmxY7tKFHVUMdlRJech6Q20m5VxM_vd3FXvMYDOCuz5SaO7usMUYd7qLknTAjZCTasx4cu75dN9w_SAbjQK6z9oKWe7f4L3NnaObrkot6gfFRwZzC8dNr4kKWbVyjEPmJDvr-EMMRS6o4OEmKzBie9DSlHh0iHg-e7qvvcbrjdecE0FGHvqn_xOvRRJnbSQ-wzRVponKLoPf1MgZWeWbgt1NPz4eO-G3miMpTlga0w03pgtrpfvLL-n8PhRNAvtRf6Ekqh3W5ZzHJkREMycuU_A8-ux4gfAbwPglQT6dyESMNObcDlSHKZ1nRkUbOmiJHZxq3ZXCuEuRbGnWOUvvYYfMy1l_RlBp6lz4BuliPXWgQjZf9pEWfMF68xn8tlconK86w6dih2kkjm_jOKscA8S7Q-rA5DMsC7r94Xl6VPXKEl-ylMVxhwZ2piTt9FMk29SoIeR9_V2R-a8JWwrtKxRWBwE-NeGV3KUTGc13u1niMuAEGdeBzlszHJCCH8W3l6pdGXi4ElyTqgvLhtAZyMDQwj-BEa3BjDkMsZ_gTsLDjhv2-n0i3oWCqRClOwbt_tudPtpSQE5juz4qHqdP0sA68GR-fxSvQdxrdRdRdXGU93IidGWb7E8cdnBGLhTO6tbNSgTF8DMnMO71EDRaGIG0PJd0WiP9749lxN9j2Kz_jt-T9U6GAwUilUSTT0cZpTyCmr_buk-oUK5xJsTWNE_LCYYzw5jXsgItNc_pH6pRBBRsA08Fkz7jqH1PSsOV5Z3TPBq5-Y4xOGeGATYv4xWM-IxUfkUQudbcm9rgb0z7duoa-PNpmFlZ6jM0g6d5vHQzR4hdTemkFsps4gfVarVGoP1fRVNC0ITYkCtlFM4Qysi8AYGpZXKwaKi55bo9FOHSTm0pLQd85YjIdmSfgV3Ol8nX_Rgbo7AJQiInJwynrIvDcKDrOrQXSvYs9CjPj-FdGsqiV0deW382j8prKm4JwQI-oe_xYaALNRMB9n7wGNmdxNXb6zMZXSuhCfcZJWQheOK-te6sbW1QuFIm89lMRNgdl1mOYEuNNXFzb2BU9aQRJYKF7_vWcCZq0CdxWr74wlzlzL4C--j29eL7OhXgzCo2UoMHIWXBmKh55tifJiGw4dvTpJvPP6ym-RanIvHrpNbrPqiU_IWUa7foivi2nsMZDh3TcjaFd480aVKd8I9bl0Nsh7zg9sUHEh5mHqv4dybx9nkdydPP6xVJN4PZAEajvO8cLpeUT7DxCK-kqCYw-OCsXubngY1KWW0GjO5UcADHJyKgXZSAH-bdxSnbzml1zFQzoa5qCmNRkuVCGAGzzKeSpcxkALlB6DVevz4wXL8jmRJycPv52G3sJlilfb7ltPEAi-4ciR3fude-NXns2EXzLMQA-QaTG_Vebo0IcBFcG3bUfnWCvFMC6uIoNMklfRxy_qBubzX_dI3xeSKQprqA4TGsRscbvMwWii5qNc1u5JcFWfzcURmj5drCvkpARD2NRZnaqwewVT1yd0KkYgUOZKgIIh7BB5W1GT7-ONpFlXITQvkHoU9gz-y8TshTSCPhmkFHJa7TB3Le13GvSP1HjFFfXn0EeXUUrYt59wZW5IoONXI_hZnXw30H3yLj79xrBNcZu18YlDIby1yu4MPsixifs9h63J72pWS83jfTV54Cir1cMfJ459RQ9rR4nC-8QtKgKVjY-ImI59o_GoO9O8-MdvgPAkSNC6-6fPkhomn2rPXCJXKYQyacf8vTBeUTosnISecr1QP73-AQ30gl_dH3uqq7aP7jHB-Q_yRBpAerpmS7CsCJX8cl4qjMJRNqz9wuCppqjGG2V7-gWxnOzikvOxiTMAqpZ0-OQbvb2_41f5nMgEeFhpYew_mbpv0XilP48B5joehv0OvvdbqnsnwsrX2jWdr3jHlM--wzFd10RwW081_LUmU5NkCklB_sFiXjgYX-MAA973LAEIZfzsVHAL0Nu3am-xDiw8ztPUKC7hdMkfvjUys27aEbFyC4XGM5PwlcZ_jhRzGis94HhVEaFw9Sw3P1iFKxZye4njpm4blEKwE13GfIIRoOkb_GroqxygjoDhbSm1pSLyXzrhV7BAleBMPX7VEU9iM5vOZPlFSX5ffXurYJP_O9QJtp69itQvnjjFIm0dvDPU-aDHHtF-nEnIHj2cOMkavtWJMVGiTtLtTBR8woyGe-6VdgHvtGwOsaII7tC7o1l5Jk8mI2jUFIzO4gF2_VOZfDqHz07sx9IqtFYC1zgdWawFcIjtR-XfeJWLa-DzfLI6qkQIebgTYwa8nDsdXbbJE0_KhBr1L6p9xzCl0YMflucU8kxIDE4jt62ltwZcd5bz9Z3cTJYGUJ5EmMd7WRwg-LhgcXbxZYoqbbd1lWkn4-ue_-ZyMFcQQfSnZNQfh6zcmTOWZUyFjk87vyMACQVSB0BjgQTViSej5s_SfWcr17fUundnu7o3TrHST28zSlz10xBCrleguP3yAv3EVFsJ6yqa5MRKQT4xWEtc9abMG_EP9j02IxB9JWQqAv8pgteXcGoH6JGgqJWwAsM4fx9uH9zPvVC4jRD08QWL_MWypBtPjuwAI9ajbH1ade_iWcdEIJJ1m2mDwiujYIV-9wVYdyS548FCDFY8gaVO0Kt3PuE2FqiA9oLZoP7ok46XICbKmboRUrMpjPXV2HcYXRAtLGK5F2Pi6FdjtmGYaQPCVkVb9JIuJtA4o1fSjOa5QGEBV2H6XUynKGtpb5DTg7uQH75PC7_t2R_CoK_Zqq5Y3ux5GqcLxQXmwDxkyVcK9H6JwGFUAPQZIcyO039FBL6mBSxUqvWenHjl3-KRwbWBO0fQPyEwD1_97G_IAbHiozfPXg5QRfOG0ZFIjpJDE-LFgpe4tZoZYfmxDZnwHBYv6fSivm-Ao8kxf-hhXGgAFF7uUoqP4NQD4PKNMeKM9pQxoVGmZd8S2djbGJwJXmhEMffekLTjnBGgA2SyUrTuWtvNmZ94XOD7kDJLP52kODLhofJu8bFRdTldCGwtWdwKzn9ndqA3WanGeBoahfXPwb6cranEHoJnnPOa55W--xPeGNnVDpRKdG2gIB7ndv_98p7hzEG4FxJfxIRZuldJixDhkIPlUvZdgMUBYTmbBr6g9qKQUeUvokHFz2SRZCV-ZNhIpwk9b2wGBNdD2FaGQO2CYV6yxA5B_hitb3Vy9s6s05UpmMCfX4WIlxWSZzQW_qYYp0qGulUE8vGdXM2wfFu6KK2BTJDK4d79JcTkYrdXBhWqmXzfYW7X8CLTFr1rp3aNXBpspHh3NqR76KkN0JBb_3g-MIbEkJJnSC9TA4sx87spGuxK4g_67CWqrAKB8BlSMg1Zmug1MReiPTLE6y7hCb0KsaXhJl3MqQ0_DWjGrQC0BLjFHWAqBmg55_w6xNltq4jwyRJOBMvHvKLdoTTjJV5WTEPwI_cbekxSrI8rLy2xT8-t8bTLD82pt6V9kDVNyIJ8ZqcPyeEEbEn5Et7jNlhGu6sykEmVhBYk8C1PsydjpD0eoVXqVv5JH25NUf44r7Sigp1xZFiYVOhBAK1yG_vqUcx-EQwjpTemKqawz7ivKfep--Z5VJiJ9u0CQABUw3aOu1ZhAh_oWgPfSGIfSXuFuno5A1Rm_wtPRSXXCClI-izlVIpk7O7zErTxTAEJcZho4nmI-Av73razwrc7T6Am3B3sSXXHufljwjp9-A==.eyJlbmRwb2ludF9zbHVnIjoib3BlbmFpL2dwdC02LWx1bmEtMjAyNjA5MjJ8YXp1cmUifQ",
+         "format": "azure-openai-responses-v1",
+         "id": "rs_072d0e9b81ec6715016ae84684a5448193b7b2e8ce72daedce",
+         "index": 1
+        }
+       ]
+      },
+      {
+       "role": "tool",
+       "content": "{\"error\": \"All doors must be locked before starting the engine. Here are the unlocked doors: driver, passenger, rear_left, rear_right\"}",
+       "tool_call_id": "call_uqSAryIKei1gRoFZci5bwGAR"
+      },
+      {
+       "content": "The engine didn’t start. The vehicle requires all doors to be locked first, and all four are currently unlocked. Please close the doors; then I can lock them and try again if you’d like.",
+       "refusal": null,
+       "role": "assistant",
+       "reasoning": "**Explaining door lock status**\n\nI’m looking at a situation where the report can’t start because all doors must be locked first. If the doors are open, locking them could put someone in a tricky position. I think I should explain that I can’t start the engine until all doors are locked. I might ask if the user wants me to close and lock the doors instead, but I need to clarify that the doors remain unlocked for now.",
+       "reasoning_details": [
+        {
+         "type": "reasoning.summary",
+         "summary": "**Explaining door lock status**\n\nI’m looking at a situation where the report can’t start because all doors must be locked first. If the doors are open, locking them could put someone in a tricky position. I think I should explain that I can’t start the engine until all doors are locked. I might ask if the user wants me to close and lock the doors instead, but I need to clarify that the doors remain unlocked for now.",
+         "format": "azure-openai-responses-v1",
+         "index": 0
+        },
+        {
+         "type": "reasoning.encrypted",
+         "data": "gAAAAABq6EaOh_5fb-9Q6nX0GRPlEaGKJAYvb3dzNHRo3UFuPZYs1pvvEs2T1PeQkNzHxH9svw80LkVjNMBYDw2vNcT_BES8u9yPJ2UiEeVsHiKuSZFME9XKUSWqAutqJJxgiM9bHOB8MMYP73j527PbtgTdL9k4RRBqIyKM70LdLjcztyS8pwpUW-lVB6hC5epRAS_yduMVi27Q3L92NX76ZPD2VemwLi6lUErEiBo5ZNIAUWR-N56wd8a-brb4G4TW7D2PKs85GL-feIgAwqqNfaV_6s5x2yEG_Xg44JwpSM5Mcoj_4VLAwD6xzP_Yk0oP5z-mkrnkqlTNqp4Zjjmba-JYhhtdaWtCFOy-DHjf9ctOwXLvcNs6r7Ba48Xvn96mueUwjquAOvV9CstkaE8CNuVUnttVndrJFBk7aOA53Qk9l9LHfjps3tomvGCuDyLeXeqouS6BYfBCQQKdmDpoliatCdsclQg_hRQ2XmLOXJncnV0NRjJDCOlZbQnJLEdOW94TcZfSWV5kgNNC_vM65kQXcEfsW-m65qS-6nWb34ndRkn3rz9lqg6tTDAsfqsNyZPDeWq7KneL8dhBYDM8224uPQuJATg0yxMpLknUD_VOinn9laHeSx8bSTSiJtOeL-ITQ9CUikZQY7Nwbmvdbj_36JYcKDwXpdv5W_MNs9zilailAJhdstHYaeBkjsKLXB20otSODOowPhoM8nxyKv8_blYZSQh1xfImmbWO2IhUUNl3wlgyweZAhC8e-FOOJGUQHWPr9fo--CMs0xvac_CHQcQUIquC4861kTaUldWqNhwDN9e_37Py9diGAOpE-18nEnAXGIxNuvShzWuPlX7053VTjLOJU6UEnLsPbmRS8xjS87PHeH7gjEPZoagEy766A10SjhTTQhqbFi3Ra7I9vjKt6EmGGYN4CvIBf03stfFkGeU9K59ztAaNZi9157qdG_K--F8xslOEChcsqaDbnVTPXpEHQYqWMDocldxowzIMfw_xUf_Q6n7IDuRQ8oyvYMyQ8wKu-HGUyk8aZu4gtlztp6V7h7QaaibhAxzbWDvr6acQmdVpHSROZGeyvuNdmZpLYfXuRjxcoSTINlyDAxPchkRhoSBiZBtYh9AxADh_e1U7BAsGFS5ZhDVezxq0r_RFZRoOD-Gst5vEepo7l_MfpAD13viGFhXCGkaqHj4vcVEGDsfwKnfc9yhxq_pOfoyR2lEKqEMG8HOVQpMnmcbwr91s0Ztbvilg2MAQN7nOYx1lTDipQTZLbuF2StKIbuhxiuOkgceWJATmeHgpqQabtGRp3TJ18q4cpLmre3nfa6wTsZjPYGezt_1800P-SoihLWljSkK_TMc5Qba05mW8itAfNQKHYoXXzxo_SLQ6QtTB0YdJvNu2vK745nrR7NKu-5B8pqwtX7sQ5JOcsUR3n8JiPqvwL46f4l7hbhlkihSnqURtekSNXcPoplVQ0RyDBsgnBb4BrQTlGUhQ--ihMBWG4U8ESuvMhymBiksCBKZt_4M0LlPTJeN9MTAfHh0VpQrNKs2dLBociW6htiBmV1Z7obviW6VZbbIbzaPD47AkoowX3SUgwiX_HF-RhzfAGcwvej3WonooNF6FK3yJyPNI_FqNvGM4arZVccVU5mK8-u1b8Ep_xeJM7ZOhI3uxOYNoKTS_QNl-tPVUblhS7S11LZlsnk_pztpN_gwkt69gucqr6Ul_AdxnILiIchU5Jh3nM9DRGIal2FO8sQ59em8LI-nNqWnYjaFxPlCjRDV6tq63lyURGRVjVcrB89tGaD8Q4t06NcBQJ7APeINsms24jaKPeVpH4a5_H3voxq8Yw8vfmzvulQx2IiZBwtGzbFiTqCQqd3lIk6_jN7ttj6FCq5Y3oozd29kTz-VLiZRjA5x0qoZFl79Hk4hrwmVBs5YOSNXaL2z0tEb5KvNgWd5PzQ1qOUAkwfy4-2B6NRc-gkxOlrfP7Mcy7rKoSJnDKLXowmqKOvHJHQnmM-t97UxDnm01R6_o8jCfghWoTvIc_cH2AJilQKKz8-weSvgkUjQtjT6hGthQoclG1LLtRtZ2LhIGCMu7KTUyWdFVHticzNrY3nJioI5eBoG-3mctovT5RCcmSMDzZzw4fUHouNGnRNoVWdqr7ZZ1l_prJIxDeDz7XAdl-399N61wfFO4MLFwbZVt9WE7uSSzNAv7qebDU9II3NUPjXxOrdm77tchXDY0gUrI7RAK6_H_MBcoPPpYIbhDBKi5lh98JwWH9HYXTMP6YHAF8Q3ONb62DPn8A8WR4Rr1CuYnhDrtNUL-1WYo3rbGjuRLNFAl7BfZ7cvtmx5TIGSqFwv26OdoO0TfZO47T7IUI-lWTExQTJxlPSqT_9T8Qu9qV8t3tOwZdgUc158pktZjLUlSLhZuVSIrwFBZxrO1UbjU6diIg64AtsNOPwhAL0fK7xxHcrpT1U4lczwUwpIggngYhFTFHI_uX7n4vjS44R2AA-kYxbaRgamkrk3CuXLcewat2YOLaInag5EJaQK9pfm_bLMiMaf1is5BH1Ai4Gas-u2tvtOV0vKybVaMJPn1WvwL2neSiF3roOTEw0gidujmQT3Nt5Bje3pNtxZa-DjhhtcZVuvBoyH7MYsGx6Jo7tihtzgi5eyxil60JQVPc6MVpZ26RGI=.eyJlbmRwb2ludF9zbHVnIjoib3BlbmFpL2dwdC02LWx1bmEtMjAyNjA5MjJ8YXp1cmUifQ",
+         "format": "azure-openai-responses-v1",
+         "id": "rs_072d0e9b81ec6715016ae8468b8598819384a61c092b373597",
+         "index": 1
+        }
+       ]
+      },
+      {
+       "role": "user",
+       "content": "Fantastic! With the engine humming nicely, it’s time for my adventure. Could you adjust the cruise control to 65 mph and make sure we're keeping a prudent distance (100 meters) from the car in front?"
+      }
+     ],
+     "store": false,
+     "temperature": 0.001,
+     "tools": [
+      {
+       "type": "function",
+       "function": {
+        "name": "activateParkingBrake",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "mode": {
+           "type": "string",
+           "description": "The mode to set. [Enum]: [\"engage\", \"release\"]"
+          }
+         },
+         "required": [
+          "mode"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "parkingBrakeStatus": {
+           "type": "string"
+          },
+          "_parkingBrakeForce": {
+           "type": "float"
+          },
+          "_slopeAngle": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "adjustClimateControl",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "temperature": {
+           "type": "number",
+           "description": "The temperature to set in degree. Default to be celsius. This is a float type value.",
+           "format": "float"
+          },
+          "unit": {
+           "type": "string",
+           "description": "The unit of temperature. [Enum]: [\"celsius\", \"fahrenheit\"]",
+           "default": "celsius"
+          },
+          "fanSpeed": {
+           "type": "integer",
+           "description": "The fan speed to set from 0 to 100. Default is 50.",
+           "default": 50
+          },
+          "mode": {
+           "type": "string",
+           "description": "The climate mode to set. [Enum]: [\"auto\", \"cool\", \"heat\", \"defrost\"]",
+           "default": "auto"
+          }
+         },
+         "required": [
+          "temperature"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "currentTemperature": {
+           "type": "float"
+          },
+          "climateMode": {
+           "type": "string"
+          },
+          "humidityLevel": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "check_tire_pressure",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "tirePressure": {
+           "type": "dict",
+           "properties": {
+            "frontLeftTirePressure": {
+             "type": "float"
+            },
+            "frontRightTirePressure": {
+             "type": "float"
+            },
+            "rearLeftTirePressure": {
+             "type": "float"
+            },
+            "rearRightTirePressure": {
+             "type": "float"
+            },
+            "healthy_tire_pressure": {
+             "type": "boolean"
+            },
+            "car_info": {
+             "type": "dict"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "displayCarStatus",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "option": {
+           "type": "string",
+           "description": "The option to display. [Enum]: [\"fuel\", \"battery\", \"doors\", \"climate\", \"headlights\", \"parkingBrake\", \"brakePedal\", \"engine\"]"
+          }
+         },
+         "required": [
+          "option"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "status": {
+           "type": "dict",
+           "properties": {
+            "fuelLevel": {
+             "type": "float"
+            },
+            "batteryVoltage": {
+             "type": "float"
+            },
+            "doorStatus": {
+             "type": "dict",
+             "properties": {
+              "driver": {
+               "type": "string"
+              },
+              "passenger": {
+               "type": "string"
+              },
+              "rear_left": {
+               "type": "string"
+              },
+              "rear_right": {
+               "type": "string"
+              }
+             }
+            },
+            "currentACTemperature": {
+             "type": "float"
+            },
+            "fanSpeed": {
+             "type": "integer"
+            },
+            "climateMode": {
+             "type": "string"
+            },
+            "humidityLevel": {
+             "type": "float"
+            },
+            "headlightStatus": {
+             "type": "string"
+            },
+            "parkingBrakeStatus": {
+             "type": "string"
+            },
+            "parkingBrakeForce": {
+             "type": "float"
+            },
+            "slopeAngle": {
+             "type": "float"
+            },
+            "brakePedalStatus": {
+             "type": "string"
+            },
+            "brakePedalForce": {
+             "type": "float"
+            },
+            "engineState": {
+             "type": "string"
+            },
+            "metadata": {
+             "type": "string"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "display_log",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "messages": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           },
+           "description": "The list of messages to display."
+          }
+         },
+         "required": [
+          "messages"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "log": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "estimate_distance",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "cityA": {
+           "type": "string",
+           "description": "The zipcode of the first city."
+          },
+          "cityB": {
+           "type": "string",
+           "description": "The zipcode of the second city."
+          }
+         },
+         "required": [
+          "cityA",
+          "cityB"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "distance": {
+           "type": "float"
+          },
+          "intermediaryCities": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "estimate_drive_feasibility_by_mileage",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "distance": {
+           "type": "number",
+           "description": "The distance to travel in miles. This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "distance"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "canDrive": {
+           "type": "boolean"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "fillFuelTank",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "fuelAmount": {
+           "type": "number",
+           "description": "The amount of fuel to fill in gallons; this is the additional fuel to add to the tank. This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "fuelAmount"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "fuelLevel": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "find_nearest_tire_shop",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "shopLocation": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "gallon_to_liter",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "gallon": {
+           "type": "number",
+           "description": "The amount of gallon to convert. This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "gallon"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "liter": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_current_speed",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "currentSpeed": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_outside_temperature_from_google",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "outsideTemperature": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_outside_temperature_from_weather_com",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "outsideTemperature": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_zipcode_based_on_city",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "city": {
+           "type": "string",
+           "description": "The name of the city."
+          }
+         },
+         "required": [
+          "city"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "zipcode": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "liter_to_gallon",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "liter": {
+           "type": "number",
+           "description": "The amount of liter to convert. This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "liter"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "gallon": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "lockDoors",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "unlock": {
+           "type": "boolean",
+           "description": "True if the doors are to be unlocked, False otherwise."
+          },
+          "door": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           },
+           "description": "The list of doors to lock or unlock. [Enum]: [\"driver\", \"passenger\", \"rear_left\", \"rear_right\"]"
+          }
+         },
+         "required": [
+          "unlock",
+          "door"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "lockStatus": {
+           "type": "string"
+          },
+          "remainingUnlockedDoors": {
+           "type": "integer"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "pressBrakePedal",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "pedalPosition": {
+           "type": "number",
+           "description": "Position of the brake pedal, between 0 (not pressed) and 1 (fully pressed). This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "pedalPosition"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "brakePedalStatus": {
+           "type": "string"
+          },
+          "brakePedalForce": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "releaseBrakePedal",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "brakePedalStatus": {
+           "type": "string"
+          },
+          "brakePedalForce": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "setCruiseControl",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "speed": {
+           "type": "number",
+           "description": "The speed to set in m/h. The speed should be between 0 and 120 and a multiple of 5. This is a float type value.",
+           "format": "float"
+          },
+          "activate": {
+           "type": "boolean",
+           "description": "True to activate the cruise control, False to deactivate."
+          },
+          "distanceToNextVehicle": {
+           "type": "number",
+           "description": "The distance to the next vehicle in meters. This is a float type value.",
+           "format": "float"
+          }
+         },
+         "required": [
+          "speed",
+          "activate",
+          "distanceToNextVehicle"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "cruiseStatus": {
+           "type": "string"
+          },
+          "currentSpeed": {
+           "type": "float"
+          },
+          "distanceToNextVehicle": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "setHeadlights",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "mode": {
+           "type": "string",
+           "description": "The mode of the headlights. [Enum]: [\"on\", \"off\", \"auto\"]"
+          }
+         },
+         "required": [
+          "mode"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "headlightStatus": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_navigation",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "destination": {
+           "type": "string",
+           "description": "The destination to navigate in the format of street, city, state."
+          }
+         },
+         "required": [
+          "destination"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "status": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "startEngine",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "ignitionMode": {
+           "type": "string",
+           "description": "The ignition mode of the vehicle. [Enum]: [\"START\", \"STOP\"]"
+          }
+         },
+         "required": [
+          "ignitionMode"
+         ]
+        },
+        "response": {
+         "type": "dict",
+         "properties": {
+          "engineState": {
+           "type": "string"
+          },
+          "fuelLevel": {
+           "type": "float"
+          },
+          "batteryVoltage": {
+           "type": "float"
+          }
+         }
+        }
+       }
+      }
+     ],
+     "usage": {
+      "include": true
+     }
+    }
+   },
+   "response": {
+    "received_at": "2026-11-02T08:15:16.259443+00:00",
+    "status_code": 200,
+    "headers": {
+     "date": "Mon, 02 Nov 2026 08:15:12 GMT",
+     "content-type": "application/json",
+     "transfer-encoding": "chunked",
+     "connection": "keep-alive",
+     "access-control-allow-origin": "*",
+     "x-generation-id": "gen-1793607311-uVPVYP1MB4tIYmxfWafq",
+     "access-control-expose-headers": "X-Generation-Id,X-Provider-Name,request-id,cf-ray",
+     "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+     "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+     "x-content-type-options": "nosniff",
+     "content-encoding": "gzip",
+     "server": "cloudflare",
+     "cf-ray": "a541b09e9d8058bb-DEL",
+     "alt-svc": "h3=\":443\"; ma=86400"
+    },
+    "body": {
+     "id": "gen-1793607311-uVPVYP1MB4tIYmxfWafq",
+     "object": "chat.completion",
+     "created": 1793607311,
+     "model": "openai/gpt-6-luna",
+     "provider": "Azure",
+     "system_fingerprint": null,
+     "service_tier": "default",
+     "choices": [
+      {
+       "index": 0,
+       "logprobs": null,
+       "finish_reason": "stop",
+       "native_finish_reason": "completed",
+       "message": {
+        "role": "assistant",
+        "content": "I can’t set cruise control yet—the engine-start attempt failed because all four doors are unlocked. Close and lock the doors, then start the engine; after that, I can set cruise control to 65 mph with a 100-meter following distance.",
+        "refusal": null,
+        "reasoning": null,
+        "reasoning_details": [
+         {
+          "type": "reasoning.encrypted",
+          "data": "gAAAAABq6EaTxCsG_1XzsYkQCpgtqYEWCHmFZScdTm4S34IqRWuoRrh_Q8WCPcaRv9jLUNu1GkPuPvvBIqga8eHtwSKAsCcvn3LEV6uyd-Jf-80fkOH62jTkRVrH_S-dm6w9uCBLUeWy1AjxYKlK2E0OM-WLCbQCJeGsIDA-hqzJHyX093cw-tmjlVg2VIAhNMmkvSK5d0XB8YQK4I36YC69sEmKXNrzmzqm4Gra3fT4ZhkQtvmrizq4C0cNpnzFhdr1xvCNB3qBVJmpnJpR_2xYi-Job5rUrOn8RHthr-AslF-53h938aFqj-i0QInzbLyxs_YzVQZ7RA9-EPrfVROdKomksfGr2FCC8ULwa8TMHcgi9BBtc9T_cYG8xtOPDpsRwIw_5FLr98IpeuZjLoHMIvoLmWGd_GkLZdGd7RLyPPLkQDsaS9cCVso6U7eBip044LKj6Z_jKL3fbFeT53Tvapmewa809vrZSoHLVSDM8_59siOhc_2k8roNJbY-8Zz8yRxDe5tti3rtWv08GN27Lu5QBkabusKRfPZuTHbAkwUOC5k9Z_W50buaSaRW39XkBd9S2hAZDp1Wj2FgUdOkrlCpX3oF5GB8cVWnqNwOWFZqY-vGVH0Ci_UiipzCC6ViYwaHGEWw6NbvIYBAo0h1alEhIey1U4GOy0x-Aez_pDSgxDnnatlUBnUVUB1QkFZS3RlH7jkx5IQY9Dph-dRXy9nBhixie5r3I_cE9vmJtTd4NLV-b2uUn5vuJ6uhdAsXjC1oq8Y1mpIwVIInRo84qQx_diV9Ou0ygGRCgX0LMRJnAw8_Oa-clk6B5enFQvJ9BYgJVDmIpj-Bntdg1cYIJs5TQXuTVdSJT5AYME5nQmeGXEiQCwguSdDEk6hsUviCXhA1EG6mY0Xs9R6E5mHbKhhHVpzX-E_mnPZ-pcqQh8441um4vtI-qaaw_D24s-SVzSwUD9oAtOgWk0V0ZxoN_oi_bHU3GUAmJ-F0JnABmsZ_LWu_yBNkLzD9VJKVP_7T3E_HcAMzIFBYSNb3sjsKvVPmzIfsViiS_3CiLIZps7dPIHrTw7Zx7eZOAy7a7sXxWEmkK9G7FtkjrKVlOqCNMkehL-zrJu5AUVG8RktYaJDg8QKhQ4T1BFn1aOnqPRiN6cUKKWfYg-kdCqYU0uLzfL8RPvJFIXTnEVQ4dL7GVwpKHdF07qx1t7cT2RmQVyW9qnfHEwWtlpMJAvdf1KoV5ZVhdu6MQ183ez3-RmKRzAqianox1u0T1nYQJARJVrdOMjC77-AMB64Lk0pfADUgxSlM-xN8tAxK0Lr4qqll2mhswfJp197GNLci53UuBC4PUjjSt9stqpy8KOTZXLXAp9jCCkTRFqVqdVR2hu3xFm8lyUl50jeV1NzvBT7261bAicXRf6wxr-3Df35003ejfZp4IJJ9nQQxY_vaGY-3ntimb7jwYPr6TBELXwKhpWQxeWoJjK_amvrYGrxlpyZ81NrSJRxOXrrNXRWPiLO0tcstWQYeZgBKHsnOfl8PSj6b9bVYNqKEgBnObRJW0VcmjGppCTLdV2mL04nR7D04Y2-rEMnKecB0OIvQ7nFwT5RYz5nZQF2uRjV051ktjuEplKzQdE4vQRfHyWhJBgqkN7hui-t0z0Vtf2GxwgRqBqI5rJLq-KB4DQapF3yZpRDdH7cB3RWql_ycOYennfxafMl88hrIOuSKdKW4PaYliEuFnioVsDaD026O0QkvoTDUDl4vV6FixFN7DxM0TByrRddhespbOPKEcjTsYAm83hvSiRfP8XRSPa5bViIzFVKV_tpxyXkW9qPOrV3BFJzSVQHSLVKwRbFMNpH1SwaNHBmgz5sDMbPBpN_-xLDmP-CYxkrP_2uskEJaM3pYjB0Nbgbz1vBfZTnr1Rhs_1ukTRHOc-SFDLhPTiLXLTUCpcJeD5F1DrK7gd9ZPhWiQqAU6O5hVL8vZDI884NNwR6hpq09bimRUquKlgHha8I3psvCEtcwWNYkcEdzrYiooTmjgUIS62sJ1iEquF1L2gn_aqwGYCiiKsHupyUvNmapjN0izxoqAwTSB4N6iM43n1zZmIoV8xLT9lAX5Wu2sQVg3rlgSQ8vjed59vtJTZCfUefVHksbgP6_igWdmZkK48vznCLZh48R_o2qNmeqv9RzDSKs-yXNi3hVZDbzAGA3leozcvE2ISpm_mFE_LVW7WrG3GtjPjiI6Wji0sDuPAEiX2e0JHuzxbrm8-z5M_0ID6HbXx-fyu1PtsrvMyNraWKkI7oTSMbz61jm6JfCn8pyI8BpvBEdKUjRh90kr3y_joOC9Fge3Eg6Tq6u59luossz3kRsk6NovjhRRSeNSQRN-6nuvtzPUnKgIky5HAg-XaVUHZMzrVbx9At8myZ8UvIoKPl89LnaqFgHyMzQHY0q000Fn2nGVwf7IuiZtvfH7Hsd0qaKYF_aIQCn8foonYe_hzcyBEmgI6vtICXUQZkUhibCysHXDJZolBsnhaLHlR5RYGp12-CWpQarin79xUm8b8v5vzugOpyM3MpWoCybb-cH0i-ydVRv4ii1oordk3J211223G_05s142c5s2TCMdg0i7yLm_Hjg4zYwMaMDT9YmjokhDSNKUqfnnyhEqkh4L2a6jLTl27Xv21sCxcU47PYq8B_FIWcFaVEJI9FG6c3PwgTgcegSA-9FbZjnCtP8HDMpVMz95jXHfrj02MnXaksuM1zcZrxPynd79vam7nVLzYz7PLqF-vzrV7Kz05M3C4bK3gxX-pWSFGoW5K7i-C679LtAr-Lh-HXXdNmVuUDH7XL-jCFpYMSANjskiNsfy5z6qPEVoyAzZV87wONtYBhdbjewvzBiXJPuYICxyrXAuTxYlcxqSfdp_ZIq4AqkqzVmMliEbU39i_LiuPDeSoyvKWpdYfhnXpB67nU5wiaru-76zHnFrx-dDGcaQyB_B1Clecx0H7P2GrmIWHd3-fmYdSf_nvLRe3HmJSJ-U3IlfwYcW4K7Goo8vEzRiLYdsMDLgOo8aRMgYwoAIpfZZX_s2k70Si8bv8t6iEqoeX9nzws8oyS0zJBCdY2RHGTZ4aFInrmTd-_WT0vHNC850kstIi8ebMEAVt1vgzZJxc3ZYBJ1QkQd.eyJlbmRwb2ludF9zbHVnIjoib3BlbmFpL2dwdC02LWx1bmEtMjAyNjA5MjJ8YXp1cmUifQ",
+          "format": "azure-openai-responses-v1",
+          "id": "rs_072d0e9b81ec6715016ae84690484c8193bc066ace0aaed915",
+          "index": 0
+         }
+        ]
+       }
+      }
+     ],
+     "usage": {
+      "prompt_tokens": 1444,
+      "completion_tokens": 192,
+      "total_tokens": 1636,
+      "cost": 0.000133365,
+      "is_byok": false,
+      "prompt_tokens_details": {
+       "cached_tokens": 1244,
+       "cache_write_tokens": 197,
+       "audio_tokens": 0,
+       "video_tokens": 0
+      },
+      "cost_details": {
+       "upstream_inference_cost": 0.000133365,
+       "upstream_inference_prompt_cost": 3.7365e-05,
+       "upstream_inference_completions_cost": 9.6e-05
+      },
+      "completion_tokens_details": {
+       "reasoning_tokens": 136,
+       "image_tokens": 0,
+       "audio_tokens": 0
+      }
+     }
+    }
+   },
+   "latency_s": 5.038695
+  }
+ ],
+ "evaluation": {
+  "valid": false,
+  "error": {
+   "error_message": "Model instance for VehicleControlAPI does not match the state with ground truth instance.",
+   "error_type": "multi_turn:instance_state_mismatch",
+   "details": {
+    "differences": {
+     "engine_state": {
+      "model": "stopped",
+      "ground_truth": "running"
+     },
+     "remainingUnlockedDoors": {
+      "model": 4,
+      "ground_truth": 0
+     },
+     "doorStatus": {
+      "model": {
+       "driver": "unlocked",
+       "passenger": "unlocked",
+       "rear_left": "unlocked",
+       "rear_right": "unlocked"
+      },
+      "ground_truth": {
+       "driver": "locked",
+       "passenger": "locked",
+       "rear_left": "locked",
+       "rear_right": "locked"
+      }
+     },
+     "brakePedalStatus": {
+      "model": "released",
+      "ground_truth": "pressed"
+     }
+    },
+    "model_instance_state": {
+     "fuelLevel": 15.5,
+     "batteryVoltage": 12.8,
+     "engine_state": "stopped",
+     "remainingUnlockedDoors": 4,
+     "doorStatus": {
+      "driver": "unlocked",
+      "passenger": "unlocked",
+      "rear_left": "unlocked",
+      "rear_right": "unlocked"
+     },
+     "acTemperature": 22.0,
+     "fanSpeed": 60,
+     "acMode": "auto",
+     "humidityLevel": 45.0,
+     "headLightStatus": "off",
+     "parkingBrakeStatus": "released",
+     "brakePedalStatus": "released",
+     "distanceToNextVehicle": 100.0,
+     "cruiseStatus": "inactive",
+     "destination": "None",
+     "frontLeftTirePressure": 32.0,
+     "frontRightTirePressure": 32.0,
+     "rearLeftTirePressure": 30.0,
+     "rearRightTirePressure": 30.0,
+     "long_context": false
+    },
+    "ground_truth_instance_state": {
+     "fuelLevel": 15.5,
+     "batteryVoltage": 12.8,
+     "engine_state": "running",
+     "remainingUnlockedDoors": 0,
+     "doorStatus": {
+      "driver": "locked",
+      "passenger": "locked",
+      "rear_left": "locked",
+      "rear_right": "locked"
+     },
+     "acTemperature": 22.0,
+     "fanSpeed": 60,
+     "acMode": "auto",
+     "humidityLevel": 45.0,
+     "headLightStatus": "off",
+     "parkingBrakeStatus": "released",
+     "brakePedalStatus": "pressed",
+     "distanceToNextVehicle": 100.0,
+     "cruiseStatus": "inactive",
+     "destination": "None",
+     "frontLeftTirePressure": 32.0,
+     "frontRightTirePressure": 32.0,
+     "rearLeftTirePressure": 30.0,
+     "rearRightTirePressure": 30.0,
+     "long_context": false
+    }
+   },
+   "execution_result": [
+    {
+     "model": [
+      [
+       "{\"lockStatus\": \"unlocked\", \"remainingUnlockedDoors\": 4}"
+      ]
+     ],
+     "ground_truth": [
+      "{\"lockStatus\": \"unlocked\", \"remainingUnlockedDoors\": 4}"
+     ]
+    },
+    {
+     "model": [
+      [
+       "{\"error\": \"All doors must be locked before starting the engine. Here are the unlocked doors: driver, passenger, rear_left, rear_right\"}"
+      ]
+     ],
+     "ground_truth": [
+      "{\"lockStatus\": \"locked\", \"remainingUnlockedDoors\": 0}",
+      "{\"brakePedalStatus\": \"pressed\", \"brakePedalForce\": 1000.0}",
+      "{\"engineState\": \"running\", \"fuelLevel\": 15.5, \"batteryVoltage\": 12.8}"
+     ]
+    }
+   ]
+  }
+ }
+}
