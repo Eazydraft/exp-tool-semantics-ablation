@@ -11,6 +11,7 @@ Everything for one run lives under runs/<run-name>/:
 """
 
 import argparse
+import fcntl
 import json
 import os
 import subprocess
@@ -86,6 +87,8 @@ def generate_one(args, registry: str):
     AblationHandler.trajectory_dir = run_dir / "trajectories"
     # Passed by the parent rather than read from run_config.json, which a concurrent launch into the
     # same run directory may have changed since (that mislabelled the main run's trajectories).
+    if "ABLATION_LAUNCH" not in os.environ:
+        raise SystemExit("generate-one is started by `generate`/`all`, which pass it the launch record; run those instead")
     AblationHandler.run_info = json.loads(os.environ["ABLATION_LAUNCH"])
 
     # Same namespace `bfcl generate` builds from its CLI flags; GPU/vLLM options are unused here.
@@ -218,13 +221,6 @@ def record_launch(args, run_dir: Path):
     A run directory is usually filled by several launches (main study, follow-ups, redos), so the
     config must accumulate rather than describe only the latest one. Returns this launch's record.
     """
-    # ponytail: unlocked read-modify-write; two launches starting in the same second can drop one
-    # record. Add a file lock if launches are ever scripted to start together.
-    path = run_dir / "run_config.json"
-    cfg = json.loads(path.read_text()) if path.exists() else {}
-    launches = cfg.get("launches")
-    if launches is None:  # pre-launch-history format: the file itself describes one launch
-        launches = [{k: v for k, v in cfg.items() if k != "conditions_spec"}] if cfg else []
     bfcl_commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=BFCL_DIR, capture_output=True, text=True).stdout.strip()
     launch = {
         "run_name": args.run_name, "command": args.command, "started_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
@@ -232,14 +228,28 @@ def record_launch(args, run_dir: Path):
         "temperature": args.temperature, "threads": args.threads, "limit": args.limit, "task_ids": args.task_ids,
         "test_category": TEST_CATEGORY, "bfcl_commit": bfcl_commit,
     }
-    launches.append(launch)
-    path.write_text(json.dumps({
-        "run_name": args.run_name,
-        "models": list(dict.fromkeys(m for l in launches for m in l["models"])),
-        "conditions": list(dict.fromkeys(c for l in launches for c in l["conditions"])),
-        "conditions_spec": CONDITIONS,
-        "launches": launches,
-    }, indent=1))
+    path = run_dir / "run_config.json"
+    # Concurrent launches into one run directory would otherwise drop each other's records.
+    with open(run_dir / ".run_config.lock", "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        cfg = json.loads(path.read_text()) if path.exists() else {}
+        if "launches" not in cfg:  # pre-launch-history format: the file itself describes one launch
+            cfg = {"launches": [{k: v for k, v in cfg.items() if k != "conditions_spec"}] if cfg else []}
+        launches = cfg["launches"]
+        old_commits = {l["bfcl_commit"] for l in launches} - {bfcl_commit}
+        if old_commits:
+            raise SystemExit(f"{path} has results from BFCL commit {', '.join(old_commits)}, not {bfcl_commit}; "
+                             "use a new --run-name so one run never mixes BFCL versions")
+        launches.append(launch)
+        # update() keeps any other top-level keys, such as a hand-written provenance note.
+        cfg.update({
+            "run_name": args.run_name,
+            "models": list(dict.fromkeys(m for l in launches for m in l["models"])),
+            "conditions": list(dict.fromkeys(c for l in launches for c in l["conditions"])),
+            "bfcl_commit": bfcl_commit,
+            "conditions_spec": CONDITIONS,
+        })
+        path.write_text(json.dumps(cfg, indent=1))
     return launch
 
 
