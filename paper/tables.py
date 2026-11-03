@@ -281,3 +281,95 @@ if rerun.exists():
               f"\\newcommand{{\\rerunp}}{{{fmt_p(r['p'])}}}"]
     write("rerunmacros", macros)
 print("follow-up tables done")
+
+
+# ---- Reasoning-controlled pairs (runs/main/reasoning) and ToolSandbox (runs/main/toolsandbox) ---------------
+PAIRS = [("openai/gpt-6-luna", "openai/gpt-6-luna-nothink", "on", "off"),
+         ("anthropic/claude-haiku-5.5", "anthropic/claude-haiku-5.5-nothink", "on", "off"),
+         ("google/gemma-4-26b-a4b-it", "google/gemma-4-26b-a4b-it-think", "off", "on")]
+reasoning = ROOT / "runs" / "main" / "reasoning" / "index.json"
+if reasoning.exists():
+    main_rows = json.load(open(ROOT / "runs" / "main" / "index.json"))["trajectories"]
+    var_rows = json.load(open(reasoning))["trajectories"]
+    by = {}
+    for r in main_rows + var_rows:
+        by.setdefault((r["model"], r["condition"]), {})[r["id"]] = r
+    ids = sorted(by[("openai/gpt-6-luna", "D0")])
+
+    def vec(m, c):
+        return [bool(by[(m, c)][i]["valid"]) for i in ids]
+
+    def tok(m):
+        return sum(by[(m, "D0")][i]["reasoning_tokens"] for i in ids) / len(ids)
+
+    rows = []
+    for base, var, lab_base, lab_var in PAIRS:
+        for m, lab, first in [(base, lab_base + "$^{\\ast}$", True), (var, lab_var, False)]:
+            if (m, "D0") not in by:
+                continue
+            succ = [pct(sum(vec(m, c)) / len(ids)) for c in CONDS]
+            d2, d4 = paired(vec(m, "D0"), vec(m, "D2")), paired(vec(m, "D0"), vec(m, "D4"))
+            rows.append(f"{SHORT[base] if first else ''} & {lab} & {tok(m):.0f} & " + " & ".join(succ) +
+                        f" & {d2['diff']:+.1f} [{d2['ci'][0]:.1f}, {d2['ci'][1]:.1f}] & {fmt_p(d2['p'])}"
+                        f" & {d4['diff']:+.1f} [{d4['ci'][0]:.1f}, {d4['ci'][1]:.1f}] & {fmt_p(d4['p'])} \\\\")
+        if base != PAIRS[-1][0]:
+            rows.append(r"\addlinespace")
+    write("reasoning", rows)
+    print("reasoning table:", *rows, sep="\n")
+
+toolsandbox = ROOT / "runs" / "main" / "toolsandbox" / "index.json"
+if toolsandbox.exists():
+    T = json.load(open(toolsandbox))["trajectories"]
+    sims = {}
+    for r in T:
+        sims.setdefault((r["model"], r["condition"]), {})[r["id"]] = r
+    names = sorted(sims[("openai/gpt-6-luna", "D0")])
+    cats = {r["id"]: r["categories"] for r in T}
+
+    def sim(m, c):
+        return [sims[(m, c)][n]["similarity"] for n in names]
+
+    def passed(m, c):
+        return [sims[(m, c)][n]["similarity"] == 1.0 for n in names]
+
+    def signflip(diffs, seed=0, n_perm=10000):
+        """Paired permutation (sign-flip) test on the mean difference."""
+        rng = random.Random(seed); obs = abs(sum(diffs))
+        hits = sum(abs(sum(d if rng.random() < 0.5 else -d for d in diffs)) >= obs - 1e-12 for _ in range(n_perm))
+        return (hits + 1) / (n_perm + 1)
+
+    def boot_ci(diffs, seed=0):
+        rng = random.Random(seed); n = len(diffs)
+        s = sorted(sum(diffs[rng.randrange(n)] for _ in range(n)) / n * 100 for _ in range(2000))
+        return s[50], s[1949]
+
+    rows, prows = [], []
+    for m in MODELS:
+        cells = [f"{sum(sim(m, c)) / len(names) * 100:.1f}" for c in CONDS] + [pct(sum(passed(m, c)) / len(names)) for c in CONDS]
+        rows.append(f"{SHORT[m]} & " + " & ".join(cells) + " \\\\")
+        first = True
+        for c in CONDS[1:]:
+            diffs = [b - a for a, b in zip(sim(m, "D0"), sim(m, c))]
+            lo, hi = boot_ci(diffs); r = paired(passed(m, "D0"), passed(m, c))
+            prows.append(f"{SHORT[m] if first else ''} & {c} & {sum(sim(m, 'D0')) / len(names) * 100:.1f} & {sum(sim(m, c)) / len(names) * 100:.1f}"
+                         f" & {sum(diffs) / len(names) * 100:+.1f} & [{lo:.1f}, {hi:.1f}] & {fmt_p(signflip(diffs))}"
+                         f" & {pct(sum(passed(m, 'D0')) / len(names))} & {pct(sum(passed(m, c)) / len(names))} & {r['a_only']}/{r['b_only']} & {fmt_p(r['p'])} \\\\")
+            first = False
+        if m != MODELS[-1]:
+            prows.append(r"\addlinespace")
+    write("toolsandbox", rows)
+    write("toolsandboxpaired", prows)
+    # category breakdown: D0 and D2 mean similarity per category
+    CATS = [("SINGLE_TOOL_CALL", "single tool call"), ("MULTIPLE_TOOL_CALL", "multiple tool calls"), ("SINGLE_USER_TURN", "single user turn"),
+            ("MULTIPLE_USER_TURN", "multiple user turns"), ("STATE_DEPENDENCY", "state dependency"), ("CANONICALIZATION", "canonicalization"),
+            ("INSUFFICIENT_INFORMATION", "insufficient information")]
+    crows = []
+    for key, label in CATS:
+        sub = [n for n in names if key in cats[n]]
+        cells = []
+        for m in MODELS:
+            for c in ["D0", "D2"]:
+                cells.append(f"{sum(sims[(m, c)][n]['similarity'] for n in sub) / len(sub) * 100:.1f}")
+        crows.append(f"{label} & {len(sub)} & " + " & ".join(cells) + " \\\\")
+    write("toolsandboxcats", crows)
+    print("toolsandbox tables:", *rows, *prows, sep="\n")

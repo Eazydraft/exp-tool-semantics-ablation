@@ -28,6 +28,7 @@ from openai import APIConnectionError, InternalServerError, RateLimitError
 from tenacity import stop_after_attempt
 
 from ablation.conditions import apply_condition, restore_call, split_registry_name
+from ablation.models import MODELS
 
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 REQUEST_TIMEOUT_S = 180
@@ -47,6 +48,7 @@ class AblationHandler(OpenAICompletionsHandler):
         self._tls = threading.local()
         super().__init__(model_name, temperature, registry_name, is_fc_model, **kwargs)
         self.model_id, self.condition = split_registry_name(registry_name)
+        self.extra_body = MODELS[self.model_id].get("extra_body", {})  # e.g. reasoning on/off for the controlled pairs
 
     # ---- OpenRouter client with raw HTTP capture -------------------------------
 
@@ -99,7 +101,7 @@ class AblationHandler(OpenAICompletionsHandler):
     )
     def generate_with_backoff(self, **kwargs):
         # Ask OpenRouter to report cost and token details in `usage`.
-        kwargs["extra_body"] = {"usage": {"include": True}}
+        kwargs["extra_body"] = {"usage": {"include": True}, **self.extra_body}
         start = time.time()
         api_response = self.client.chat.completions.create(**kwargs)
         return api_response, time.time() - start
@@ -163,6 +165,7 @@ class AblationHandler(OpenAICompletionsHandler):
             "model": self.model_id,
             "condition": self.condition,
             "registry_name": self.registry_name,
+            "extra_body": self.extra_body,
             "run": self.run_info,
             "started_at": started_at,
             "finished_at": now_iso(),

@@ -1,0 +1,5619 @@
+{
+ "id": "remove_contact_by_phone_multiple_user_turn_alt",
+ "benchmark": "toolsandbox",
+ "model": "openai/gpt-6-luna",
+ "condition": "D0",
+ "user_model": "openai/gpt-4o-2024-05-13",
+ "extra_body": {},
+ "categories": [
+  "MULTIPLE_TOOL_CALL",
+  "MULTIPLE_USER_TURN",
+  "ALL_TOOLS_AVAILABLE"
+ ],
+ "started_at": "2026-11-03T06:55:28.986592+00:00",
+ "finished_at": "2026-11-03T06:55:43.977087+00:00",
+ "wall_time_s": 14.99050498008728,
+ "totals": {
+  "api_calls": 5,
+  "prompt_tokens": 10230,
+  "completion_tokens": 134,
+  "reasoning_tokens": 27,
+  "cost_usd": 0.000195605,
+  "latency_s": 9.932128
+ },
+ "user_totals": {
+  "api_calls": 3,
+  "prompt_tokens": 4078,
+  "completion_tokens": 21,
+  "reasoning_tokens": 0,
+  "cost_usd": 0.020705,
+  "latency_s": 4.603126
+ },
+ "error": null,
+ "result": {
+  "similarity": 0.9242679569317324,
+  "milestone_similarity": 0.9242679569317324,
+  "minefield_similarity": 0,
+  "turn_count": 9,
+  "milestone_mapping": {
+   "0": [
+    25,
+    1.0
+   ],
+   "1": [
+    29,
+    1.0
+   ],
+   "2": [
+    30,
+    0.7728038707951971
+   ]
+  },
+  "minefield_mapping": {}
+ },
+ "tools_sent": [
+  {
+   "type": "function",
+   "function": {
+    "name": "add_contact",
+    "description": "Add a new contact person to contact database. Entries with identical information are allowed,\nand will be assigned different person_ids.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "name": {
+       "type": "string",
+       "description": "Name of contact person"
+      },
+      "phone_number": {
+       "type": "string",
+       "description": "Phone number of contact person"
+      },
+      "relationship": {
+       "type": "string",
+       "description": "Optional, relationship between user and this contact"
+      },
+      "is_self": {
+       "type": "boolean",
+       "description": "Optional. Defaults to False. Should be set to True if the contact corresponds to the current user."
+      }
+     },
+     "required": [
+      "name",
+      "phone_number"
+     ]
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "modify_contact",
+    "description": "Modify a contact entry with new information provided",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "person_id": {
+       "type": "string",
+       "description": "String unique identifier for the contact person"
+      },
+      "name": {
+       "type": "string",
+       "description": "New name for the person"
+      },
+      "phone_number": {
+       "type": "string",
+       "description": "New phone number for the person"
+      },
+      "relationship": {
+       "type": "string",
+       "description": "New relationship for the person"
+      },
+      "is_self": {
+       "type": "boolean",
+       "description": "Optional. Defaults to False. Should be set to True if the contact corresponds to the current user."
+      }
+     },
+     "required": [
+      "person_id"
+     ]
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "remove_contact",
+    "description": "Remove an existing contact person to contact database.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "person_id": {
+       "type": "string",
+       "description": "String format unique identifier of the person to be deleted"
+      }
+     },
+     "required": [
+      "person_id"
+     ]
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "search_contacts",
+    "description": "Search for a contact person based on provided arguments Each field has a search criteria of either\n1. Exact value matching\n2. Fuzzy string matching with a predefined threshold\nSearch results contains all contact entries that matched all criteria",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "person_id": {
+       "type": "string",
+       "description": "String format unique identifier for the contact person, will be exact matched"
+      },
+      "name": {
+       "type": "string",
+       "description": "Name of contact person, will be fuzzy matched"
+      },
+      "phone_number": {
+       "type": "string",
+       "description": "Phone number of contact person, will be exact matched"
+      },
+      "relationship": {
+       "type": "string",
+       "description": "Relationship between user and this contact, will be fuzzy matched"
+      },
+      "is_self": {
+       "type": "boolean",
+       "description": "If the requested contact corresponds to the current user. Will be exact matched"
+      }
+     },
+     "required": []
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "get_cellular_service_status",
+    "description": "Request cellular service status",
+    "parameters": {
+     "type": "object",
+     "properties": {},
+     "required": []
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "search_messages",
+    "description": "Search for a message based on provided arguments Each field has a search criteria of one of the below\n1. Exact value matching\n2. Fuzzy string matching with a predefined threshold\n3. Range matching timestamp with upperbound or lowerbound\nSearch results contains all contact entries that matched all criteria",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "message_id": {
+       "type": "string",
+       "description": "String format unique identifier for message, will be exact matched"
+      },
+      "sender_person_id": {
+       "type": "string",
+       "description": "String format unique identifier for the sender, will be exact matched"
+      },
+      "sender_phone_number": {
+       "type": "string",
+       "description": "Phone number for the sender, will be exact matched"
+      },
+      "recipient_person_id": {
+       "type": "string",
+       "description": "String format unique identifier for the recipient, will be exact matched"
+      },
+      "recipient_phone_number": {
+       "type": "string",
+       "description": "Phone number for the recipient, will be exact matched"
+      },
+      "content": {
+       "type": "string",
+       "description": "Message content, will be fuzzy matched"
+      },
+      "creation_timestamp_lowerbound": {
+       "type": "number",
+       "description": "Lowerbound of the POSIX timestamp of the time the message is created."
+      },
+      "creation_timestamp_upperbound": {
+       "type": "number",
+       "description": "Upperbound of the POSIX timestamp of the time the message is created."
+      }
+     },
+     "required": []
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "send_message_with_phone_number",
+    "description": "Send a message to a recipient using phone_number",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "phone_number": {
+       "type": "string",
+       "description": "String format phone number to send the message to"
+      },
+      "content": {
+       "type": "string",
+       "description": "Message payload text"
+      }
+     },
+     "required": [
+      "phone_number",
+      "content"
+     ]
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "get_current_location",
+    "description": "Request current location latitude and longitude",
+    "parameters": {
+     "type": "object",
+     "properties": {},
+     "required": []
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "get_location_service_status",
+    "description": "Request location service status",
+    "parameters": {
+     "type": "object",
+     "properties": {},
+     "required": []
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "get_wifi_status",
+    "description": "Request wifi status",
+    "parameters": {
+     "type": "object",
+     "properties": {},
+     "required": []
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "add_reminder",
+    "description": "Add a reminder",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "content": {
+       "type": "string",
+       "description": "Content of the reminder"
+      },
+      "reminder_timestamp": {
+       "type": "number",
+       "description": "When the user wants to be reminded. Expressed in POSIX timestamp"
+      },
+      "latitude": {
+       "type": "number",
+       "description": "Optional. Latitude of the location associated with this reminder"
+      },
+      "longitude": {
+       "type": "number",
+       "description": "Optional. Longitude of the location associated with this reminder"
+      }
+     },
+     "required": [
+      "content",
+      "reminder_timestamp"
+     ]
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "modify_reminder",
+    "description": "Modify a reminder with new information provided. Creation timestamp is updated automatically.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "reminder_id": {
+       "type": "string",
+       "description": "String format unique identifier of the reminder to be modified"
+      },
+      "content": {
+       "type": "string",
+       "description": "New content"
+      },
+      "reminder_timestamp": {
+       "type": "number",
+       "description": "When the user wants to be reminded. Expressed in POSIX timestamp"
+      },
+      "latitude": {
+       "type": "number",
+       "description": "Optional. Latitude of the location associated with this reminder"
+      },
+      "longitude": {
+       "type": "number",
+       "description": "Optional. Longitude of the location associated with this reminder"
+      }
+     },
+     "required": [
+      "reminder_id"
+     ]
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "remove_reminder",
+    "description": "Remove a reminder given its unique identifier",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "reminder_id": {
+       "type": "string",
+       "description": "String format unique identifier of the reminder to be removed"
+      }
+     },
+     "required": [
+      "reminder_id"
+     ]
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "search_reminder",
+    "description": "Search for a reminder based on provided arguments Each field has a search criteria of either\n1. Exact value matching\n2. Fuzzy string matching with a predefined threshold\n3. Range matching timestamp with upperbound or lowerbound\nSearch results contains all reminder entries that matched all criteria",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "reminder_id": {
+       "type": "string",
+       "description": "String format unique identifier for the reminder person, will be exact matched"
+      },
+      "content": {
+       "type": "string",
+       "description": "Content of the reminder, will be fuzzy matched"
+      },
+      "creation_timestamp_lowerbound": {
+       "type": "number",
+       "description": "Lowerbound of the POSIX timestamp of the time the reminder is created."
+      },
+      "creation_timestamp_upperbound": {
+       "type": "number",
+       "description": "Upperbound of the POSIX timestamp of the time the reminder is created."
+      },
+      "reminder_timestamp_lowerbound": {
+       "type": "number",
+       "description": "Lowerbound of the POSIX timestamp of the time the reminder should be reminded."
+      },
+      "reminder_timestamp_upperbound": {
+       "type": "number",
+       "description": "Upperbound of the POSIX timestamp of the time the reminder should be reminded."
+      },
+      "latitude": {
+       "type": "number",
+       "description": "Latitude of the location associated with the reminder. Will be exact matched."
+      },
+      "longitude": {
+       "type": "number",
+       "description": "Longitude of the location associated with the reminder. Will be exact matched."
+      }
+     },
+     "required": []
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "get_low_battery_mode_status",
+    "description": "Request low battery mode status",
+    "parameters": {
+     "type": "object",
+     "properties": {},
+     "required": []
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "set_cellular_service_status",
+    "description": "Enable / Disable cellular service",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "on": {
+       "type": "boolean",
+       "description": "If we want to turn on cellular service"
+      }
+     },
+     "required": [
+      "on"
+     ]
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "set_location_service_status",
+    "description": "Enable / Disable location service",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "on": {
+       "type": "boolean",
+       "description": "If we want to turn on location service"
+      }
+     },
+     "required": [
+      "on"
+     ]
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "set_low_battery_mode_status",
+    "description": "Enable / Disable low battery mode",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "on": {
+       "type": "boolean",
+       "description": "If we want to turn on low battery mode"
+      }
+     },
+     "required": [
+      "on"
+     ]
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "set_wifi_status",
+    "description": "Enable / Disable wifi",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "on": {
+       "type": "boolean",
+       "description": "If we want to turn on wifi"
+      }
+     },
+     "required": [
+      "on"
+     ]
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "calculate_lat_lon_distance",
+    "description": "Calculate the distance between 2 pairs of latitude and longitude.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "latitude_0": {
+       "type": "number",
+       "description": "First Latitude."
+      },
+      "longitude_0": {
+       "type": "number",
+       "description": "First Longitude."
+      },
+      "latitude_1": {
+       "type": "number",
+       "description": "Second Latitude."
+      },
+      "longitude_1": {
+       "type": "number",
+       "description": "Second Longitude."
+      }
+     },
+     "required": [
+      "latitude_0",
+      "longitude_0",
+      "latitude_1",
+      "longitude_1"
+     ]
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "datetime_info_to_timestamp",
+    "description": "Convert  date time information to POSIX timestamp",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "year": {
+       "type": "integer",
+       "description": "Year of timestamp"
+      },
+      "month": {
+       "type": "integer",
+       "description": "Month of timestamp"
+      },
+      "day": {
+       "type": "integer",
+       "description": "Day of timestamp"
+      },
+      "hour": {
+       "type": "integer",
+       "description": "Hour of timestamp in 24hr format"
+      },
+      "minute": {
+       "type": "integer",
+       "description": "Minute of timestamp"
+      },
+      "second": {
+       "type": "integer",
+       "description": "Second of timestamp"
+      }
+     },
+     "required": [
+      "year",
+      "month",
+      "day",
+      "hour",
+      "minute",
+      "second"
+     ]
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "get_current_timestamp",
+    "description": "Get current POSIX timestamp",
+    "parameters": {
+     "type": "object",
+     "properties": {},
+     "required": []
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "search_holiday",
+    "description": "Search for a holiday by name in the US. Canonicalize return value into corresponding POSIX timestamp.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "holiday_name": {
+       "type": "string",
+       "description": "Name of the holiday in surface form string"
+      },
+      "year": {
+       "type": "integer",
+       "description": "Optional. Year to search the holiday in. When not provided defaults to current year."
+      }
+     },
+     "required": [
+      "holiday_name"
+     ]
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "seconds_to_hours_minutes_seconds",
+    "description": "Convert total number of seconds past 0:00 into hours, minutes and seconds",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "seconds": {
+       "type": "number",
+       "description": "Number of seconds past 0:00"
+      }
+     },
+     "required": [
+      "seconds"
+     ]
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "shift_timestamp",
+    "description": "Shifts a POSIX timestamp by provided deltas. Delta can be positive or negative.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "timestamp": {
+       "type": "number",
+       "description": "POSIX timestamp to be shifted"
+      },
+      "weeks": {
+       "type": "integer",
+       "description": "Number of weeks to add or subtract"
+      },
+      "days": {
+       "type": "integer",
+       "description": "Number of days to add or subtract"
+      },
+      "hours": {
+       "type": "integer",
+       "description": "Number of hours to add or subtract"
+      },
+      "minutes": {
+       "type": "integer",
+       "description": "Number of minutes to add or subtract"
+      },
+      "seconds": {
+       "type": "integer",
+       "description": "Number of seconds to add or subtract"
+      }
+     },
+     "required": [
+      "timestamp"
+     ]
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "timestamp_diff",
+    "description": "Calculates the difference between two timestamps, timestamp_1 - timestamp_0, return the difference\nrepresented in days and seconds",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "timestamp_0": {
+       "type": "number",
+       "description": "Timestamp to subtract"
+      },
+      "timestamp_1": {
+       "type": "number",
+       "description": "Timestamp to subtract from"
+      }
+     },
+     "required": [
+      "timestamp_0",
+      "timestamp_1"
+     ]
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "timestamp_to_datetime_info",
+    "description": "Convert POSIX timestamp to a dictionary of date time information, including\n    [\"year\", \"month\", \"day\", \"hour\", \"minute\", \"second\", \"isoweekday\"]\n    isoweekday ranges from [1, 7]",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "timestamp": {
+       "type": "number",
+       "description": "Float representing POSIX timestamp"
+      }
+     },
+     "required": [
+      "timestamp"
+     ]
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "unit_conversion",
+    "description": "Convert a certain amount from one unit to another You can use common english names to represent the from and to units",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "amount": {
+       "type": "number",
+       "description": "Float point amount in from_unit"
+      },
+      "from_unit": {
+       "type": "string",
+       "description": "Unit to convert from. For example celsius"
+      },
+      "to_unit": {
+       "type": "string",
+       "description": "Unit to convert to. For example fahrenheit"
+      }
+     },
+     "required": [
+      "amount",
+      "from_unit",
+      "to_unit"
+     ]
+    }
+   }
+  }
+ ],
+ "name_maps": {
+  "tool": {},
+  "param": {}
+ },
+ "api_calls": [
+  {
+   "request": {
+    "sent_at": "2026-11-03T06:55:28.999335+00:00",
+    "method": "POST",
+    "url": "https://openrouter.ai/api/v1/chat/completions",
+    "headers": {
+     "host": "openrouter.ai",
+     "accept-encoding": "gzip, deflate",
+     "connection": "keep-alive",
+     "accept": "application/json",
+     "content-type": "application/json",
+     "user-agent": "OpenAI/Python 1.17.0",
+     "x-stainless-lang": "python",
+     "x-stainless-package-version": "1.17.0",
+     "x-stainless-os": "Linux",
+     "x-stainless-arch": "x64",
+     "x-stainless-runtime": "CPython",
+     "x-stainless-runtime-version": "3.12.3",
+     "authorization": "<redacted>",
+     "x-stainless-async": "false",
+     "content-length": "13853"
+    },
+    "body": {
+     "messages": [
+      {
+       "role": "system",
+       "content": "Don't make assumptions about what values to plug into functions. Ask for clarification if a user request is ambiguous."
+      },
+      {
+       "role": "user",
+       "content": "Who's +12453344098 in my contact?"
+      }
+     ],
+     "model": "openai/gpt-6-luna",
+     "temperature": 0.001,
+     "tools": [
+      {
+       "type": "function",
+       "function": {
+        "name": "add_contact",
+        "description": "Add a new contact person to contact database. Entries with identical information are allowed,\nand will be assigned different person_ids.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "name": {
+           "type": "string",
+           "description": "Name of contact person"
+          },
+          "phone_number": {
+           "type": "string",
+           "description": "Phone number of contact person"
+          },
+          "relationship": {
+           "type": "string",
+           "description": "Optional, relationship between user and this contact"
+          },
+          "is_self": {
+           "type": "boolean",
+           "description": "Optional. Defaults to False. Should be set to True if the contact corresponds to the current user."
+          }
+         },
+         "required": [
+          "name",
+          "phone_number"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "modify_contact",
+        "description": "Modify a contact entry with new information provided",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "person_id": {
+           "type": "string",
+           "description": "String unique identifier for the contact person"
+          },
+          "name": {
+           "type": "string",
+           "description": "New name for the person"
+          },
+          "phone_number": {
+           "type": "string",
+           "description": "New phone number for the person"
+          },
+          "relationship": {
+           "type": "string",
+           "description": "New relationship for the person"
+          },
+          "is_self": {
+           "type": "boolean",
+           "description": "Optional. Defaults to False. Should be set to True if the contact corresponds to the current user."
+          }
+         },
+         "required": [
+          "person_id"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "remove_contact",
+        "description": "Remove an existing contact person to contact database.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "person_id": {
+           "type": "string",
+           "description": "String format unique identifier of the person to be deleted"
+          }
+         },
+         "required": [
+          "person_id"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "search_contacts",
+        "description": "Search for a contact person based on provided arguments Each field has a search criteria of either\n1. Exact value matching\n2. Fuzzy string matching with a predefined threshold\nSearch results contains all contact entries that matched all criteria",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "person_id": {
+           "type": "string",
+           "description": "String format unique identifier for the contact person, will be exact matched"
+          },
+          "name": {
+           "type": "string",
+           "description": "Name of contact person, will be fuzzy matched"
+          },
+          "phone_number": {
+           "type": "string",
+           "description": "Phone number of contact person, will be exact matched"
+          },
+          "relationship": {
+           "type": "string",
+           "description": "Relationship between user and this contact, will be fuzzy matched"
+          },
+          "is_self": {
+           "type": "boolean",
+           "description": "If the requested contact corresponds to the current user. Will be exact matched"
+          }
+         },
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_cellular_service_status",
+        "description": "Request cellular service status",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "search_messages",
+        "description": "Search for a message based on provided arguments Each field has a search criteria of one of the below\n1. Exact value matching\n2. Fuzzy string matching with a predefined threshold\n3. Range matching timestamp with upperbound or lowerbound\nSearch results contains all contact entries that matched all criteria",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "message_id": {
+           "type": "string",
+           "description": "String format unique identifier for message, will be exact matched"
+          },
+          "sender_person_id": {
+           "type": "string",
+           "description": "String format unique identifier for the sender, will be exact matched"
+          },
+          "sender_phone_number": {
+           "type": "string",
+           "description": "Phone number for the sender, will be exact matched"
+          },
+          "recipient_person_id": {
+           "type": "string",
+           "description": "String format unique identifier for the recipient, will be exact matched"
+          },
+          "recipient_phone_number": {
+           "type": "string",
+           "description": "Phone number for the recipient, will be exact matched"
+          },
+          "content": {
+           "type": "string",
+           "description": "Message content, will be fuzzy matched"
+          },
+          "creation_timestamp_lowerbound": {
+           "type": "number",
+           "description": "Lowerbound of the POSIX timestamp of the time the message is created."
+          },
+          "creation_timestamp_upperbound": {
+           "type": "number",
+           "description": "Upperbound of the POSIX timestamp of the time the message is created."
+          }
+         },
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "send_message_with_phone_number",
+        "description": "Send a message to a recipient using phone_number",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "phone_number": {
+           "type": "string",
+           "description": "String format phone number to send the message to"
+          },
+          "content": {
+           "type": "string",
+           "description": "Message payload text"
+          }
+         },
+         "required": [
+          "phone_number",
+          "content"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_current_location",
+        "description": "Request current location latitude and longitude",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_location_service_status",
+        "description": "Request location service status",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_wifi_status",
+        "description": "Request wifi status",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "add_reminder",
+        "description": "Add a reminder",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "content": {
+           "type": "string",
+           "description": "Content of the reminder"
+          },
+          "reminder_timestamp": {
+           "type": "number",
+           "description": "When the user wants to be reminded. Expressed in POSIX timestamp"
+          },
+          "latitude": {
+           "type": "number",
+           "description": "Optional. Latitude of the location associated with this reminder"
+          },
+          "longitude": {
+           "type": "number",
+           "description": "Optional. Longitude of the location associated with this reminder"
+          }
+         },
+         "required": [
+          "content",
+          "reminder_timestamp"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "modify_reminder",
+        "description": "Modify a reminder with new information provided. Creation timestamp is updated automatically.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "reminder_id": {
+           "type": "string",
+           "description": "String format unique identifier of the reminder to be modified"
+          },
+          "content": {
+           "type": "string",
+           "description": "New content"
+          },
+          "reminder_timestamp": {
+           "type": "number",
+           "description": "When the user wants to be reminded. Expressed in POSIX timestamp"
+          },
+          "latitude": {
+           "type": "number",
+           "description": "Optional. Latitude of the location associated with this reminder"
+          },
+          "longitude": {
+           "type": "number",
+           "description": "Optional. Longitude of the location associated with this reminder"
+          }
+         },
+         "required": [
+          "reminder_id"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "remove_reminder",
+        "description": "Remove a reminder given its unique identifier",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "reminder_id": {
+           "type": "string",
+           "description": "String format unique identifier of the reminder to be removed"
+          }
+         },
+         "required": [
+          "reminder_id"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "search_reminder",
+        "description": "Search for a reminder based on provided arguments Each field has a search criteria of either\n1. Exact value matching\n2. Fuzzy string matching with a predefined threshold\n3. Range matching timestamp with upperbound or lowerbound\nSearch results contains all reminder entries that matched all criteria",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "reminder_id": {
+           "type": "string",
+           "description": "String format unique identifier for the reminder person, will be exact matched"
+          },
+          "content": {
+           "type": "string",
+           "description": "Content of the reminder, will be fuzzy matched"
+          },
+          "creation_timestamp_lowerbound": {
+           "type": "number",
+           "description": "Lowerbound of the POSIX timestamp of the time the reminder is created."
+          },
+          "creation_timestamp_upperbound": {
+           "type": "number",
+           "description": "Upperbound of the POSIX timestamp of the time the reminder is created."
+          },
+          "reminder_timestamp_lowerbound": {
+           "type": "number",
+           "description": "Lowerbound of the POSIX timestamp of the time the reminder should be reminded."
+          },
+          "reminder_timestamp_upperbound": {
+           "type": "number",
+           "description": "Upperbound of the POSIX timestamp of the time the reminder should be reminded."
+          },
+          "latitude": {
+           "type": "number",
+           "description": "Latitude of the location associated with the reminder. Will be exact matched."
+          },
+          "longitude": {
+           "type": "number",
+           "description": "Longitude of the location associated with the reminder. Will be exact matched."
+          }
+         },
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_low_battery_mode_status",
+        "description": "Request low battery mode status",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_cellular_service_status",
+        "description": "Enable / Disable cellular service",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "on": {
+           "type": "boolean",
+           "description": "If we want to turn on cellular service"
+          }
+         },
+         "required": [
+          "on"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_location_service_status",
+        "description": "Enable / Disable location service",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "on": {
+           "type": "boolean",
+           "description": "If we want to turn on location service"
+          }
+         },
+         "required": [
+          "on"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_low_battery_mode_status",
+        "description": "Enable / Disable low battery mode",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "on": {
+           "type": "boolean",
+           "description": "If we want to turn on low battery mode"
+          }
+         },
+         "required": [
+          "on"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_wifi_status",
+        "description": "Enable / Disable wifi",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "on": {
+           "type": "boolean",
+           "description": "If we want to turn on wifi"
+          }
+         },
+         "required": [
+          "on"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "calculate_lat_lon_distance",
+        "description": "Calculate the distance between 2 pairs of latitude and longitude.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "latitude_0": {
+           "type": "number",
+           "description": "First Latitude."
+          },
+          "longitude_0": {
+           "type": "number",
+           "description": "First Longitude."
+          },
+          "latitude_1": {
+           "type": "number",
+           "description": "Second Latitude."
+          },
+          "longitude_1": {
+           "type": "number",
+           "description": "Second Longitude."
+          }
+         },
+         "required": [
+          "latitude_0",
+          "longitude_0",
+          "latitude_1",
+          "longitude_1"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "datetime_info_to_timestamp",
+        "description": "Convert  date time information to POSIX timestamp",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "year": {
+           "type": "integer",
+           "description": "Year of timestamp"
+          },
+          "month": {
+           "type": "integer",
+           "description": "Month of timestamp"
+          },
+          "day": {
+           "type": "integer",
+           "description": "Day of timestamp"
+          },
+          "hour": {
+           "type": "integer",
+           "description": "Hour of timestamp in 24hr format"
+          },
+          "minute": {
+           "type": "integer",
+           "description": "Minute of timestamp"
+          },
+          "second": {
+           "type": "integer",
+           "description": "Second of timestamp"
+          }
+         },
+         "required": [
+          "year",
+          "month",
+          "day",
+          "hour",
+          "minute",
+          "second"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_current_timestamp",
+        "description": "Get current POSIX timestamp",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "search_holiday",
+        "description": "Search for a holiday by name in the US. Canonicalize return value into corresponding POSIX timestamp.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "holiday_name": {
+           "type": "string",
+           "description": "Name of the holiday in surface form string"
+          },
+          "year": {
+           "type": "integer",
+           "description": "Optional. Year to search the holiday in. When not provided defaults to current year."
+          }
+         },
+         "required": [
+          "holiday_name"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "seconds_to_hours_minutes_seconds",
+        "description": "Convert total number of seconds past 0:00 into hours, minutes and seconds",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "seconds": {
+           "type": "number",
+           "description": "Number of seconds past 0:00"
+          }
+         },
+         "required": [
+          "seconds"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "shift_timestamp",
+        "description": "Shifts a POSIX timestamp by provided deltas. Delta can be positive or negative.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "timestamp": {
+           "type": "number",
+           "description": "POSIX timestamp to be shifted"
+          },
+          "weeks": {
+           "type": "integer",
+           "description": "Number of weeks to add or subtract"
+          },
+          "days": {
+           "type": "integer",
+           "description": "Number of days to add or subtract"
+          },
+          "hours": {
+           "type": "integer",
+           "description": "Number of hours to add or subtract"
+          },
+          "minutes": {
+           "type": "integer",
+           "description": "Number of minutes to add or subtract"
+          },
+          "seconds": {
+           "type": "integer",
+           "description": "Number of seconds to add or subtract"
+          }
+         },
+         "required": [
+          "timestamp"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "timestamp_diff",
+        "description": "Calculates the difference between two timestamps, timestamp_1 - timestamp_0, return the difference\nrepresented in days and seconds",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "timestamp_0": {
+           "type": "number",
+           "description": "Timestamp to subtract"
+          },
+          "timestamp_1": {
+           "type": "number",
+           "description": "Timestamp to subtract from"
+          }
+         },
+         "required": [
+          "timestamp_0",
+          "timestamp_1"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "timestamp_to_datetime_info",
+        "description": "Convert POSIX timestamp to a dictionary of date time information, including\n    [\"year\", \"month\", \"day\", \"hour\", \"minute\", \"second\", \"isoweekday\"]\n    isoweekday ranges from [1, 7]",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "timestamp": {
+           "type": "number",
+           "description": "Float representing POSIX timestamp"
+          }
+         },
+         "required": [
+          "timestamp"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "unit_conversion",
+        "description": "Convert a certain amount from one unit to another You can use common english names to represent the from and to units",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "amount": {
+           "type": "number",
+           "description": "Float point amount in from_unit"
+          },
+          "from_unit": {
+           "type": "string",
+           "description": "Unit to convert from. For example celsius"
+          },
+          "to_unit": {
+           "type": "string",
+           "description": "Unit to convert to. For example fahrenheit"
+          }
+         },
+         "required": [
+          "amount",
+          "from_unit",
+          "to_unit"
+         ]
+        }
+       }
+      }
+     ],
+     "usage": {
+      "include": true
+     }
+    }
+   },
+   "response": {
+    "received_at": "2026-11-03T06:55:30.499888+00:00",
+    "status_code": 200,
+    "headers": {
+     "date": "Tue, 03 Nov 2026 06:55:30 GMT",
+     "content-type": "application/json",
+     "transfer-encoding": "chunked",
+     "connection": "keep-alive",
+     "access-control-allow-origin": "*",
+     "x-generation-id": "gen-1793688929-OWQCjthWaVxY6kNh9Vp1",
+     "access-control-expose-headers": "X-Generation-Id,X-Provider-Name,request-id,cf-ray",
+     "set-cookie": "__cf_bm=CTN8PSKGxF3yJXtFdrAdZuRhxqS0w.GRNmjoJ.hBoA8-1793688929.206714-1.0.1.1-JMO0vXE6LGb1.5syEIBWOcFHxB8sFCqIb_YXVpetuJBRb8uu7BaBm7oV5twJ_CTYvAA8H7GL9rd3D8e1yjR0_wsU0iyRmnvZfZYVdUvPVhho_qDuehgmwMmrDy0_5_zr; HttpOnly; SameSite=None; Secure; Path=/; Domain=openrouter.ai; Expires=Tue, 03 Nov 2026 07:25:30 GMT",
+     "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+     "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+     "x-content-type-options": "nosniff",
+     "content-encoding": "gzip",
+     "server": "cloudflare",
+     "cf-ray": "a549793f8862a80a-DEL",
+     "alt-svc": "h3=\":443\"; ma=86400"
+    },
+    "body": {
+     "id": "gen-1793688929-OWQCjthWaVxY6kNh9Vp1",
+     "object": "chat.completion",
+     "created": 1793688929,
+     "model": "openai/gpt-6-luna",
+     "provider": "Azure",
+     "system_fingerprint": null,
+     "service_tier": "default",
+     "choices": [
+      {
+       "index": 0,
+       "logprobs": null,
+       "finish_reason": "tool_calls",
+       "native_finish_reason": "completed",
+       "message": {
+        "role": "assistant",
+        "content": null,
+        "refusal": null,
+        "reasoning": null,
+        "tool_calls": [
+         {
+          "type": "function",
+          "index": 0,
+          "id": "call_IhRM39kiyZntqSobWuhokSJ4",
+          "function": {
+           "name": "search_contacts",
+           "arguments": "{\"phone_number\":\"+12453344098\"}"
+          }
+         }
+        ]
+       }
+      }
+     ],
+     "usage": {
+      "prompt_tokens": 1925,
+      "completion_tokens": 22,
+      "total_tokens": 1947,
+      "cost": 3.213e-05,
+      "is_byok": false,
+      "prompt_tokens_details": {
+       "cached_tokens": 1908,
+       "cache_write_tokens": 14,
+       "audio_tokens": 0,
+       "video_tokens": 0
+      },
+      "cost_details": {
+       "upstream_inference_cost": 3.213e-05,
+       "upstream_inference_prompt_cost": 2.113e-05,
+       "upstream_inference_completions_cost": 1.1e-05
+      },
+      "completion_tokens_details": {
+       "reasoning_tokens": 0,
+       "image_tokens": 0,
+       "audio_tokens": 0
+      }
+     }
+    }
+   },
+   "latency_s": 1.500441
+  },
+  {
+   "request": {
+    "sent_at": "2026-11-03T06:55:30.530907+00:00",
+    "method": "POST",
+    "url": "https://openrouter.ai/api/v1/chat/completions",
+    "headers": {
+     "host": "openrouter.ai",
+     "accept-encoding": "gzip, deflate",
+     "connection": "keep-alive",
+     "accept": "application/json",
+     "content-type": "application/json",
+     "user-agent": "OpenAI/Python 1.17.0",
+     "x-stainless-lang": "python",
+     "x-stainless-package-version": "1.17.0",
+     "x-stainless-os": "Linux",
+     "x-stainless-arch": "x64",
+     "x-stainless-runtime": "CPython",
+     "x-stainless-runtime-version": "3.12.3",
+     "authorization": "<redacted>",
+     "x-stainless-async": "false",
+     "cookie": "__cf_bm=CTN8PSKGxF3yJXtFdrAdZuRhxqS0w.GRNmjoJ.hBoA8-1793688929.206714-1.0.1.1-JMO0vXE6LGb1.5syEIBWOcFHxB8sFCqIb_YXVpetuJBRb8uu7BaBm7oV5twJ_CTYvAA8H7GL9rd3D8e1yjR0_wsU0iyRmnvZfZYVdUvPVhho_qDuehgmwMmrDy0_5_zr",
+     "content-length": "14309"
+    },
+    "body": {
+     "messages": [
+      {
+       "role": "system",
+       "content": "Don't make assumptions about what values to plug into functions. Ask for clarification if a user request is ambiguous."
+      },
+      {
+       "role": "user",
+       "content": "Who's +12453344098 in my contact?"
+      },
+      {
+       "role": "assistant",
+       "content": "",
+       "tool_calls": [
+        {
+         "id": "call_IhRM39kiyZntqSobWuhokSJ4",
+         "function": {
+          "name": "search_contacts",
+          "arguments": "{\"phone_number\":\"+12453344098\"}"
+         },
+         "type": "function"
+        }
+       ]
+      },
+      {
+       "tool_call_id": "call_IhRM39kiyZntqSobWuhokSJ4",
+       "role": "tool",
+       "name": "search_contacts",
+       "content": "[{'person_id': '9e137f06-916a-5310-8174-cf0b7e9f7054', 'name': 'Fredrik Thordendal', 'phone_number': '+12453344098', 'relationship': 'friend', 'is_self': False}]"
+      }
+     ],
+     "model": "openai/gpt-6-luna",
+     "temperature": 0.001,
+     "tools": [
+      {
+       "type": "function",
+       "function": {
+        "name": "add_contact",
+        "description": "Add a new contact person to contact database. Entries with identical information are allowed,\nand will be assigned different person_ids.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "name": {
+           "type": "string",
+           "description": "Name of contact person"
+          },
+          "phone_number": {
+           "type": "string",
+           "description": "Phone number of contact person"
+          },
+          "relationship": {
+           "type": "string",
+           "description": "Optional, relationship between user and this contact"
+          },
+          "is_self": {
+           "type": "boolean",
+           "description": "Optional. Defaults to False. Should be set to True if the contact corresponds to the current user."
+          }
+         },
+         "required": [
+          "name",
+          "phone_number"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "modify_contact",
+        "description": "Modify a contact entry with new information provided",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "person_id": {
+           "type": "string",
+           "description": "String unique identifier for the contact person"
+          },
+          "name": {
+           "type": "string",
+           "description": "New name for the person"
+          },
+          "phone_number": {
+           "type": "string",
+           "description": "New phone number for the person"
+          },
+          "relationship": {
+           "type": "string",
+           "description": "New relationship for the person"
+          },
+          "is_self": {
+           "type": "boolean",
+           "description": "Optional. Defaults to False. Should be set to True if the contact corresponds to the current user."
+          }
+         },
+         "required": [
+          "person_id"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "remove_contact",
+        "description": "Remove an existing contact person to contact database.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "person_id": {
+           "type": "string",
+           "description": "String format unique identifier of the person to be deleted"
+          }
+         },
+         "required": [
+          "person_id"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "search_contacts",
+        "description": "Search for a contact person based on provided arguments Each field has a search criteria of either\n1. Exact value matching\n2. Fuzzy string matching with a predefined threshold\nSearch results contains all contact entries that matched all criteria",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "person_id": {
+           "type": "string",
+           "description": "String format unique identifier for the contact person, will be exact matched"
+          },
+          "name": {
+           "type": "string",
+           "description": "Name of contact person, will be fuzzy matched"
+          },
+          "phone_number": {
+           "type": "string",
+           "description": "Phone number of contact person, will be exact matched"
+          },
+          "relationship": {
+           "type": "string",
+           "description": "Relationship between user and this contact, will be fuzzy matched"
+          },
+          "is_self": {
+           "type": "boolean",
+           "description": "If the requested contact corresponds to the current user. Will be exact matched"
+          }
+         },
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_cellular_service_status",
+        "description": "Request cellular service status",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "search_messages",
+        "description": "Search for a message based on provided arguments Each field has a search criteria of one of the below\n1. Exact value matching\n2. Fuzzy string matching with a predefined threshold\n3. Range matching timestamp with upperbound or lowerbound\nSearch results contains all contact entries that matched all criteria",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "message_id": {
+           "type": "string",
+           "description": "String format unique identifier for message, will be exact matched"
+          },
+          "sender_person_id": {
+           "type": "string",
+           "description": "String format unique identifier for the sender, will be exact matched"
+          },
+          "sender_phone_number": {
+           "type": "string",
+           "description": "Phone number for the sender, will be exact matched"
+          },
+          "recipient_person_id": {
+           "type": "string",
+           "description": "String format unique identifier for the recipient, will be exact matched"
+          },
+          "recipient_phone_number": {
+           "type": "string",
+           "description": "Phone number for the recipient, will be exact matched"
+          },
+          "content": {
+           "type": "string",
+           "description": "Message content, will be fuzzy matched"
+          },
+          "creation_timestamp_lowerbound": {
+           "type": "number",
+           "description": "Lowerbound of the POSIX timestamp of the time the message is created."
+          },
+          "creation_timestamp_upperbound": {
+           "type": "number",
+           "description": "Upperbound of the POSIX timestamp of the time the message is created."
+          }
+         },
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "send_message_with_phone_number",
+        "description": "Send a message to a recipient using phone_number",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "phone_number": {
+           "type": "string",
+           "description": "String format phone number to send the message to"
+          },
+          "content": {
+           "type": "string",
+           "description": "Message payload text"
+          }
+         },
+         "required": [
+          "phone_number",
+          "content"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_current_location",
+        "description": "Request current location latitude and longitude",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_location_service_status",
+        "description": "Request location service status",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_wifi_status",
+        "description": "Request wifi status",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "add_reminder",
+        "description": "Add a reminder",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "content": {
+           "type": "string",
+           "description": "Content of the reminder"
+          },
+          "reminder_timestamp": {
+           "type": "number",
+           "description": "When the user wants to be reminded. Expressed in POSIX timestamp"
+          },
+          "latitude": {
+           "type": "number",
+           "description": "Optional. Latitude of the location associated with this reminder"
+          },
+          "longitude": {
+           "type": "number",
+           "description": "Optional. Longitude of the location associated with this reminder"
+          }
+         },
+         "required": [
+          "content",
+          "reminder_timestamp"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "modify_reminder",
+        "description": "Modify a reminder with new information provided. Creation timestamp is updated automatically.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "reminder_id": {
+           "type": "string",
+           "description": "String format unique identifier of the reminder to be modified"
+          },
+          "content": {
+           "type": "string",
+           "description": "New content"
+          },
+          "reminder_timestamp": {
+           "type": "number",
+           "description": "When the user wants to be reminded. Expressed in POSIX timestamp"
+          },
+          "latitude": {
+           "type": "number",
+           "description": "Optional. Latitude of the location associated with this reminder"
+          },
+          "longitude": {
+           "type": "number",
+           "description": "Optional. Longitude of the location associated with this reminder"
+          }
+         },
+         "required": [
+          "reminder_id"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "remove_reminder",
+        "description": "Remove a reminder given its unique identifier",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "reminder_id": {
+           "type": "string",
+           "description": "String format unique identifier of the reminder to be removed"
+          }
+         },
+         "required": [
+          "reminder_id"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "search_reminder",
+        "description": "Search for a reminder based on provided arguments Each field has a search criteria of either\n1. Exact value matching\n2. Fuzzy string matching with a predefined threshold\n3. Range matching timestamp with upperbound or lowerbound\nSearch results contains all reminder entries that matched all criteria",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "reminder_id": {
+           "type": "string",
+           "description": "String format unique identifier for the reminder person, will be exact matched"
+          },
+          "content": {
+           "type": "string",
+           "description": "Content of the reminder, will be fuzzy matched"
+          },
+          "creation_timestamp_lowerbound": {
+           "type": "number",
+           "description": "Lowerbound of the POSIX timestamp of the time the reminder is created."
+          },
+          "creation_timestamp_upperbound": {
+           "type": "number",
+           "description": "Upperbound of the POSIX timestamp of the time the reminder is created."
+          },
+          "reminder_timestamp_lowerbound": {
+           "type": "number",
+           "description": "Lowerbound of the POSIX timestamp of the time the reminder should be reminded."
+          },
+          "reminder_timestamp_upperbound": {
+           "type": "number",
+           "description": "Upperbound of the POSIX timestamp of the time the reminder should be reminded."
+          },
+          "latitude": {
+           "type": "number",
+           "description": "Latitude of the location associated with the reminder. Will be exact matched."
+          },
+          "longitude": {
+           "type": "number",
+           "description": "Longitude of the location associated with the reminder. Will be exact matched."
+          }
+         },
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_low_battery_mode_status",
+        "description": "Request low battery mode status",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_cellular_service_status",
+        "description": "Enable / Disable cellular service",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "on": {
+           "type": "boolean",
+           "description": "If we want to turn on cellular service"
+          }
+         },
+         "required": [
+          "on"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_location_service_status",
+        "description": "Enable / Disable location service",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "on": {
+           "type": "boolean",
+           "description": "If we want to turn on location service"
+          }
+         },
+         "required": [
+          "on"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_low_battery_mode_status",
+        "description": "Enable / Disable low battery mode",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "on": {
+           "type": "boolean",
+           "description": "If we want to turn on low battery mode"
+          }
+         },
+         "required": [
+          "on"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_wifi_status",
+        "description": "Enable / Disable wifi",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "on": {
+           "type": "boolean",
+           "description": "If we want to turn on wifi"
+          }
+         },
+         "required": [
+          "on"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "calculate_lat_lon_distance",
+        "description": "Calculate the distance between 2 pairs of latitude and longitude.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "latitude_0": {
+           "type": "number",
+           "description": "First Latitude."
+          },
+          "longitude_0": {
+           "type": "number",
+           "description": "First Longitude."
+          },
+          "latitude_1": {
+           "type": "number",
+           "description": "Second Latitude."
+          },
+          "longitude_1": {
+           "type": "number",
+           "description": "Second Longitude."
+          }
+         },
+         "required": [
+          "latitude_0",
+          "longitude_0",
+          "latitude_1",
+          "longitude_1"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "datetime_info_to_timestamp",
+        "description": "Convert  date time information to POSIX timestamp",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "year": {
+           "type": "integer",
+           "description": "Year of timestamp"
+          },
+          "month": {
+           "type": "integer",
+           "description": "Month of timestamp"
+          },
+          "day": {
+           "type": "integer",
+           "description": "Day of timestamp"
+          },
+          "hour": {
+           "type": "integer",
+           "description": "Hour of timestamp in 24hr format"
+          },
+          "minute": {
+           "type": "integer",
+           "description": "Minute of timestamp"
+          },
+          "second": {
+           "type": "integer",
+           "description": "Second of timestamp"
+          }
+         },
+         "required": [
+          "year",
+          "month",
+          "day",
+          "hour",
+          "minute",
+          "second"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_current_timestamp",
+        "description": "Get current POSIX timestamp",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "search_holiday",
+        "description": "Search for a holiday by name in the US. Canonicalize return value into corresponding POSIX timestamp.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "holiday_name": {
+           "type": "string",
+           "description": "Name of the holiday in surface form string"
+          },
+          "year": {
+           "type": "integer",
+           "description": "Optional. Year to search the holiday in. When not provided defaults to current year."
+          }
+         },
+         "required": [
+          "holiday_name"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "seconds_to_hours_minutes_seconds",
+        "description": "Convert total number of seconds past 0:00 into hours, minutes and seconds",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "seconds": {
+           "type": "number",
+           "description": "Number of seconds past 0:00"
+          }
+         },
+         "required": [
+          "seconds"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "shift_timestamp",
+        "description": "Shifts a POSIX timestamp by provided deltas. Delta can be positive or negative.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "timestamp": {
+           "type": "number",
+           "description": "POSIX timestamp to be shifted"
+          },
+          "weeks": {
+           "type": "integer",
+           "description": "Number of weeks to add or subtract"
+          },
+          "days": {
+           "type": "integer",
+           "description": "Number of days to add or subtract"
+          },
+          "hours": {
+           "type": "integer",
+           "description": "Number of hours to add or subtract"
+          },
+          "minutes": {
+           "type": "integer",
+           "description": "Number of minutes to add or subtract"
+          },
+          "seconds": {
+           "type": "integer",
+           "description": "Number of seconds to add or subtract"
+          }
+         },
+         "required": [
+          "timestamp"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "timestamp_diff",
+        "description": "Calculates the difference between two timestamps, timestamp_1 - timestamp_0, return the difference\nrepresented in days and seconds",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "timestamp_0": {
+           "type": "number",
+           "description": "Timestamp to subtract"
+          },
+          "timestamp_1": {
+           "type": "number",
+           "description": "Timestamp to subtract from"
+          }
+         },
+         "required": [
+          "timestamp_0",
+          "timestamp_1"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "timestamp_to_datetime_info",
+        "description": "Convert POSIX timestamp to a dictionary of date time information, including\n    [\"year\", \"month\", \"day\", \"hour\", \"minute\", \"second\", \"isoweekday\"]\n    isoweekday ranges from [1, 7]",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "timestamp": {
+           "type": "number",
+           "description": "Float representing POSIX timestamp"
+          }
+         },
+         "required": [
+          "timestamp"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "unit_conversion",
+        "description": "Convert a certain amount from one unit to another You can use common english names to represent the from and to units",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "amount": {
+           "type": "number",
+           "description": "Float point amount in from_unit"
+          },
+          "from_unit": {
+           "type": "string",
+           "description": "Unit to convert from. For example celsius"
+          },
+          "to_unit": {
+           "type": "string",
+           "description": "Unit to convert to. For example fahrenheit"
+          }
+         },
+         "required": [
+          "amount",
+          "from_unit",
+          "to_unit"
+         ]
+        }
+       }
+      }
+     ],
+     "usage": {
+      "include": true
+     }
+    }
+   },
+   "response": {
+    "received_at": "2026-11-03T06:55:32.007956+00:00",
+    "status_code": 200,
+    "headers": {
+     "date": "Tue, 03 Nov 2026 06:55:31 GMT",
+     "content-type": "application/json",
+     "transfer-encoding": "chunked",
+     "connection": "keep-alive",
+     "access-control-allow-origin": "*",
+     "x-generation-id": "gen-1793688930-TltY0Bbov0OD8fCzbcSQ",
+     "access-control-expose-headers": "X-Generation-Id,X-Provider-Name,request-id,cf-ray",
+     "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+     "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+     "x-content-type-options": "nosniff",
+     "content-encoding": "gzip",
+     "server": "cloudflare",
+     "cf-ray": "a5497948fcfea80a-DEL",
+     "alt-svc": "h3=\":443\"; ma=86400"
+    },
+    "body": {
+     "id": "gen-1793688930-TltY0Bbov0OD8fCzbcSQ",
+     "object": "chat.completion",
+     "created": 1793688930,
+     "model": "openai/gpt-6-luna",
+     "provider": "Azure",
+     "system_fingerprint": null,
+     "service_tier": "default",
+     "choices": [
+      {
+       "index": 0,
+       "logprobs": null,
+       "finish_reason": "stop",
+       "native_finish_reason": "completed",
+       "message": {
+        "role": "assistant",
+        "content": "That number belongs to **Fredrik Thordendal**, listed as your friend.",
+        "refusal": null,
+        "reasoning": null
+       }
+      }
+     ],
+     "usage": {
+      "prompt_tokens": 2021,
+      "completion_tokens": 20,
+      "total_tokens": 2041,
+      "cost": 4.152e-05,
+      "is_byok": false,
+      "prompt_tokens_details": {
+       "cached_tokens": 1922,
+       "cache_write_tokens": 96,
+       "audio_tokens": 0,
+       "video_tokens": 0
+      },
+      "cost_details": {
+       "upstream_inference_cost": 4.152e-05,
+       "upstream_inference_prompt_cost": 3.152e-05,
+       "upstream_inference_completions_cost": 1e-05
+      },
+      "completion_tokens_details": {
+       "reasoning_tokens": 0,
+       "image_tokens": 0,
+       "audio_tokens": 0
+      }
+     }
+    }
+   },
+   "latency_s": 1.476904
+  },
+  {
+   "request": {
+    "sent_at": "2026-11-03T06:55:33.246999+00:00",
+    "method": "POST",
+    "url": "https://openrouter.ai/api/v1/chat/completions",
+    "headers": {
+     "host": "openrouter.ai",
+     "accept-encoding": "gzip, deflate",
+     "connection": "keep-alive",
+     "accept": "application/json",
+     "content-type": "application/json",
+     "user-agent": "OpenAI/Python 1.17.0",
+     "x-stainless-lang": "python",
+     "x-stainless-package-version": "1.17.0",
+     "x-stainless-os": "Linux",
+     "x-stainless-arch": "x64",
+     "x-stainless-runtime": "CPython",
+     "x-stainless-runtime-version": "3.12.3",
+     "authorization": "<redacted>",
+     "x-stainless-async": "false",
+     "cookie": "__cf_bm=CTN8PSKGxF3yJXtFdrAdZuRhxqS0w.GRNmjoJ.hBoA8-1793688929.206714-1.0.1.1-JMO0vXE6LGb1.5syEIBWOcFHxB8sFCqIb_YXVpetuJBRb8uu7BaBm7oV5twJ_CTYvAA8H7GL9rd3D8e1yjR0_wsU0iyRmnvZfZYVdUvPVhho_qDuehgmwMmrDy0_5_zr",
+     "content-length": "14458"
+    },
+    "body": {
+     "messages": [
+      {
+       "role": "system",
+       "content": "Don't make assumptions about what values to plug into functions. Ask for clarification if a user request is ambiguous."
+      },
+      {
+       "role": "user",
+       "content": "Who's +12453344098 in my contact?"
+      },
+      {
+       "role": "assistant",
+       "content": "",
+       "tool_calls": [
+        {
+         "id": "call_IhRM39kiyZntqSobWuhokSJ4",
+         "function": {
+          "name": "search_contacts",
+          "arguments": "{\"phone_number\":\"+12453344098\"}"
+         },
+         "type": "function"
+        }
+       ]
+      },
+      {
+       "tool_call_id": "call_IhRM39kiyZntqSobWuhokSJ4",
+       "role": "tool",
+       "name": "search_contacts",
+       "content": "[{'person_id': '9e137f06-916a-5310-8174-cf0b7e9f7054', 'name': 'Fredrik Thordendal', 'phone_number': '+12453344098', 'relationship': 'friend', 'is_self': False}]"
+      },
+      {
+       "role": "assistant",
+       "content": "That number belongs to **Fredrik Thordendal**, listed as your friend."
+      },
+      {
+       "role": "user",
+       "content": "Please delete it."
+      }
+     ],
+     "model": "openai/gpt-6-luna",
+     "temperature": 0.001,
+     "tools": [
+      {
+       "type": "function",
+       "function": {
+        "name": "add_contact",
+        "description": "Add a new contact person to contact database. Entries with identical information are allowed,\nand will be assigned different person_ids.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "name": {
+           "type": "string",
+           "description": "Name of contact person"
+          },
+          "phone_number": {
+           "type": "string",
+           "description": "Phone number of contact person"
+          },
+          "relationship": {
+           "type": "string",
+           "description": "Optional, relationship between user and this contact"
+          },
+          "is_self": {
+           "type": "boolean",
+           "description": "Optional. Defaults to False. Should be set to True if the contact corresponds to the current user."
+          }
+         },
+         "required": [
+          "name",
+          "phone_number"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "modify_contact",
+        "description": "Modify a contact entry with new information provided",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "person_id": {
+           "type": "string",
+           "description": "String unique identifier for the contact person"
+          },
+          "name": {
+           "type": "string",
+           "description": "New name for the person"
+          },
+          "phone_number": {
+           "type": "string",
+           "description": "New phone number for the person"
+          },
+          "relationship": {
+           "type": "string",
+           "description": "New relationship for the person"
+          },
+          "is_self": {
+           "type": "boolean",
+           "description": "Optional. Defaults to False. Should be set to True if the contact corresponds to the current user."
+          }
+         },
+         "required": [
+          "person_id"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "remove_contact",
+        "description": "Remove an existing contact person to contact database.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "person_id": {
+           "type": "string",
+           "description": "String format unique identifier of the person to be deleted"
+          }
+         },
+         "required": [
+          "person_id"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "search_contacts",
+        "description": "Search for a contact person based on provided arguments Each field has a search criteria of either\n1. Exact value matching\n2. Fuzzy string matching with a predefined threshold\nSearch results contains all contact entries that matched all criteria",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "person_id": {
+           "type": "string",
+           "description": "String format unique identifier for the contact person, will be exact matched"
+          },
+          "name": {
+           "type": "string",
+           "description": "Name of contact person, will be fuzzy matched"
+          },
+          "phone_number": {
+           "type": "string",
+           "description": "Phone number of contact person, will be exact matched"
+          },
+          "relationship": {
+           "type": "string",
+           "description": "Relationship between user and this contact, will be fuzzy matched"
+          },
+          "is_self": {
+           "type": "boolean",
+           "description": "If the requested contact corresponds to the current user. Will be exact matched"
+          }
+         },
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_cellular_service_status",
+        "description": "Request cellular service status",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "search_messages",
+        "description": "Search for a message based on provided arguments Each field has a search criteria of one of the below\n1. Exact value matching\n2. Fuzzy string matching with a predefined threshold\n3. Range matching timestamp with upperbound or lowerbound\nSearch results contains all contact entries that matched all criteria",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "message_id": {
+           "type": "string",
+           "description": "String format unique identifier for message, will be exact matched"
+          },
+          "sender_person_id": {
+           "type": "string",
+           "description": "String format unique identifier for the sender, will be exact matched"
+          },
+          "sender_phone_number": {
+           "type": "string",
+           "description": "Phone number for the sender, will be exact matched"
+          },
+          "recipient_person_id": {
+           "type": "string",
+           "description": "String format unique identifier for the recipient, will be exact matched"
+          },
+          "recipient_phone_number": {
+           "type": "string",
+           "description": "Phone number for the recipient, will be exact matched"
+          },
+          "content": {
+           "type": "string",
+           "description": "Message content, will be fuzzy matched"
+          },
+          "creation_timestamp_lowerbound": {
+           "type": "number",
+           "description": "Lowerbound of the POSIX timestamp of the time the message is created."
+          },
+          "creation_timestamp_upperbound": {
+           "type": "number",
+           "description": "Upperbound of the POSIX timestamp of the time the message is created."
+          }
+         },
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "send_message_with_phone_number",
+        "description": "Send a message to a recipient using phone_number",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "phone_number": {
+           "type": "string",
+           "description": "String format phone number to send the message to"
+          },
+          "content": {
+           "type": "string",
+           "description": "Message payload text"
+          }
+         },
+         "required": [
+          "phone_number",
+          "content"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_current_location",
+        "description": "Request current location latitude and longitude",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_location_service_status",
+        "description": "Request location service status",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_wifi_status",
+        "description": "Request wifi status",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "add_reminder",
+        "description": "Add a reminder",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "content": {
+           "type": "string",
+           "description": "Content of the reminder"
+          },
+          "reminder_timestamp": {
+           "type": "number",
+           "description": "When the user wants to be reminded. Expressed in POSIX timestamp"
+          },
+          "latitude": {
+           "type": "number",
+           "description": "Optional. Latitude of the location associated with this reminder"
+          },
+          "longitude": {
+           "type": "number",
+           "description": "Optional. Longitude of the location associated with this reminder"
+          }
+         },
+         "required": [
+          "content",
+          "reminder_timestamp"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "modify_reminder",
+        "description": "Modify a reminder with new information provided. Creation timestamp is updated automatically.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "reminder_id": {
+           "type": "string",
+           "description": "String format unique identifier of the reminder to be modified"
+          },
+          "content": {
+           "type": "string",
+           "description": "New content"
+          },
+          "reminder_timestamp": {
+           "type": "number",
+           "description": "When the user wants to be reminded. Expressed in POSIX timestamp"
+          },
+          "latitude": {
+           "type": "number",
+           "description": "Optional. Latitude of the location associated with this reminder"
+          },
+          "longitude": {
+           "type": "number",
+           "description": "Optional. Longitude of the location associated with this reminder"
+          }
+         },
+         "required": [
+          "reminder_id"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "remove_reminder",
+        "description": "Remove a reminder given its unique identifier",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "reminder_id": {
+           "type": "string",
+           "description": "String format unique identifier of the reminder to be removed"
+          }
+         },
+         "required": [
+          "reminder_id"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "search_reminder",
+        "description": "Search for a reminder based on provided arguments Each field has a search criteria of either\n1. Exact value matching\n2. Fuzzy string matching with a predefined threshold\n3. Range matching timestamp with upperbound or lowerbound\nSearch results contains all reminder entries that matched all criteria",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "reminder_id": {
+           "type": "string",
+           "description": "String format unique identifier for the reminder person, will be exact matched"
+          },
+          "content": {
+           "type": "string",
+           "description": "Content of the reminder, will be fuzzy matched"
+          },
+          "creation_timestamp_lowerbound": {
+           "type": "number",
+           "description": "Lowerbound of the POSIX timestamp of the time the reminder is created."
+          },
+          "creation_timestamp_upperbound": {
+           "type": "number",
+           "description": "Upperbound of the POSIX timestamp of the time the reminder is created."
+          },
+          "reminder_timestamp_lowerbound": {
+           "type": "number",
+           "description": "Lowerbound of the POSIX timestamp of the time the reminder should be reminded."
+          },
+          "reminder_timestamp_upperbound": {
+           "type": "number",
+           "description": "Upperbound of the POSIX timestamp of the time the reminder should be reminded."
+          },
+          "latitude": {
+           "type": "number",
+           "description": "Latitude of the location associated with the reminder. Will be exact matched."
+          },
+          "longitude": {
+           "type": "number",
+           "description": "Longitude of the location associated with the reminder. Will be exact matched."
+          }
+         },
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_low_battery_mode_status",
+        "description": "Request low battery mode status",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_cellular_service_status",
+        "description": "Enable / Disable cellular service",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "on": {
+           "type": "boolean",
+           "description": "If we want to turn on cellular service"
+          }
+         },
+         "required": [
+          "on"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_location_service_status",
+        "description": "Enable / Disable location service",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "on": {
+           "type": "boolean",
+           "description": "If we want to turn on location service"
+          }
+         },
+         "required": [
+          "on"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_low_battery_mode_status",
+        "description": "Enable / Disable low battery mode",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "on": {
+           "type": "boolean",
+           "description": "If we want to turn on low battery mode"
+          }
+         },
+         "required": [
+          "on"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_wifi_status",
+        "description": "Enable / Disable wifi",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "on": {
+           "type": "boolean",
+           "description": "If we want to turn on wifi"
+          }
+         },
+         "required": [
+          "on"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "calculate_lat_lon_distance",
+        "description": "Calculate the distance between 2 pairs of latitude and longitude.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "latitude_0": {
+           "type": "number",
+           "description": "First Latitude."
+          },
+          "longitude_0": {
+           "type": "number",
+           "description": "First Longitude."
+          },
+          "latitude_1": {
+           "type": "number",
+           "description": "Second Latitude."
+          },
+          "longitude_1": {
+           "type": "number",
+           "description": "Second Longitude."
+          }
+         },
+         "required": [
+          "latitude_0",
+          "longitude_0",
+          "latitude_1",
+          "longitude_1"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "datetime_info_to_timestamp",
+        "description": "Convert  date time information to POSIX timestamp",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "year": {
+           "type": "integer",
+           "description": "Year of timestamp"
+          },
+          "month": {
+           "type": "integer",
+           "description": "Month of timestamp"
+          },
+          "day": {
+           "type": "integer",
+           "description": "Day of timestamp"
+          },
+          "hour": {
+           "type": "integer",
+           "description": "Hour of timestamp in 24hr format"
+          },
+          "minute": {
+           "type": "integer",
+           "description": "Minute of timestamp"
+          },
+          "second": {
+           "type": "integer",
+           "description": "Second of timestamp"
+          }
+         },
+         "required": [
+          "year",
+          "month",
+          "day",
+          "hour",
+          "minute",
+          "second"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_current_timestamp",
+        "description": "Get current POSIX timestamp",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "search_holiday",
+        "description": "Search for a holiday by name in the US. Canonicalize return value into corresponding POSIX timestamp.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "holiday_name": {
+           "type": "string",
+           "description": "Name of the holiday in surface form string"
+          },
+          "year": {
+           "type": "integer",
+           "description": "Optional. Year to search the holiday in. When not provided defaults to current year."
+          }
+         },
+         "required": [
+          "holiday_name"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "seconds_to_hours_minutes_seconds",
+        "description": "Convert total number of seconds past 0:00 into hours, minutes and seconds",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "seconds": {
+           "type": "number",
+           "description": "Number of seconds past 0:00"
+          }
+         },
+         "required": [
+          "seconds"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "shift_timestamp",
+        "description": "Shifts a POSIX timestamp by provided deltas. Delta can be positive or negative.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "timestamp": {
+           "type": "number",
+           "description": "POSIX timestamp to be shifted"
+          },
+          "weeks": {
+           "type": "integer",
+           "description": "Number of weeks to add or subtract"
+          },
+          "days": {
+           "type": "integer",
+           "description": "Number of days to add or subtract"
+          },
+          "hours": {
+           "type": "integer",
+           "description": "Number of hours to add or subtract"
+          },
+          "minutes": {
+           "type": "integer",
+           "description": "Number of minutes to add or subtract"
+          },
+          "seconds": {
+           "type": "integer",
+           "description": "Number of seconds to add or subtract"
+          }
+         },
+         "required": [
+          "timestamp"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "timestamp_diff",
+        "description": "Calculates the difference between two timestamps, timestamp_1 - timestamp_0, return the difference\nrepresented in days and seconds",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "timestamp_0": {
+           "type": "number",
+           "description": "Timestamp to subtract"
+          },
+          "timestamp_1": {
+           "type": "number",
+           "description": "Timestamp to subtract from"
+          }
+         },
+         "required": [
+          "timestamp_0",
+          "timestamp_1"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "timestamp_to_datetime_info",
+        "description": "Convert POSIX timestamp to a dictionary of date time information, including\n    [\"year\", \"month\", \"day\", \"hour\", \"minute\", \"second\", \"isoweekday\"]\n    isoweekday ranges from [1, 7]",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "timestamp": {
+           "type": "number",
+           "description": "Float representing POSIX timestamp"
+          }
+         },
+         "required": [
+          "timestamp"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "unit_conversion",
+        "description": "Convert a certain amount from one unit to another You can use common english names to represent the from and to units",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "amount": {
+           "type": "number",
+           "description": "Float point amount in from_unit"
+          },
+          "from_unit": {
+           "type": "string",
+           "description": "Unit to convert from. For example celsius"
+          },
+          "to_unit": {
+           "type": "string",
+           "description": "Unit to convert to. For example fahrenheit"
+          }
+         },
+         "required": [
+          "amount",
+          "from_unit",
+          "to_unit"
+         ]
+        }
+       }
+      }
+     ],
+     "usage": {
+      "include": true
+     }
+    }
+   },
+   "response": {
+    "received_at": "2026-11-03T06:55:37.043253+00:00",
+    "status_code": 200,
+    "headers": {
+     "date": "Tue, 03 Nov 2026 06:55:34 GMT",
+     "content-type": "application/json",
+     "transfer-encoding": "chunked",
+     "connection": "keep-alive",
+     "access-control-allow-origin": "*",
+     "x-generation-id": "gen-1793688933-IJSZdvSc0zvKEoXS11oM",
+     "access-control-expose-headers": "X-Generation-Id,X-Provider-Name,request-id,cf-ray",
+     "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+     "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+     "x-content-type-options": "nosniff",
+     "content-encoding": "gzip",
+     "server": "cloudflare",
+     "cf-ray": "a5497959fb09a80a-DEL",
+     "alt-svc": "h3=\":443\"; ma=86400"
+    },
+    "body": {
+     "id": "gen-1793688933-IJSZdvSc0zvKEoXS11oM",
+     "object": "chat.completion",
+     "created": 1793688933,
+     "model": "openai/gpt-6-luna",
+     "provider": "Azure",
+     "system_fingerprint": null,
+     "service_tier": "default",
+     "choices": [
+      {
+       "index": 0,
+       "logprobs": null,
+       "finish_reason": "tool_calls",
+       "native_finish_reason": "completed",
+       "message": {
+        "role": "assistant",
+        "content": null,
+        "refusal": null,
+        "reasoning": null,
+        "tool_calls": [
+         {
+          "type": "function",
+          "index": 0,
+          "id": "call_U2EzccH5sDWAHsAI7rsmqcmn",
+          "function": {
+           "name": "remove_contact",
+           "arguments": "{\"person_id\":\"9e137f06-916a-5310-8174-cf0b7e9f7054\"}"
+          }
+         }
+        ],
+        "reasoning_details": [
+         {
+          "type": "reasoning.encrypted",
+          "data": "gAAAAABq6YVotNQxYzNZVWJLFqK-3iAGbHgc5b0pH9G9usuh8LFseIJZw0NurK3PIcET3RcslG92GF2r95EI9nYVLOIDpvaadMrBquL-R2hZ9LH8Yrr7eWvTIhbdZDWR_EiQS7zJ6dZYHCXUbhKK641r9xNtzClEo3DlO6uClJPymSNBzC-sTFHGXC2VLDwj9IseWqkuMNtwDIoAXjxOokpLAV_yr7LUBrG_5V0E1gUd7Pw2BgKNzOcl3TvQE8_aLg-PxmK2Ez6dsxvd7tHFS8hw1ohaHOExMcXwebJ_36D-0vmIdZnASVWSfhTyyR8kzUZ6TTtYEc4p1IAxhdZHlZyKsrVsWBOjs6QAt5pCwsR1G16xZjh7dGe4K2ajDnezMftHzD5GxF0sBlK__ZH9q0taT9FS6JlfqvOF_Kgz9CeFXDNb8_UA_6EGZrNoy36TtHRa8X5yT-NSBiHMug4MOIXZapVu5M7igDL7nt4sOfxggRfOaVtBiTdFJUCWEuUTQlWrKY1AGPdJylrRGskPmsYyMgaNJO-zVyemaNvgG5FGinKnJn-o6O1Q_a-y-xd3xbsgRIuU6AmKxLWmeK3kcbCc36OwsqBAng3eCYbrMCemA6GIPiD4v0S6WgQUA_JjNJNqaj8cAhV1OZznx_kKPKdZ13rum2eoevYmuQgqzUs-qzDMxUuhKkC2NQRseE9rjs-CTu2yhJryI8vB8Eu-sK7M8akF1FWpYBOmf2T_xhn6eTC9U39bCrNvCk4Z4KEU-0Gfk3YbT1DzoZckcmURx5ESfHUKroZtWzWP6jidBPDxwhGKUK6tV5f9DiNDYayPnNRRI68Qa3nxYFLpqu6q7A3IbbBw8gKWX6V-L4grXZnt2qzrve0pqEH2AWLnm23RpwCcNkbXEl7Q3qgjJRiztFsZD68JR6l53iuM7ggZLrlWJjwAKWrRoumT5ST8gKS3jhKk-pxJo5lgMjbENN3ornsW0BjR_Ve_7ym6s7PWiGCO6uoMSid7YrL-QYuokhkFNSKp2At3TC7KdUllUJSGxEUbTpfIthIqfeQ4xKoFuC9aSC_a4FORT7x3o4-faawEXXwUVIRXhgi8E-JlycPFOKIBZqS6exzpmVvzjp2508uGIaZcICMgviTmMGLSXjdBpMNbgz_YgOfozcwwkAipkZ4Xi0HUBFtJhQWrE_cTpxX3WsOJtjcyo1qPc1MtvDEc25QTdoUdQhG5GhS166cdYPz_JbDkHlQxStioGMca9VPovaVMXKCsdxqJTPAzQLLqrEFkKXbseSVLNsgMPFOjXJgU9_VVa2yympSgd9U7ekjxx4i_68qij9ADkeuQg5mXEBbeMnJuvMl-m_G4aw5Ydk3Xl_92ybWXmPIuIEW2zJxyfW76tuBMBNSnsgW1c-ZwbTPwKbjQklIo-lo9XYzK5oMWLjAQUuJqkCfSZ9w7qKlukw5RdHmEylRmXPHsasTNLWFSZN9tvmT6L6cvoAeb6zuBrq2zJiX8XQmfjMpllhoH3hJEyhAGXiL-MKnWgbsWWu_V4nC1T_t0Kcz3P3vgOvwQY4evFHPz7WX-vMQO7XvT5DtzK8wl6mPrqcOV9rsaL1B192_BXaU6GeUTQ8boKodvV9y9-NaksGXO9h9lHkjMz437tyvizddwJ-nhSXBj57VziNpSBJUaEzN7RB7vhySOWmIjkuOe4Q==.eyJlbmRwb2ludF9zbHVnIjoib3BlbmFpL2dwdC02LWx1bmEtMjAyNjA5MjJ8YXp1cmUifQ",
+          "format": "azure-openai-responses-v1",
+          "id": "rs_023a09fc066b2706016ae98566723481908e9af174a4d9985f",
+          "index": 0
+         }
+        ]
+       }
+      }
+     ],
+     "usage": {
+      "prompt_tokens": 2051,
+      "completion_tokens": 71,
+      "total_tokens": 2122,
+      "cost": 5.973e-05,
+      "is_byok": false,
+      "prompt_tokens_details": {
+       "cached_tokens": 2018,
+       "cache_write_tokens": 30,
+       "audio_tokens": 0,
+       "video_tokens": 0
+      },
+      "cost_details": {
+       "upstream_inference_cost": 5.973e-05,
+       "upstream_inference_prompt_cost": 2.423e-05,
+       "upstream_inference_completions_cost": 3.55e-05
+      },
+      "completion_tokens_details": {
+       "reasoning_tokens": 27,
+       "image_tokens": 0,
+       "audio_tokens": 0
+      }
+     }
+    }
+   },
+   "latency_s": 3.796128
+  },
+  {
+   "request": {
+    "sent_at": "2026-11-03T06:55:37.077178+00:00",
+    "method": "POST",
+    "url": "https://openrouter.ai/api/v1/chat/completions",
+    "headers": {
+     "host": "openrouter.ai",
+     "accept-encoding": "gzip, deflate",
+     "connection": "keep-alive",
+     "accept": "application/json",
+     "content-type": "application/json",
+     "user-agent": "OpenAI/Python 1.17.0",
+     "x-stainless-lang": "python",
+     "x-stainless-package-version": "1.17.0",
+     "x-stainless-os": "Linux",
+     "x-stainless-arch": "x64",
+     "x-stainless-runtime": "CPython",
+     "x-stainless-runtime-version": "3.12.3",
+     "authorization": "<redacted>",
+     "x-stainless-async": "false",
+     "cookie": "__cf_bm=CTN8PSKGxF3yJXtFdrAdZuRhxqS0w.GRNmjoJ.hBoA8-1793688929.206714-1.0.1.1-JMO0vXE6LGb1.5syEIBWOcFHxB8sFCqIb_YXVpetuJBRb8uu7BaBm7oV5twJ_CTYvAA8H7GL9rd3D8e1yjR0_wsU0iyRmnvZfZYVdUvPVhho_qDuehgmwMmrDy0_5_zr",
+     "content-length": "14776"
+    },
+    "body": {
+     "messages": [
+      {
+       "role": "system",
+       "content": "Don't make assumptions about what values to plug into functions. Ask for clarification if a user request is ambiguous."
+      },
+      {
+       "role": "user",
+       "content": "Who's +12453344098 in my contact?"
+      },
+      {
+       "role": "assistant",
+       "content": "",
+       "tool_calls": [
+        {
+         "id": "call_IhRM39kiyZntqSobWuhokSJ4",
+         "function": {
+          "name": "search_contacts",
+          "arguments": "{\"phone_number\":\"+12453344098\"}"
+         },
+         "type": "function"
+        }
+       ]
+      },
+      {
+       "tool_call_id": "call_IhRM39kiyZntqSobWuhokSJ4",
+       "role": "tool",
+       "name": "search_contacts",
+       "content": "[{'person_id': '9e137f06-916a-5310-8174-cf0b7e9f7054', 'name': 'Fredrik Thordendal', 'phone_number': '+12453344098', 'relationship': 'friend', 'is_self': False}]"
+      },
+      {
+       "role": "assistant",
+       "content": "That number belongs to **Fredrik Thordendal**, listed as your friend."
+      },
+      {
+       "role": "user",
+       "content": "Please delete it."
+      },
+      {
+       "role": "assistant",
+       "content": "",
+       "tool_calls": [
+        {
+         "id": "call_U2EzccH5sDWAHsAI7rsmqcmn",
+         "function": {
+          "name": "remove_contact",
+          "arguments": "{\"person_id\":\"9e137f06-916a-5310-8174-cf0b7e9f7054\"}"
+         },
+         "type": "function"
+        }
+       ]
+      },
+      {
+       "tool_call_id": "call_U2EzccH5sDWAHsAI7rsmqcmn",
+       "role": "tool",
+       "name": "remove_contact",
+       "content": "None"
+      }
+     ],
+     "model": "openai/gpt-6-luna",
+     "temperature": 0.001,
+     "tools": [
+      {
+       "type": "function",
+       "function": {
+        "name": "add_contact",
+        "description": "Add a new contact person to contact database. Entries with identical information are allowed,\nand will be assigned different person_ids.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "name": {
+           "type": "string",
+           "description": "Name of contact person"
+          },
+          "phone_number": {
+           "type": "string",
+           "description": "Phone number of contact person"
+          },
+          "relationship": {
+           "type": "string",
+           "description": "Optional, relationship between user and this contact"
+          },
+          "is_self": {
+           "type": "boolean",
+           "description": "Optional. Defaults to False. Should be set to True if the contact corresponds to the current user."
+          }
+         },
+         "required": [
+          "name",
+          "phone_number"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "modify_contact",
+        "description": "Modify a contact entry with new information provided",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "person_id": {
+           "type": "string",
+           "description": "String unique identifier for the contact person"
+          },
+          "name": {
+           "type": "string",
+           "description": "New name for the person"
+          },
+          "phone_number": {
+           "type": "string",
+           "description": "New phone number for the person"
+          },
+          "relationship": {
+           "type": "string",
+           "description": "New relationship for the person"
+          },
+          "is_self": {
+           "type": "boolean",
+           "description": "Optional. Defaults to False. Should be set to True if the contact corresponds to the current user."
+          }
+         },
+         "required": [
+          "person_id"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "remove_contact",
+        "description": "Remove an existing contact person to contact database.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "person_id": {
+           "type": "string",
+           "description": "String format unique identifier of the person to be deleted"
+          }
+         },
+         "required": [
+          "person_id"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "search_contacts",
+        "description": "Search for a contact person based on provided arguments Each field has a search criteria of either\n1. Exact value matching\n2. Fuzzy string matching with a predefined threshold\nSearch results contains all contact entries that matched all criteria",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "person_id": {
+           "type": "string",
+           "description": "String format unique identifier for the contact person, will be exact matched"
+          },
+          "name": {
+           "type": "string",
+           "description": "Name of contact person, will be fuzzy matched"
+          },
+          "phone_number": {
+           "type": "string",
+           "description": "Phone number of contact person, will be exact matched"
+          },
+          "relationship": {
+           "type": "string",
+           "description": "Relationship between user and this contact, will be fuzzy matched"
+          },
+          "is_self": {
+           "type": "boolean",
+           "description": "If the requested contact corresponds to the current user. Will be exact matched"
+          }
+         },
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_cellular_service_status",
+        "description": "Request cellular service status",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "search_messages",
+        "description": "Search for a message based on provided arguments Each field has a search criteria of one of the below\n1. Exact value matching\n2. Fuzzy string matching with a predefined threshold\n3. Range matching timestamp with upperbound or lowerbound\nSearch results contains all contact entries that matched all criteria",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "message_id": {
+           "type": "string",
+           "description": "String format unique identifier for message, will be exact matched"
+          },
+          "sender_person_id": {
+           "type": "string",
+           "description": "String format unique identifier for the sender, will be exact matched"
+          },
+          "sender_phone_number": {
+           "type": "string",
+           "description": "Phone number for the sender, will be exact matched"
+          },
+          "recipient_person_id": {
+           "type": "string",
+           "description": "String format unique identifier for the recipient, will be exact matched"
+          },
+          "recipient_phone_number": {
+           "type": "string",
+           "description": "Phone number for the recipient, will be exact matched"
+          },
+          "content": {
+           "type": "string",
+           "description": "Message content, will be fuzzy matched"
+          },
+          "creation_timestamp_lowerbound": {
+           "type": "number",
+           "description": "Lowerbound of the POSIX timestamp of the time the message is created."
+          },
+          "creation_timestamp_upperbound": {
+           "type": "number",
+           "description": "Upperbound of the POSIX timestamp of the time the message is created."
+          }
+         },
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "send_message_with_phone_number",
+        "description": "Send a message to a recipient using phone_number",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "phone_number": {
+           "type": "string",
+           "description": "String format phone number to send the message to"
+          },
+          "content": {
+           "type": "string",
+           "description": "Message payload text"
+          }
+         },
+         "required": [
+          "phone_number",
+          "content"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_current_location",
+        "description": "Request current location latitude and longitude",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_location_service_status",
+        "description": "Request location service status",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_wifi_status",
+        "description": "Request wifi status",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "add_reminder",
+        "description": "Add a reminder",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "content": {
+           "type": "string",
+           "description": "Content of the reminder"
+          },
+          "reminder_timestamp": {
+           "type": "number",
+           "description": "When the user wants to be reminded. Expressed in POSIX timestamp"
+          },
+          "latitude": {
+           "type": "number",
+           "description": "Optional. Latitude of the location associated with this reminder"
+          },
+          "longitude": {
+           "type": "number",
+           "description": "Optional. Longitude of the location associated with this reminder"
+          }
+         },
+         "required": [
+          "content",
+          "reminder_timestamp"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "modify_reminder",
+        "description": "Modify a reminder with new information provided. Creation timestamp is updated automatically.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "reminder_id": {
+           "type": "string",
+           "description": "String format unique identifier of the reminder to be modified"
+          },
+          "content": {
+           "type": "string",
+           "description": "New content"
+          },
+          "reminder_timestamp": {
+           "type": "number",
+           "description": "When the user wants to be reminded. Expressed in POSIX timestamp"
+          },
+          "latitude": {
+           "type": "number",
+           "description": "Optional. Latitude of the location associated with this reminder"
+          },
+          "longitude": {
+           "type": "number",
+           "description": "Optional. Longitude of the location associated with this reminder"
+          }
+         },
+         "required": [
+          "reminder_id"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "remove_reminder",
+        "description": "Remove a reminder given its unique identifier",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "reminder_id": {
+           "type": "string",
+           "description": "String format unique identifier of the reminder to be removed"
+          }
+         },
+         "required": [
+          "reminder_id"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "search_reminder",
+        "description": "Search for a reminder based on provided arguments Each field has a search criteria of either\n1. Exact value matching\n2. Fuzzy string matching with a predefined threshold\n3. Range matching timestamp with upperbound or lowerbound\nSearch results contains all reminder entries that matched all criteria",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "reminder_id": {
+           "type": "string",
+           "description": "String format unique identifier for the reminder person, will be exact matched"
+          },
+          "content": {
+           "type": "string",
+           "description": "Content of the reminder, will be fuzzy matched"
+          },
+          "creation_timestamp_lowerbound": {
+           "type": "number",
+           "description": "Lowerbound of the POSIX timestamp of the time the reminder is created."
+          },
+          "creation_timestamp_upperbound": {
+           "type": "number",
+           "description": "Upperbound of the POSIX timestamp of the time the reminder is created."
+          },
+          "reminder_timestamp_lowerbound": {
+           "type": "number",
+           "description": "Lowerbound of the POSIX timestamp of the time the reminder should be reminded."
+          },
+          "reminder_timestamp_upperbound": {
+           "type": "number",
+           "description": "Upperbound of the POSIX timestamp of the time the reminder should be reminded."
+          },
+          "latitude": {
+           "type": "number",
+           "description": "Latitude of the location associated with the reminder. Will be exact matched."
+          },
+          "longitude": {
+           "type": "number",
+           "description": "Longitude of the location associated with the reminder. Will be exact matched."
+          }
+         },
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_low_battery_mode_status",
+        "description": "Request low battery mode status",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_cellular_service_status",
+        "description": "Enable / Disable cellular service",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "on": {
+           "type": "boolean",
+           "description": "If we want to turn on cellular service"
+          }
+         },
+         "required": [
+          "on"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_location_service_status",
+        "description": "Enable / Disable location service",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "on": {
+           "type": "boolean",
+           "description": "If we want to turn on location service"
+          }
+         },
+         "required": [
+          "on"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_low_battery_mode_status",
+        "description": "Enable / Disable low battery mode",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "on": {
+           "type": "boolean",
+           "description": "If we want to turn on low battery mode"
+          }
+         },
+         "required": [
+          "on"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_wifi_status",
+        "description": "Enable / Disable wifi",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "on": {
+           "type": "boolean",
+           "description": "If we want to turn on wifi"
+          }
+         },
+         "required": [
+          "on"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "calculate_lat_lon_distance",
+        "description": "Calculate the distance between 2 pairs of latitude and longitude.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "latitude_0": {
+           "type": "number",
+           "description": "First Latitude."
+          },
+          "longitude_0": {
+           "type": "number",
+           "description": "First Longitude."
+          },
+          "latitude_1": {
+           "type": "number",
+           "description": "Second Latitude."
+          },
+          "longitude_1": {
+           "type": "number",
+           "description": "Second Longitude."
+          }
+         },
+         "required": [
+          "latitude_0",
+          "longitude_0",
+          "latitude_1",
+          "longitude_1"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "datetime_info_to_timestamp",
+        "description": "Convert  date time information to POSIX timestamp",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "year": {
+           "type": "integer",
+           "description": "Year of timestamp"
+          },
+          "month": {
+           "type": "integer",
+           "description": "Month of timestamp"
+          },
+          "day": {
+           "type": "integer",
+           "description": "Day of timestamp"
+          },
+          "hour": {
+           "type": "integer",
+           "description": "Hour of timestamp in 24hr format"
+          },
+          "minute": {
+           "type": "integer",
+           "description": "Minute of timestamp"
+          },
+          "second": {
+           "type": "integer",
+           "description": "Second of timestamp"
+          }
+         },
+         "required": [
+          "year",
+          "month",
+          "day",
+          "hour",
+          "minute",
+          "second"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_current_timestamp",
+        "description": "Get current POSIX timestamp",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "search_holiday",
+        "description": "Search for a holiday by name in the US. Canonicalize return value into corresponding POSIX timestamp.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "holiday_name": {
+           "type": "string",
+           "description": "Name of the holiday in surface form string"
+          },
+          "year": {
+           "type": "integer",
+           "description": "Optional. Year to search the holiday in. When not provided defaults to current year."
+          }
+         },
+         "required": [
+          "holiday_name"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "seconds_to_hours_minutes_seconds",
+        "description": "Convert total number of seconds past 0:00 into hours, minutes and seconds",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "seconds": {
+           "type": "number",
+           "description": "Number of seconds past 0:00"
+          }
+         },
+         "required": [
+          "seconds"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "shift_timestamp",
+        "description": "Shifts a POSIX timestamp by provided deltas. Delta can be positive or negative.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "timestamp": {
+           "type": "number",
+           "description": "POSIX timestamp to be shifted"
+          },
+          "weeks": {
+           "type": "integer",
+           "description": "Number of weeks to add or subtract"
+          },
+          "days": {
+           "type": "integer",
+           "description": "Number of days to add or subtract"
+          },
+          "hours": {
+           "type": "integer",
+           "description": "Number of hours to add or subtract"
+          },
+          "minutes": {
+           "type": "integer",
+           "description": "Number of minutes to add or subtract"
+          },
+          "seconds": {
+           "type": "integer",
+           "description": "Number of seconds to add or subtract"
+          }
+         },
+         "required": [
+          "timestamp"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "timestamp_diff",
+        "description": "Calculates the difference between two timestamps, timestamp_1 - timestamp_0, return the difference\nrepresented in days and seconds",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "timestamp_0": {
+           "type": "number",
+           "description": "Timestamp to subtract"
+          },
+          "timestamp_1": {
+           "type": "number",
+           "description": "Timestamp to subtract from"
+          }
+         },
+         "required": [
+          "timestamp_0",
+          "timestamp_1"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "timestamp_to_datetime_info",
+        "description": "Convert POSIX timestamp to a dictionary of date time information, including\n    [\"year\", \"month\", \"day\", \"hour\", \"minute\", \"second\", \"isoweekday\"]\n    isoweekday ranges from [1, 7]",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "timestamp": {
+           "type": "number",
+           "description": "Float representing POSIX timestamp"
+          }
+         },
+         "required": [
+          "timestamp"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "unit_conversion",
+        "description": "Convert a certain amount from one unit to another You can use common english names to represent the from and to units",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "amount": {
+           "type": "number",
+           "description": "Float point amount in from_unit"
+          },
+          "from_unit": {
+           "type": "string",
+           "description": "Unit to convert from. For example celsius"
+          },
+          "to_unit": {
+           "type": "string",
+           "description": "Unit to convert to. For example fahrenheit"
+          }
+         },
+         "required": [
+          "amount",
+          "from_unit",
+          "to_unit"
+         ]
+        }
+       }
+      }
+     ],
+     "usage": {
+      "include": true
+     }
+    }
+   },
+   "response": {
+    "received_at": "2026-11-03T06:55:38.303912+00:00",
+    "status_code": 200,
+    "headers": {
+     "date": "Tue, 03 Nov 2026 06:55:38 GMT",
+     "content-type": "application/json",
+     "transfer-encoding": "chunked",
+     "connection": "keep-alive",
+     "access-control-allow-origin": "*",
+     "x-generation-id": "gen-1793688937-aP2w0KE9JGhVcDJhZIml",
+     "access-control-expose-headers": "X-Generation-Id,X-Provider-Name,request-id,cf-ray",
+     "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+     "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+     "x-content-type-options": "nosniff",
+     "content-encoding": "gzip",
+     "server": "cloudflare",
+     "cf-ray": "a5497971efd0a80a-DEL",
+     "alt-svc": "h3=\":443\"; ma=86400"
+    },
+    "body": {
+     "id": "gen-1793688937-aP2w0KE9JGhVcDJhZIml",
+     "object": "chat.completion",
+     "created": 1793688937,
+     "model": "openai/gpt-6-luna",
+     "provider": "Azure",
+     "system_fingerprint": null,
+     "service_tier": "default",
+     "choices": [
+      {
+       "index": 0,
+       "logprobs": null,
+       "finish_reason": "stop",
+       "native_finish_reason": "completed",
+       "message": {
+        "role": "assistant",
+        "content": "Deleted Fredrik Thordendal’s contact.",
+        "refusal": null,
+        "reasoning": null
+       }
+      }
+     ],
+     "usage": {
+      "prompt_tokens": 2105,
+      "completion_tokens": 13,
+      "total_tokens": 2118,
+      "cost": 3.403e-05,
+      "is_byok": false,
+      "prompt_tokens_details": {
+       "cached_tokens": 2048,
+       "cache_write_tokens": 54,
+       "audio_tokens": 0,
+       "video_tokens": 0
+      },
+      "cost_details": {
+       "upstream_inference_cost": 3.403e-05,
+       "upstream_inference_prompt_cost": 2.753e-05,
+       "upstream_inference_completions_cost": 6.5e-06
+      },
+      "completion_tokens_details": {
+       "reasoning_tokens": 0,
+       "image_tokens": 0,
+       "audio_tokens": 0
+      }
+     }
+    }
+   },
+   "latency_s": 1.226572
+  },
+  {
+   "request": {
+    "sent_at": "2026-11-03T06:55:40.124918+00:00",
+    "method": "POST",
+    "url": "https://openrouter.ai/api/v1/chat/completions",
+    "headers": {
+     "host": "openrouter.ai",
+     "accept-encoding": "gzip, deflate",
+     "connection": "keep-alive",
+     "accept": "application/json",
+     "content-type": "application/json",
+     "user-agent": "OpenAI/Python 1.17.0",
+     "x-stainless-lang": "python",
+     "x-stainless-package-version": "1.17.0",
+     "x-stainless-os": "Linux",
+     "x-stainless-arch": "x64",
+     "x-stainless-runtime": "CPython",
+     "x-stainless-runtime-version": "3.12.3",
+     "authorization": "<redacted>",
+     "x-stainless-async": "false",
+     "cookie": "__cf_bm=CTN8PSKGxF3yJXtFdrAdZuRhxqS0w.GRNmjoJ.hBoA8-1793688929.206714-1.0.1.1-JMO0vXE6LGb1.5syEIBWOcFHxB8sFCqIb_YXVpetuJBRb8uu7BaBm7oV5twJ_CTYvAA8H7GL9rd3D8e1yjR0_wsU0iyRmnvZfZYVdUvPVhho_qDuehgmwMmrDy0_5_zr",
+     "content-length": "14891"
+    },
+    "body": {
+     "messages": [
+      {
+       "role": "system",
+       "content": "Don't make assumptions about what values to plug into functions. Ask for clarification if a user request is ambiguous."
+      },
+      {
+       "role": "user",
+       "content": "Who's +12453344098 in my contact?"
+      },
+      {
+       "role": "assistant",
+       "content": "",
+       "tool_calls": [
+        {
+         "id": "call_IhRM39kiyZntqSobWuhokSJ4",
+         "function": {
+          "name": "search_contacts",
+          "arguments": "{\"phone_number\":\"+12453344098\"}"
+         },
+         "type": "function"
+        }
+       ]
+      },
+      {
+       "tool_call_id": "call_IhRM39kiyZntqSobWuhokSJ4",
+       "role": "tool",
+       "name": "search_contacts",
+       "content": "[{'person_id': '9e137f06-916a-5310-8174-cf0b7e9f7054', 'name': 'Fredrik Thordendal', 'phone_number': '+12453344098', 'relationship': 'friend', 'is_self': False}]"
+      },
+      {
+       "role": "assistant",
+       "content": "That number belongs to **Fredrik Thordendal**, listed as your friend."
+      },
+      {
+       "role": "user",
+       "content": "Please delete it."
+      },
+      {
+       "role": "assistant",
+       "content": "",
+       "tool_calls": [
+        {
+         "id": "call_U2EzccH5sDWAHsAI7rsmqcmn",
+         "function": {
+          "name": "remove_contact",
+          "arguments": "{\"person_id\":\"9e137f06-916a-5310-8174-cf0b7e9f7054\"}"
+         },
+         "type": "function"
+        }
+       ]
+      },
+      {
+       "tool_call_id": "call_U2EzccH5sDWAHsAI7rsmqcmn",
+       "role": "tool",
+       "name": "remove_contact",
+       "content": "None"
+      },
+      {
+       "role": "assistant",
+       "content": "Deleted Fredrik Thordendal’s contact."
+      },
+      {
+       "role": "user",
+       "content": "Okay, thanks!"
+      }
+     ],
+     "model": "openai/gpt-6-luna",
+     "temperature": 0.001,
+     "tools": [
+      {
+       "type": "function",
+       "function": {
+        "name": "add_contact",
+        "description": "Add a new contact person to contact database. Entries with identical information are allowed,\nand will be assigned different person_ids.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "name": {
+           "type": "string",
+           "description": "Name of contact person"
+          },
+          "phone_number": {
+           "type": "string",
+           "description": "Phone number of contact person"
+          },
+          "relationship": {
+           "type": "string",
+           "description": "Optional, relationship between user and this contact"
+          },
+          "is_self": {
+           "type": "boolean",
+           "description": "Optional. Defaults to False. Should be set to True if the contact corresponds to the current user."
+          }
+         },
+         "required": [
+          "name",
+          "phone_number"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "modify_contact",
+        "description": "Modify a contact entry with new information provided",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "person_id": {
+           "type": "string",
+           "description": "String unique identifier for the contact person"
+          },
+          "name": {
+           "type": "string",
+           "description": "New name for the person"
+          },
+          "phone_number": {
+           "type": "string",
+           "description": "New phone number for the person"
+          },
+          "relationship": {
+           "type": "string",
+           "description": "New relationship for the person"
+          },
+          "is_self": {
+           "type": "boolean",
+           "description": "Optional. Defaults to False. Should be set to True if the contact corresponds to the current user."
+          }
+         },
+         "required": [
+          "person_id"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "remove_contact",
+        "description": "Remove an existing contact person to contact database.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "person_id": {
+           "type": "string",
+           "description": "String format unique identifier of the person to be deleted"
+          }
+         },
+         "required": [
+          "person_id"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "search_contacts",
+        "description": "Search for a contact person based on provided arguments Each field has a search criteria of either\n1. Exact value matching\n2. Fuzzy string matching with a predefined threshold\nSearch results contains all contact entries that matched all criteria",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "person_id": {
+           "type": "string",
+           "description": "String format unique identifier for the contact person, will be exact matched"
+          },
+          "name": {
+           "type": "string",
+           "description": "Name of contact person, will be fuzzy matched"
+          },
+          "phone_number": {
+           "type": "string",
+           "description": "Phone number of contact person, will be exact matched"
+          },
+          "relationship": {
+           "type": "string",
+           "description": "Relationship between user and this contact, will be fuzzy matched"
+          },
+          "is_self": {
+           "type": "boolean",
+           "description": "If the requested contact corresponds to the current user. Will be exact matched"
+          }
+         },
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_cellular_service_status",
+        "description": "Request cellular service status",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "search_messages",
+        "description": "Search for a message based on provided arguments Each field has a search criteria of one of the below\n1. Exact value matching\n2. Fuzzy string matching with a predefined threshold\n3. Range matching timestamp with upperbound or lowerbound\nSearch results contains all contact entries that matched all criteria",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "message_id": {
+           "type": "string",
+           "description": "String format unique identifier for message, will be exact matched"
+          },
+          "sender_person_id": {
+           "type": "string",
+           "description": "String format unique identifier for the sender, will be exact matched"
+          },
+          "sender_phone_number": {
+           "type": "string",
+           "description": "Phone number for the sender, will be exact matched"
+          },
+          "recipient_person_id": {
+           "type": "string",
+           "description": "String format unique identifier for the recipient, will be exact matched"
+          },
+          "recipient_phone_number": {
+           "type": "string",
+           "description": "Phone number for the recipient, will be exact matched"
+          },
+          "content": {
+           "type": "string",
+           "description": "Message content, will be fuzzy matched"
+          },
+          "creation_timestamp_lowerbound": {
+           "type": "number",
+           "description": "Lowerbound of the POSIX timestamp of the time the message is created."
+          },
+          "creation_timestamp_upperbound": {
+           "type": "number",
+           "description": "Upperbound of the POSIX timestamp of the time the message is created."
+          }
+         },
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "send_message_with_phone_number",
+        "description": "Send a message to a recipient using phone_number",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "phone_number": {
+           "type": "string",
+           "description": "String format phone number to send the message to"
+          },
+          "content": {
+           "type": "string",
+           "description": "Message payload text"
+          }
+         },
+         "required": [
+          "phone_number",
+          "content"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_current_location",
+        "description": "Request current location latitude and longitude",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_location_service_status",
+        "description": "Request location service status",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_wifi_status",
+        "description": "Request wifi status",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "add_reminder",
+        "description": "Add a reminder",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "content": {
+           "type": "string",
+           "description": "Content of the reminder"
+          },
+          "reminder_timestamp": {
+           "type": "number",
+           "description": "When the user wants to be reminded. Expressed in POSIX timestamp"
+          },
+          "latitude": {
+           "type": "number",
+           "description": "Optional. Latitude of the location associated with this reminder"
+          },
+          "longitude": {
+           "type": "number",
+           "description": "Optional. Longitude of the location associated with this reminder"
+          }
+         },
+         "required": [
+          "content",
+          "reminder_timestamp"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "modify_reminder",
+        "description": "Modify a reminder with new information provided. Creation timestamp is updated automatically.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "reminder_id": {
+           "type": "string",
+           "description": "String format unique identifier of the reminder to be modified"
+          },
+          "content": {
+           "type": "string",
+           "description": "New content"
+          },
+          "reminder_timestamp": {
+           "type": "number",
+           "description": "When the user wants to be reminded. Expressed in POSIX timestamp"
+          },
+          "latitude": {
+           "type": "number",
+           "description": "Optional. Latitude of the location associated with this reminder"
+          },
+          "longitude": {
+           "type": "number",
+           "description": "Optional. Longitude of the location associated with this reminder"
+          }
+         },
+         "required": [
+          "reminder_id"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "remove_reminder",
+        "description": "Remove a reminder given its unique identifier",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "reminder_id": {
+           "type": "string",
+           "description": "String format unique identifier of the reminder to be removed"
+          }
+         },
+         "required": [
+          "reminder_id"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "search_reminder",
+        "description": "Search for a reminder based on provided arguments Each field has a search criteria of either\n1. Exact value matching\n2. Fuzzy string matching with a predefined threshold\n3. Range matching timestamp with upperbound or lowerbound\nSearch results contains all reminder entries that matched all criteria",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "reminder_id": {
+           "type": "string",
+           "description": "String format unique identifier for the reminder person, will be exact matched"
+          },
+          "content": {
+           "type": "string",
+           "description": "Content of the reminder, will be fuzzy matched"
+          },
+          "creation_timestamp_lowerbound": {
+           "type": "number",
+           "description": "Lowerbound of the POSIX timestamp of the time the reminder is created."
+          },
+          "creation_timestamp_upperbound": {
+           "type": "number",
+           "description": "Upperbound of the POSIX timestamp of the time the reminder is created."
+          },
+          "reminder_timestamp_lowerbound": {
+           "type": "number",
+           "description": "Lowerbound of the POSIX timestamp of the time the reminder should be reminded."
+          },
+          "reminder_timestamp_upperbound": {
+           "type": "number",
+           "description": "Upperbound of the POSIX timestamp of the time the reminder should be reminded."
+          },
+          "latitude": {
+           "type": "number",
+           "description": "Latitude of the location associated with the reminder. Will be exact matched."
+          },
+          "longitude": {
+           "type": "number",
+           "description": "Longitude of the location associated with the reminder. Will be exact matched."
+          }
+         },
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_low_battery_mode_status",
+        "description": "Request low battery mode status",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_cellular_service_status",
+        "description": "Enable / Disable cellular service",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "on": {
+           "type": "boolean",
+           "description": "If we want to turn on cellular service"
+          }
+         },
+         "required": [
+          "on"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_location_service_status",
+        "description": "Enable / Disable location service",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "on": {
+           "type": "boolean",
+           "description": "If we want to turn on location service"
+          }
+         },
+         "required": [
+          "on"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_low_battery_mode_status",
+        "description": "Enable / Disable low battery mode",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "on": {
+           "type": "boolean",
+           "description": "If we want to turn on low battery mode"
+          }
+         },
+         "required": [
+          "on"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "set_wifi_status",
+        "description": "Enable / Disable wifi",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "on": {
+           "type": "boolean",
+           "description": "If we want to turn on wifi"
+          }
+         },
+         "required": [
+          "on"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "calculate_lat_lon_distance",
+        "description": "Calculate the distance between 2 pairs of latitude and longitude.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "latitude_0": {
+           "type": "number",
+           "description": "First Latitude."
+          },
+          "longitude_0": {
+           "type": "number",
+           "description": "First Longitude."
+          },
+          "latitude_1": {
+           "type": "number",
+           "description": "Second Latitude."
+          },
+          "longitude_1": {
+           "type": "number",
+           "description": "Second Longitude."
+          }
+         },
+         "required": [
+          "latitude_0",
+          "longitude_0",
+          "latitude_1",
+          "longitude_1"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "datetime_info_to_timestamp",
+        "description": "Convert  date time information to POSIX timestamp",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "year": {
+           "type": "integer",
+           "description": "Year of timestamp"
+          },
+          "month": {
+           "type": "integer",
+           "description": "Month of timestamp"
+          },
+          "day": {
+           "type": "integer",
+           "description": "Day of timestamp"
+          },
+          "hour": {
+           "type": "integer",
+           "description": "Hour of timestamp in 24hr format"
+          },
+          "minute": {
+           "type": "integer",
+           "description": "Minute of timestamp"
+          },
+          "second": {
+           "type": "integer",
+           "description": "Second of timestamp"
+          }
+         },
+         "required": [
+          "year",
+          "month",
+          "day",
+          "hour",
+          "minute",
+          "second"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "get_current_timestamp",
+        "description": "Get current POSIX timestamp",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "search_holiday",
+        "description": "Search for a holiday by name in the US. Canonicalize return value into corresponding POSIX timestamp.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "holiday_name": {
+           "type": "string",
+           "description": "Name of the holiday in surface form string"
+          },
+          "year": {
+           "type": "integer",
+           "description": "Optional. Year to search the holiday in. When not provided defaults to current year."
+          }
+         },
+         "required": [
+          "holiday_name"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "seconds_to_hours_minutes_seconds",
+        "description": "Convert total number of seconds past 0:00 into hours, minutes and seconds",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "seconds": {
+           "type": "number",
+           "description": "Number of seconds past 0:00"
+          }
+         },
+         "required": [
+          "seconds"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "shift_timestamp",
+        "description": "Shifts a POSIX timestamp by provided deltas. Delta can be positive or negative.",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "timestamp": {
+           "type": "number",
+           "description": "POSIX timestamp to be shifted"
+          },
+          "weeks": {
+           "type": "integer",
+           "description": "Number of weeks to add or subtract"
+          },
+          "days": {
+           "type": "integer",
+           "description": "Number of days to add or subtract"
+          },
+          "hours": {
+           "type": "integer",
+           "description": "Number of hours to add or subtract"
+          },
+          "minutes": {
+           "type": "integer",
+           "description": "Number of minutes to add or subtract"
+          },
+          "seconds": {
+           "type": "integer",
+           "description": "Number of seconds to add or subtract"
+          }
+         },
+         "required": [
+          "timestamp"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "timestamp_diff",
+        "description": "Calculates the difference between two timestamps, timestamp_1 - timestamp_0, return the difference\nrepresented in days and seconds",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "timestamp_0": {
+           "type": "number",
+           "description": "Timestamp to subtract"
+          },
+          "timestamp_1": {
+           "type": "number",
+           "description": "Timestamp to subtract from"
+          }
+         },
+         "required": [
+          "timestamp_0",
+          "timestamp_1"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "timestamp_to_datetime_info",
+        "description": "Convert POSIX timestamp to a dictionary of date time information, including\n    [\"year\", \"month\", \"day\", \"hour\", \"minute\", \"second\", \"isoweekday\"]\n    isoweekday ranges from [1, 7]",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "timestamp": {
+           "type": "number",
+           "description": "Float representing POSIX timestamp"
+          }
+         },
+         "required": [
+          "timestamp"
+         ]
+        }
+       }
+      },
+      {
+       "type": "function",
+       "function": {
+        "name": "unit_conversion",
+        "description": "Convert a certain amount from one unit to another You can use common english names to represent the from and to units",
+        "parameters": {
+         "type": "object",
+         "properties": {
+          "amount": {
+           "type": "number",
+           "description": "Float point amount in from_unit"
+          },
+          "from_unit": {
+           "type": "string",
+           "description": "Unit to convert from. For example celsius"
+          },
+          "to_unit": {
+           "type": "string",
+           "description": "Unit to convert to. For example fahrenheit"
+          }
+         },
+         "required": [
+          "amount",
+          "from_unit",
+          "to_unit"
+         ]
+        }
+       }
+      }
+     ],
+     "usage": {
+      "include": true
+     }
+    }
+   },
+   "response": {
+    "received_at": "2026-11-03T06:55:42.057209+00:00",
+    "status_code": 200,
+    "headers": {
+     "date": "Tue, 03 Nov 2026 06:55:41 GMT",
+     "content-type": "application/json",
+     "transfer-encoding": "chunked",
+     "connection": "keep-alive",
+     "access-control-allow-origin": "*",
+     "x-generation-id": "gen-1793688940-1YPN1mFdx9ogiRbhs38V",
+     "access-control-expose-headers": "X-Generation-Id,X-Provider-Name,request-id,cf-ray",
+     "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+     "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+     "x-content-type-options": "nosniff",
+     "content-encoding": "gzip",
+     "server": "cloudflare",
+     "cf-ray": "a5497984f975a80a-DEL",
+     "alt-svc": "h3=\":443\"; ma=86400"
+    },
+    "body": {
+     "id": "gen-1793688940-1YPN1mFdx9ogiRbhs38V",
+     "object": "chat.completion",
+     "created": 1793688940,
+     "model": "openai/gpt-6-luna",
+     "provider": "Azure",
+     "system_fingerprint": null,
+     "service_tier": "default",
+     "choices": [
+      {
+       "index": 0,
+       "logprobs": null,
+       "finish_reason": "stop",
+       "native_finish_reason": "completed",
+       "message": {
+        "role": "assistant",
+        "content": "You’re welcome!",
+        "refusal": null,
+        "reasoning": null
+       }
+      }
+     ],
+     "usage": {
+      "prompt_tokens": 2128,
+      "completion_tokens": 8,
+      "total_tokens": 2136,
+      "cost": 2.8195e-05,
+      "is_byok": false,
+      "prompt_tokens_details": {
+       "cached_tokens": 2102,
+       "cache_write_tokens": 23,
+       "audio_tokens": 0,
+       "video_tokens": 0
+      },
+      "cost_details": {
+       "upstream_inference_cost": 2.8195e-05,
+       "upstream_inference_prompt_cost": 2.4195e-05,
+       "upstream_inference_completions_cost": 4e-06
+      },
+      "completion_tokens_details": {
+       "reasoning_tokens": 0,
+       "image_tokens": 0,
+       "audio_tokens": 0
+      }
+     }
+    }
+   },
+   "latency_s": 1.932083
+  }
+ ],
+ "user_api_calls": [
+  {
+   "request": {
+    "sent_at": "2026-11-03T06:55:32.025458+00:00",
+    "method": "POST",
+    "url": "https://openrouter.ai/api/v1/chat/completions",
+    "headers": {
+     "host": "openrouter.ai",
+     "accept-encoding": "gzip, deflate",
+     "connection": "keep-alive",
+     "accept": "application/json",
+     "content-type": "application/json",
+     "user-agent": "OpenAI/Python 1.17.0",
+     "x-stainless-lang": "python",
+     "x-stainless-package-version": "1.17.0",
+     "x-stainless-os": "Linux",
+     "x-stainless-arch": "x64",
+     "x-stainless-runtime": "CPython",
+     "x-stainless-runtime-version": "3.12.3",
+     "authorization": "<redacted>",
+     "x-stainless-async": "false",
+     "content-length": "6210"
+    },
+    "body": {
+     "messages": [
+      {
+       "role": "system",
+       "content": "You are no longer an assistant. From now on role play as a user (User A) talking to another user (User B).\nMake sure you follow these instructions:\n\n0. DO NOT act as if you (User A) are an assistant. ALWAYS treat yourself as a user (User A).\n    Do not ask questions to the other user (User B).\n1. Answer any question User B asks you (User A) accurately. Use only the information provided.\n    Do not make up false information.\n2.  Use natural, short, casual language.\n3.  If User B says it could not complete the task, either provide more information\n    you (User A) posses, or ask it to use the tools it figure it out itself if you (User A)\n    do not posses information that could help.\n4.  Allow User B to turn off low battery mode, turn on cellular service, wifi or location service\n    in order to complete the task.\n5.  When User B completed the task, even if you (User A) don't have enough information to validate the\n    correctness, break out of role playing and use the provided tool named `end_conversation` to stop\n    the conversation.\n6.  When User B cannot complete the request after 5 tries, break out of role playing and\n     use the provided tool named `end_conversation` to stop the conversation.\n\nAnswer User B's questions given the following task you (User A) want User B to complete: Send a message to Bart saying: Hey what's up."
+      },
+      {
+       "role": "assistant",
+       "content": "I want to send a message to someone."
+      },
+      {
+       "role": "user",
+       "content": "Certainly! I can help you with sending a message. Could you please provide the following details: 1. The phone number of the recipient. 2. The content of the message you'd like to send."
+      },
+      {
+       "role": "assistant",
+       "content": "I don't know the phone number."
+      },
+      {
+       "role": "user",
+       "content": "OK, could you provide some more information about the contact you'd like to send message to?"
+      },
+      {
+       "role": "assistant",
+       "content": "It's Bart"
+      },
+      {
+       "role": "user",
+       "content": "What would you like to say to Bart?"
+      },
+      {
+       "role": "assistant",
+       "content": "Hey what's up"
+      },
+      {
+       "role": "user",
+       "content": "I'm about to send a message saying 'Hey what's up.' to Bart. Does this look good?"
+      },
+      {
+       "role": "assistant",
+       "content": "Yep"
+      },
+      {
+       "role": "user",
+       "content": "Your message has been successfully sent."
+      },
+      {
+       "role": "system",
+       "content": "You are no longer an assistant. From now on role play as a user (User A) talking to another user (User B).\nMake sure you follow these instructions:\n\n0. DO NOT act as if you (User A) are an assistant. ALWAYS treat yourself as a user (User A).\n    Do not ask questions to the other user (User B).\n1. Answer any question User B asks you (User A) accurately. Use only the information provided.\n    Do not make up false information.\n2.  Use natural, short, casual language.\n3.  If User B says it could not complete the task, either provide more information\n    you (User A) posses, or ask it to use the tools it figure it out itself if you (User A)\n    do not posses information that could help.\n4.  Allow User B to turn off low battery mode, turn on cellular service, wifi or location service\n    in order to complete the task.\n5.  When User B completed the task, even if you (User A) don't have enough information to validate the\n    correctness, break out of role playing and use the provided tool named `end_conversation` to stop\n    the conversation.\n6.  When User B cannot complete the request after 5 tries, break out of role playing and\n     use the provided tool named `end_conversation` to stop the conversation.\n\nAnswer User B's questions given the following task you (User A) want User B to complete: Delete a contact by phone number +13493028493."
+      },
+      {
+       "role": "assistant",
+       "content": "I need to delete someone."
+      },
+      {
+       "role": "user",
+       "content": "Sure, could you provide some detail about the contact you wish to delete? Information like the name and unique ID could be helpful."
+      },
+      {
+       "role": "assistant",
+       "content": "I don't know either of these."
+      },
+      {
+       "role": "user",
+       "content": "OK, let's try something else. What about phone number?"
+      },
+      {
+       "role": "assistant",
+       "content": "It is +12453344098"
+      },
+      {
+       "role": "user",
+       "content": "The contact with phone number +13493028493 has been successfully deleted."
+      },
+      {
+       "role": "system",
+       "content": "You are no longer an assistant. From now on role play as a user (User A) talking to another user (User B).\nMake sure you follow these instructions:\n\n0. DO NOT act as if you (User A) are an assistant. ALWAYS treat yourself as a user (User A).\n    Do not ask questions to the other user (User B).\n1. Answer any question User B asks you (User A) accurately. Use only the information provided.\n    Do not make up false information.\n2.  Use natural, short, casual language.\n3.  If User B says it could not complete the task, either provide more information\n    you (User A) posses, or ask it to use the tools it figure it out itself if you (User A)\n    do not posses information that could help.\n4.  Allow User B to turn off low battery mode, turn on cellular service, wifi or location service\n    in order to complete the task.\n5.  When User B completed the task, even if you (User A) don't have enough information to validate the\n    correctness, break out of role playing and use the provided tool named `end_conversation` to stop\n    the conversation.\n6.  When User B cannot complete the request after 5 tries, break out of role playing and\n     use the provided tool named `end_conversation` to stop the conversation.\n\nAnswer User B's questions given the following task you (User A) want User B to complete: Ask User B to delete your (User A's) contact by phone number +12453344098. You do not have more information."
+      },
+      {
+       "role": "assistant",
+       "content": "Who's +12453344098 in my contact?"
+      },
+      {
+       "role": "user",
+       "content": "That number belongs to **Fredrik Thordendal**, listed as your friend."
+      }
+     ],
+     "model": "openai/gpt-4o-2024-05-13",
+     "tools": [
+      {
+       "type": "function",
+       "function": {
+        "name": "end_conversation",
+        "description": "Finish the conversation Trigger this tool when you think the agent have completed the task for you,\nor the agent is unable to complete the task. Either way this tool will stop the conversation",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      }
+     ],
+     "usage": {
+      "include": true
+     }
+    }
+   },
+   "response": {
+    "received_at": "2026-11-03T06:55:33.229574+00:00",
+    "status_code": 200,
+    "headers": {
+     "date": "Tue, 03 Nov 2026 06:55:33 GMT",
+     "content-type": "application/json",
+     "transfer-encoding": "chunked",
+     "connection": "keep-alive",
+     "access-control-allow-origin": "*",
+     "x-generation-id": "gen-1793688932-oK2iOSU13TxGtMQxF5pi",
+     "access-control-expose-headers": "X-Generation-Id,X-Provider-Name,request-id,cf-ray",
+     "set-cookie": "__cf_bm=I8heuvtJ4I5WAWl_boJxd_g3jfSBcfpC0RuzFOzpnFk-1793688932.230104-1.0.1.1-jsEN85905wWbB5mq.v2ecx1BRFw7eOE0EUmbKK7GCxqmw60FYsoZQtUBAI1aE4Y1vxd5hJnmFouXQsJYY2SmlgQtldr.5.LBs34iHhJekbnQoGAXLvv5eOZMWjovmxWs; HttpOnly; SameSite=None; Secure; Path=/; Domain=openrouter.ai; Expires=Tue, 03 Nov 2026 07:25:33 GMT",
+     "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+     "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+     "x-content-type-options": "nosniff",
+     "content-encoding": "gzip",
+     "server": "cloudflare",
+     "cf-ray": "a549795269a3b2d8-DEL",
+     "alt-svc": "h3=\":443\"; ma=86400"
+    },
+    "body": {
+     "id": "gen-1793688932-oK2iOSU13TxGtMQxF5pi",
+     "object": "chat.completion",
+     "created": 1793688932,
+     "model": "openai/gpt-4o-2024-05-13",
+     "provider": "Azure",
+     "system_fingerprint": "fp_da7d7499ec",
+     "service_tier": "default",
+     "choices": [
+      {
+       "index": 0,
+       "logprobs": null,
+       "finish_reason": "stop",
+       "native_finish_reason": "stop",
+       "message": {
+        "role": "assistant",
+        "content": "Please delete it.",
+        "refusal": null,
+        "reasoning": null
+       }
+      }
+     ],
+     "usage": {
+      "prompt_tokens": 1340,
+      "completion_tokens": 5,
+      "total_tokens": 1345,
+      "cost": 0.006775,
+      "is_byok": false,
+      "prompt_tokens_details": {
+       "cached_tokens": 1152,
+       "cache_write_tokens": 0,
+       "audio_tokens": 0,
+       "video_tokens": 0
+      },
+      "cost_details": {
+       "upstream_inference_cost": 0.006775,
+       "upstream_inference_prompt_cost": 0.0067,
+       "upstream_inference_completions_cost": 7.5e-05
+      },
+      "completion_tokens_details": {
+       "reasoning_tokens": 0,
+       "image_tokens": 0,
+       "audio_tokens": 0
+      }
+     }
+    }
+   },
+   "latency_s": 1.204009
+  },
+  {
+   "request": {
+    "sent_at": "2026-11-03T06:55:38.322693+00:00",
+    "method": "POST",
+    "url": "https://openrouter.ai/api/v1/chat/completions",
+    "headers": {
+     "host": "openrouter.ai",
+     "accept-encoding": "gzip, deflate",
+     "connection": "keep-alive",
+     "accept": "application/json",
+     "content-type": "application/json",
+     "user-agent": "OpenAI/Python 1.17.0",
+     "x-stainless-lang": "python",
+     "x-stainless-package-version": "1.17.0",
+     "x-stainless-os": "Linux",
+     "x-stainless-arch": "x64",
+     "x-stainless-runtime": "CPython",
+     "x-stainless-runtime-version": "3.12.3",
+     "authorization": "<redacted>",
+     "x-stainless-async": "false",
+     "cookie": "__cf_bm=I8heuvtJ4I5WAWl_boJxd_g3jfSBcfpC0RuzFOzpnFk-1793688932.230104-1.0.1.1-jsEN85905wWbB5mq.v2ecx1BRFw7eOE0EUmbKK7GCxqmw60FYsoZQtUBAI1aE4Y1vxd5hJnmFouXQsJYY2SmlgQtldr.5.LBs34iHhJekbnQoGAXLvv5eOZMWjovmxWs",
+     "content-length": "6329"
+    },
+    "body": {
+     "messages": [
+      {
+       "role": "system",
+       "content": "You are no longer an assistant. From now on role play as a user (User A) talking to another user (User B).\nMake sure you follow these instructions:\n\n0. DO NOT act as if you (User A) are an assistant. ALWAYS treat yourself as a user (User A).\n    Do not ask questions to the other user (User B).\n1. Answer any question User B asks you (User A) accurately. Use only the information provided.\n    Do not make up false information.\n2.  Use natural, short, casual language.\n3.  If User B says it could not complete the task, either provide more information\n    you (User A) posses, or ask it to use the tools it figure it out itself if you (User A)\n    do not posses information that could help.\n4.  Allow User B to turn off low battery mode, turn on cellular service, wifi or location service\n    in order to complete the task.\n5.  When User B completed the task, even if you (User A) don't have enough information to validate the\n    correctness, break out of role playing and use the provided tool named `end_conversation` to stop\n    the conversation.\n6.  When User B cannot complete the request after 5 tries, break out of role playing and\n     use the provided tool named `end_conversation` to stop the conversation.\n\nAnswer User B's questions given the following task you (User A) want User B to complete: Send a message to Bart saying: Hey what's up."
+      },
+      {
+       "role": "assistant",
+       "content": "I want to send a message to someone."
+      },
+      {
+       "role": "user",
+       "content": "Certainly! I can help you with sending a message. Could you please provide the following details: 1. The phone number of the recipient. 2. The content of the message you'd like to send."
+      },
+      {
+       "role": "assistant",
+       "content": "I don't know the phone number."
+      },
+      {
+       "role": "user",
+       "content": "OK, could you provide some more information about the contact you'd like to send message to?"
+      },
+      {
+       "role": "assistant",
+       "content": "It's Bart"
+      },
+      {
+       "role": "user",
+       "content": "What would you like to say to Bart?"
+      },
+      {
+       "role": "assistant",
+       "content": "Hey what's up"
+      },
+      {
+       "role": "user",
+       "content": "I'm about to send a message saying 'Hey what's up.' to Bart. Does this look good?"
+      },
+      {
+       "role": "assistant",
+       "content": "Yep"
+      },
+      {
+       "role": "user",
+       "content": "Your message has been successfully sent."
+      },
+      {
+       "role": "system",
+       "content": "You are no longer an assistant. From now on role play as a user (User A) talking to another user (User B).\nMake sure you follow these instructions:\n\n0. DO NOT act as if you (User A) are an assistant. ALWAYS treat yourself as a user (User A).\n    Do not ask questions to the other user (User B).\n1. Answer any question User B asks you (User A) accurately. Use only the information provided.\n    Do not make up false information.\n2.  Use natural, short, casual language.\n3.  If User B says it could not complete the task, either provide more information\n    you (User A) posses, or ask it to use the tools it figure it out itself if you (User A)\n    do not posses information that could help.\n4.  Allow User B to turn off low battery mode, turn on cellular service, wifi or location service\n    in order to complete the task.\n5.  When User B completed the task, even if you (User A) don't have enough information to validate the\n    correctness, break out of role playing and use the provided tool named `end_conversation` to stop\n    the conversation.\n6.  When User B cannot complete the request after 5 tries, break out of role playing and\n     use the provided tool named `end_conversation` to stop the conversation.\n\nAnswer User B's questions given the following task you (User A) want User B to complete: Delete a contact by phone number +13493028493."
+      },
+      {
+       "role": "assistant",
+       "content": "I need to delete someone."
+      },
+      {
+       "role": "user",
+       "content": "Sure, could you provide some detail about the contact you wish to delete? Information like the name and unique ID could be helpful."
+      },
+      {
+       "role": "assistant",
+       "content": "I don't know either of these."
+      },
+      {
+       "role": "user",
+       "content": "OK, let's try something else. What about phone number?"
+      },
+      {
+       "role": "assistant",
+       "content": "It is +12453344098"
+      },
+      {
+       "role": "user",
+       "content": "The contact with phone number +13493028493 has been successfully deleted."
+      },
+      {
+       "role": "system",
+       "content": "You are no longer an assistant. From now on role play as a user (User A) talking to another user (User B).\nMake sure you follow these instructions:\n\n0. DO NOT act as if you (User A) are an assistant. ALWAYS treat yourself as a user (User A).\n    Do not ask questions to the other user (User B).\n1. Answer any question User B asks you (User A) accurately. Use only the information provided.\n    Do not make up false information.\n2.  Use natural, short, casual language.\n3.  If User B says it could not complete the task, either provide more information\n    you (User A) posses, or ask it to use the tools it figure it out itself if you (User A)\n    do not posses information that could help.\n4.  Allow User B to turn off low battery mode, turn on cellular service, wifi or location service\n    in order to complete the task.\n5.  When User B completed the task, even if you (User A) don't have enough information to validate the\n    correctness, break out of role playing and use the provided tool named `end_conversation` to stop\n    the conversation.\n6.  When User B cannot complete the request after 5 tries, break out of role playing and\n     use the provided tool named `end_conversation` to stop the conversation.\n\nAnswer User B's questions given the following task you (User A) want User B to complete: Ask User B to delete your (User A's) contact by phone number +12453344098. You do not have more information."
+      },
+      {
+       "role": "assistant",
+       "content": "Who's +12453344098 in my contact?"
+      },
+      {
+       "role": "user",
+       "content": "That number belongs to **Fredrik Thordendal**, listed as your friend."
+      },
+      {
+       "role": "assistant",
+       "content": "Please delete it."
+      },
+      {
+       "role": "user",
+       "content": "Deleted Fredrik Thordendal’s contact."
+      }
+     ],
+     "model": "openai/gpt-4o-2024-05-13",
+     "tools": [
+      {
+       "type": "function",
+       "function": {
+        "name": "end_conversation",
+        "description": "Finish the conversation Trigger this tool when you think the agent have completed the task for you,\nor the agent is unable to complete the task. Either way this tool will stop the conversation",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      }
+     ],
+     "usage": {
+      "include": true
+     }
+    }
+   },
+   "response": {
+    "received_at": "2026-11-03T06:55:40.105989+00:00",
+    "status_code": 200,
+    "headers": {
+     "date": "Tue, 03 Nov 2026 06:55:40 GMT",
+     "content-type": "application/json",
+     "transfer-encoding": "chunked",
+     "connection": "keep-alive",
+     "access-control-allow-origin": "*",
+     "x-generation-id": "gen-1793688938-oGMQVBwGn0ARoTq913HY",
+     "access-control-expose-headers": "X-Generation-Id,X-Provider-Name,request-id,cf-ray",
+     "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+     "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+     "x-content-type-options": "nosniff",
+     "content-encoding": "gzip",
+     "server": "cloudflare",
+     "cf-ray": "a5497979cf66a7f2-DEL",
+     "alt-svc": "h3=\":443\"; ma=86400"
+    },
+    "body": {
+     "id": "gen-1793688938-oGMQVBwGn0ARoTq913HY",
+     "object": "chat.completion",
+     "created": 1793688938,
+     "model": "openai/gpt-4o-2024-05-13",
+     "provider": "Azure",
+     "system_fingerprint": "fp_da7d7499ec",
+     "service_tier": "default",
+     "choices": [
+      {
+       "index": 0,
+       "logprobs": null,
+       "finish_reason": "stop",
+       "native_finish_reason": "stop",
+       "message": {
+        "role": "assistant",
+        "content": "Okay, thanks!",
+        "refusal": null,
+        "reasoning": null
+       }
+      }
+     ],
+     "usage": {
+      "prompt_tokens": 1361,
+      "completion_tokens": 5,
+      "total_tokens": 1366,
+      "cost": 0.00688,
+      "is_byok": false,
+      "prompt_tokens_details": {
+       "cached_tokens": 1152,
+       "cache_write_tokens": 0,
+       "audio_tokens": 0,
+       "video_tokens": 0
+      },
+      "cost_details": {
+       "upstream_inference_cost": 0.00688,
+       "upstream_inference_prompt_cost": 0.006805,
+       "upstream_inference_completions_cost": 7.5e-05
+      },
+      "completion_tokens_details": {
+       "reasoning_tokens": 0,
+       "image_tokens": 0,
+       "audio_tokens": 0
+      }
+     }
+    }
+   },
+   "latency_s": 1.783165
+  },
+  {
+   "request": {
+    "sent_at": "2026-11-03T06:55:42.079095+00:00",
+    "method": "POST",
+    "url": "https://openrouter.ai/api/v1/chat/completions",
+    "headers": {
+     "host": "openrouter.ai",
+     "accept-encoding": "gzip, deflate",
+     "connection": "keep-alive",
+     "accept": "application/json",
+     "content-type": "application/json",
+     "user-agent": "OpenAI/Python 1.17.0",
+     "x-stainless-lang": "python",
+     "x-stainless-package-version": "1.17.0",
+     "x-stainless-os": "Linux",
+     "x-stainless-arch": "x64",
+     "x-stainless-runtime": "CPython",
+     "x-stainless-runtime-version": "3.12.3",
+     "authorization": "<redacted>",
+     "x-stainless-async": "false",
+     "cookie": "__cf_bm=I8heuvtJ4I5WAWl_boJxd_g3jfSBcfpC0RuzFOzpnFk-1793688932.230104-1.0.1.1-jsEN85905wWbB5mq.v2ecx1BRFw7eOE0EUmbKK7GCxqmw60FYsoZQtUBAI1aE4Y1vxd5hJnmFouXQsJYY2SmlgQtldr.5.LBs34iHhJekbnQoGAXLvv5eOZMWjovmxWs",
+     "content-length": "6422"
+    },
+    "body": {
+     "messages": [
+      {
+       "role": "system",
+       "content": "You are no longer an assistant. From now on role play as a user (User A) talking to another user (User B).\nMake sure you follow these instructions:\n\n0. DO NOT act as if you (User A) are an assistant. ALWAYS treat yourself as a user (User A).\n    Do not ask questions to the other user (User B).\n1. Answer any question User B asks you (User A) accurately. Use only the information provided.\n    Do not make up false information.\n2.  Use natural, short, casual language.\n3.  If User B says it could not complete the task, either provide more information\n    you (User A) posses, or ask it to use the tools it figure it out itself if you (User A)\n    do not posses information that could help.\n4.  Allow User B to turn off low battery mode, turn on cellular service, wifi or location service\n    in order to complete the task.\n5.  When User B completed the task, even if you (User A) don't have enough information to validate the\n    correctness, break out of role playing and use the provided tool named `end_conversation` to stop\n    the conversation.\n6.  When User B cannot complete the request after 5 tries, break out of role playing and\n     use the provided tool named `end_conversation` to stop the conversation.\n\nAnswer User B's questions given the following task you (User A) want User B to complete: Send a message to Bart saying: Hey what's up."
+      },
+      {
+       "role": "assistant",
+       "content": "I want to send a message to someone."
+      },
+      {
+       "role": "user",
+       "content": "Certainly! I can help you with sending a message. Could you please provide the following details: 1. The phone number of the recipient. 2. The content of the message you'd like to send."
+      },
+      {
+       "role": "assistant",
+       "content": "I don't know the phone number."
+      },
+      {
+       "role": "user",
+       "content": "OK, could you provide some more information about the contact you'd like to send message to?"
+      },
+      {
+       "role": "assistant",
+       "content": "It's Bart"
+      },
+      {
+       "role": "user",
+       "content": "What would you like to say to Bart?"
+      },
+      {
+       "role": "assistant",
+       "content": "Hey what's up"
+      },
+      {
+       "role": "user",
+       "content": "I'm about to send a message saying 'Hey what's up.' to Bart. Does this look good?"
+      },
+      {
+       "role": "assistant",
+       "content": "Yep"
+      },
+      {
+       "role": "user",
+       "content": "Your message has been successfully sent."
+      },
+      {
+       "role": "system",
+       "content": "You are no longer an assistant. From now on role play as a user (User A) talking to another user (User B).\nMake sure you follow these instructions:\n\n0. DO NOT act as if you (User A) are an assistant. ALWAYS treat yourself as a user (User A).\n    Do not ask questions to the other user (User B).\n1. Answer any question User B asks you (User A) accurately. Use only the information provided.\n    Do not make up false information.\n2.  Use natural, short, casual language.\n3.  If User B says it could not complete the task, either provide more information\n    you (User A) posses, or ask it to use the tools it figure it out itself if you (User A)\n    do not posses information that could help.\n4.  Allow User B to turn off low battery mode, turn on cellular service, wifi or location service\n    in order to complete the task.\n5.  When User B completed the task, even if you (User A) don't have enough information to validate the\n    correctness, break out of role playing and use the provided tool named `end_conversation` to stop\n    the conversation.\n6.  When User B cannot complete the request after 5 tries, break out of role playing and\n     use the provided tool named `end_conversation` to stop the conversation.\n\nAnswer User B's questions given the following task you (User A) want User B to complete: Delete a contact by phone number +13493028493."
+      },
+      {
+       "role": "assistant",
+       "content": "I need to delete someone."
+      },
+      {
+       "role": "user",
+       "content": "Sure, could you provide some detail about the contact you wish to delete? Information like the name and unique ID could be helpful."
+      },
+      {
+       "role": "assistant",
+       "content": "I don't know either of these."
+      },
+      {
+       "role": "user",
+       "content": "OK, let's try something else. What about phone number?"
+      },
+      {
+       "role": "assistant",
+       "content": "It is +12453344098"
+      },
+      {
+       "role": "user",
+       "content": "The contact with phone number +13493028493 has been successfully deleted."
+      },
+      {
+       "role": "system",
+       "content": "You are no longer an assistant. From now on role play as a user (User A) talking to another user (User B).\nMake sure you follow these instructions:\n\n0. DO NOT act as if you (User A) are an assistant. ALWAYS treat yourself as a user (User A).\n    Do not ask questions to the other user (User B).\n1. Answer any question User B asks you (User A) accurately. Use only the information provided.\n    Do not make up false information.\n2.  Use natural, short, casual language.\n3.  If User B says it could not complete the task, either provide more information\n    you (User A) posses, or ask it to use the tools it figure it out itself if you (User A)\n    do not posses information that could help.\n4.  Allow User B to turn off low battery mode, turn on cellular service, wifi or location service\n    in order to complete the task.\n5.  When User B completed the task, even if you (User A) don't have enough information to validate the\n    correctness, break out of role playing and use the provided tool named `end_conversation` to stop\n    the conversation.\n6.  When User B cannot complete the request after 5 tries, break out of role playing and\n     use the provided tool named `end_conversation` to stop the conversation.\n\nAnswer User B's questions given the following task you (User A) want User B to complete: Ask User B to delete your (User A's) contact by phone number +12453344098. You do not have more information."
+      },
+      {
+       "role": "assistant",
+       "content": "Who's +12453344098 in my contact?"
+      },
+      {
+       "role": "user",
+       "content": "That number belongs to **Fredrik Thordendal**, listed as your friend."
+      },
+      {
+       "role": "assistant",
+       "content": "Please delete it."
+      },
+      {
+       "role": "user",
+       "content": "Deleted Fredrik Thordendal’s contact."
+      },
+      {
+       "role": "assistant",
+       "content": "Okay, thanks!"
+      },
+      {
+       "role": "user",
+       "content": "You’re welcome!"
+      }
+     ],
+     "model": "openai/gpt-4o-2024-05-13",
+     "tools": [
+      {
+       "type": "function",
+       "function": {
+        "name": "end_conversation",
+        "description": "Finish the conversation Trigger this tool when you think the agent have completed the task for you,\nor the agent is unable to complete the task. Either way this tool will stop the conversation",
+        "parameters": {
+         "type": "object",
+         "properties": {},
+         "required": []
+        }
+       }
+      }
+     ],
+     "usage": {
+      "include": true
+     }
+    }
+   },
+   "response": {
+    "received_at": "2026-11-03T06:55:43.695139+00:00",
+    "status_code": 200,
+    "headers": {
+     "date": "Tue, 03 Nov 2026 06:55:43 GMT",
+     "content-type": "application/json",
+     "transfer-encoding": "chunked",
+     "connection": "keep-alive",
+     "access-control-allow-origin": "*",
+     "x-generation-id": "gen-1793688942-UpHgjs074LK6vul6FsWf",
+     "access-control-expose-headers": "X-Generation-Id,X-Provider-Name,request-id,cf-ray",
+     "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+     "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+     "x-content-type-options": "nosniff",
+     "content-encoding": "gzip",
+     "server": "cloudflare",
+     "cf-ray": "a54979912d10a7f2-DEL",
+     "alt-svc": "h3=\":443\"; ma=86400"
+    },
+    "body": {
+     "id": "gen-1793688942-UpHgjs074LK6vul6FsWf",
+     "object": "chat.completion",
+     "created": 1793688942,
+     "model": "openai/gpt-4o-2024-05-13",
+     "provider": "Azure",
+     "system_fingerprint": "fp_da7d7499ec",
+     "service_tier": "default",
+     "choices": [
+      {
+       "index": 0,
+       "logprobs": null,
+       "finish_reason": "tool_calls",
+       "native_finish_reason": "tool_calls",
+       "message": {
+        "role": "assistant",
+        "content": null,
+        "refusal": null,
+        "reasoning": null,
+        "tool_calls": [
+         {
+          "type": "function",
+          "index": 0,
+          "id": "call_PtL3jww6LP1Z8Ezh8yGGuZ7y",
+          "function": {
+           "name": "end_conversation",
+           "arguments": "{}"
+          }
+         }
+        ]
+       }
+      }
+     ],
+     "usage": {
+      "prompt_tokens": 1377,
+      "completion_tokens": 11,
+      "total_tokens": 1388,
+      "cost": 0.00705,
+      "is_byok": false,
+      "prompt_tokens_details": {
+       "cached_tokens": 1280,
+       "cache_write_tokens": 0,
+       "audio_tokens": 0,
+       "video_tokens": 0
+      },
+      "cost_details": {
+       "upstream_inference_cost": 0.00705,
+       "upstream_inference_prompt_cost": 0.006885,
+       "upstream_inference_completions_cost": 0.000165
+      },
+      "completion_tokens_details": {
+       "reasoning_tokens": 0,
+       "image_tokens": 0,
+       "audio_tokens": 0
+      }
+     }
+    }
+   },
+   "latency_s": 1.615952
+  }
+ ]
+}
