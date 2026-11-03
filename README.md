@@ -15,7 +15,26 @@ model, condition and task, including every API request and response); the repeat
 D0 run used for the noise floor is in `runs/main/rerun/`. `./browse.sh` serves a
 small local UI at http://localhost:8765/: pick a model, click a cell in the task x condition
 matrix, and read the transcript, the checker's verdict with its state diff, and the tool
-schemas exactly as the model saw them under that condition.
+schemas exactly as the model saw them under that condition. A benchmark selector switches to the
+ToolSandbox runs; the reasoning variants appear as extra models.
+
+## Two extensions
+
+**ToolSandbox.** The same conditions D0–D5 on Apple's ToolSandbox (`toolsandbox/` submodule, used
+unmodified): the 91 base scenarios that need no RapidAPI key, each with every sandbox tool offered
+(minus the five RapidAPI tools), GPT-4o-2024-05-13 as the user simulator as in the ToolSandbox paper.
+`./run_toolsandbox.sh` creates its own virtualenv (ToolSandbox pins old `openai`/`polars`) and writes
+`runs/main/toolsandbox/` (ToolSandbox's own `conversation.json` per scenario plus our `ablation.json`
+with every API call, the tool schemas sent and the score). `ablation/toolsandbox_run.py` is the runner.
+One wrinkle: ToolSandbox executes each call as a Python statement named after the tool-call id, and
+some providers (SiliconFlow for Qwen, Gemma's) return ids that start with a digit, which made every
+call a `SyntaxError`; the runner prefixes such ids with `call_` before execution.
+
+**Reasoning-controlled pairs.** GPT-6 Luna and Claude Haiku 5.5 reason by default, Gemma 4 does not;
+`ablation/models.py` defines `*-nothink` / `*-think` variants that send the same model with reasoning
+explicitly off or on. `RUN_NAME=main/reasoning ./run_eval.sh --models openai/gpt-6-luna-nothink
+anthropic/claude-haiku-5.5-nothink google/gemma-4-26b-a4b-it-think` produced `runs/main/reasoning/`.
+Qwen3-30B-A3B-Instruct-2507 has no reasoning switch (its thinking variant is a different checkpoint).
 
 ## Run
 

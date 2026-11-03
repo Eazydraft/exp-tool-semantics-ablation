@@ -25,6 +25,7 @@ from types import SimpleNamespace
 from dotenv import load_dotenv
 
 from ablation.conditions import CONDITIONS, registry_name
+from ablation.models import BASE_MODELS, MODELS, api_model
 
 # NOTE: bfcl_eval (and ablation.handler, which imports it) is only imported inside functions,
 # after BFCL_PROJECT_ROOT is set in main(): BFCL resolves its result/score dirs at import time.
@@ -33,14 +34,6 @@ PROJECT_DIR = Path(__file__).resolve().parents[1]
 BFCL_DIR = PROJECT_DIR / "gorilla" / "berkeley-function-call-leaderboard"
 TEST_CATEGORY = "multi_turn_base"  # BFCL v3 base multi-turn, 200 tasks
 
-# OpenRouter model ids. Prices (USD per 1M tokens, as listed on OpenRouter on 2026-11-02) are only
-# used by BFCL's leaderboard CSV; the actual cost of every call is recorded from OpenRouter's usage field.
-MODELS = {
-    "openai/gpt-6-luna": dict(org="OpenAI", input_price=0.10, output_price=0.50),
-    "anthropic/claude-haiku-5.5": dict(org="Anthropic", input_price=0.10, output_price=0.50),
-    "qwen/qwen3-30b-a3b-instruct-2507": dict(org="Qwen", input_price=0.10, output_price=0.30),
-    "google/gemma-4-26b-a4b-it": dict(org="Google", input_price=0.064, output_price=0.191),
-}
 
 
 def register_models():
@@ -52,7 +45,7 @@ def register_models():
     for model_id, info in MODELS.items():
         for condition_id in CONDITIONS:
             MODEL_CONFIG_MAPPING[registry_name(model_id, condition_id)] = ModelConfig(
-                model_name=model_id,
+                model_name=api_model(model_id),
                 display_name=f"{model_id} [{condition_id}]",
                 url=f"https://openrouter.ai/{model_id}",
                 org=info["org"],
@@ -258,7 +251,8 @@ def record_launch(args, run_dir: Path):
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("command", nargs="?", default="all", choices=["all", "generate", "evaluate", "index", "generate-one"])
-    p.add_argument("--models", nargs="+", default=list(MODELS), choices=list(MODELS))
+    p.add_argument("--models", nargs="+", default=BASE_MODELS, choices=list(MODELS),
+                   help="base models by default; the *-think/*-nothink reasoning variants on request")
     p.add_argument("--conditions", nargs="+", default=list(CONDITIONS), choices=list(CONDITIONS))
     p.add_argument("--threads", type=int, default=8, help="parallel tasks per model x condition")
     p.add_argument("--jobs", type=int, default=4, help="model x condition combos run in parallel")

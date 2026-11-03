@@ -289,3 +289,42 @@ if "D6" in A["conditions"] and "D7" in A["conditions"]:
     ax.legend(ncol=4, loc="upper center", bbox_to_anchor=(0.5, 1.14))
     save(fig, "fig10_followup")
     print("wrote fig10_followup.pdf")
+
+# Figure 11: ToolSandbox, mean similarity by condition ---------------------------------------------------
+TS = ROOT / "runs" / "main" / "toolsandbox" / "index.json"
+if TS.exists():
+    T = json.load(open(TS))["summary"]
+    fig, ax = plt.subplots(figsize=(6.6, 2.5))
+    x, w = np.arange(len(CONDS)), 0.19
+    for i, m in enumerate(MODELS):
+        vals = [T[f"{m} {c}"]["mean_similarity"] * 100 for c in CONDS]
+        ax.bar(x + (i - 1.5) * w, vals, w * 0.92, color=MCOL[i], label=SHORT[m], linewidth=0)
+    ax.set_xticks(x, [CLAB[c] for c in CONDS])
+    ax.set_ylabel("ToolSandbox similarity (91 scenarios)")
+    tidy(ax, 100, pct=True)
+    ax.legend(ncol=4, loc="upper center", bbox_to_anchor=(0.5, 1.14))
+    save(fig, "fig11_toolsandbox")
+    print("wrote fig11_toolsandbox.pdf")
+
+# Figure 12: reasoning-controlled pairs ---------------------------------------------------------------
+RS = ROOT / "runs" / "main" / "reasoning" / "index.json"
+if RS.exists():
+    R = json.load(open(RS))["summary"]
+    pairs = [("openai/gpt-6-luna", "openai/gpt-6-luna-nothink", "reasoning on (default)", "reasoning off"),
+             ("anthropic/claude-haiku-5.5", "anthropic/claude-haiku-5.5-nothink", "reasoning on (default)", "reasoning off"),
+             ("google/gemma-4-26b-a4b-it", "google/gemma-4-26b-a4b-it-think", "reasoning off (default)", "reasoning on")]
+    fig, axes = plt.subplots(1, 3, figsize=(6.6, 2.3), sharey=True)
+    x, w = np.arange(len(CONDS)), 0.36
+    for ax, (base, var, lb, lv) in zip(axes, pairs):
+        i = MODELS.index(base)
+        on_first = lb.startswith("reasoning on")
+        for j, (m, lab, col) in enumerate([(base, lb, MCOL[i]), (var, lv, "#b9b8b0")]):
+            vals = [(S[m][c] if m in S else R[f"{m} {c}"]["success_rate"]) * 100 for c in CONDS]
+            ax.bar(x + (j - 0.5) * w, vals, w * 0.92, color=col, label=lab, linewidth=0)
+        ax.set_title(SHORT[base])
+        ax.set_xticks(x, CONDS)
+        tidy(ax, 100, pct=True)
+        ax.legend(loc="upper right", fontsize=6.5)
+    axes[0].set_ylabel("task success (200 tasks)")
+    save(fig, "fig12_reasoning")
+    print("wrote fig12_reasoning.pdf")

@@ -68,6 +68,7 @@
 <body>
 <header>
   <h1>Trajectory browser</h1>
+  <label>Benchmark <select id="bench"><option value="bfcl">BFCL multi-turn</option><option value="ts">ToolSandbox</option></select></label>
   <label>Model <select id="model"></select></label>
   <label>Show <select id="filter">
     <option value="all">all tasks</option>
@@ -83,14 +84,14 @@
 <script>
 const RUN = "../runs/main/";
 const CONDS = ["D0","D1","D2","D3","D4","D5","D6","D7","D0 run 2"];
-let INDEX, BY = {};          // BY[model][cond][taskId] -> index row
+let INDEX, BY = {}, TS, TSBY = {};   // BY[model][cond][taskId] -> index row; TSBY likewise for ToolSandbox
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const num = id => parseInt(id.split("_").pop(), 10);
 const short = m => m.split("/").pop();
 const pretty = v => { if (typeof v === "string") { try { v = JSON.parse(v); } catch {} } return typeof v === "string" ? v : JSON.stringify(v, null, 2); };
-const cls = r => r.inference_error ? "err" : r.valid ? "pass" : "fail";
-const glyph = r => r.inference_error ? "!" : r.valid ? "✓" : "✗";
+const cls = r => r.inference_error ? "err" : ok(r) ? "pass" : "fail";
+const glyph = r => r.inference_error ? "!" : ok(r) ? "✓" : "✗";
 
 async function init() {
   INDEX = await (await fetch(RUN + "index.json")).json();
@@ -100,38 +101,62 @@ async function init() {
     INDEX.trajectories.push({ ...r, condition: "D0 run 2", file: "rerun/" + r.file });
     for (const [k, v] of Object.entries(rerun.summary)) INDEX.summary[k.replace(/ D0$/, " D0 run 2")] = v;
   }
+  // Reasoning-controlled pairs: the *-nothink/*-think variants are extra models in their own sub-run.
+  const reasoning = await fetch(RUN + "reasoning/index.json").then(r => r.ok ? r.json() : null).catch(() => null);
+  for (const r of reasoning?.trajectories || []) INDEX.trajectories.push({ ...r, file: "reasoning/" + r.file });
+  Object.assign(INDEX.summary, reasoning?.summary || {});
+  // ToolSandbox: same page, different index and verdict.
+  TS = await fetch(RUN + "toolsandbox/index.json").then(r => r.ok ? r.json() : null).catch(() => null);
+  for (const r of TS?.trajectories || []) ((TSBY[r.model] ??= {})[r.condition] ??= {})[r.id] = r;
   for (const r of INDEX.trajectories) ((BY[r.model] ??= {})[r.condition] ??= {})[r.id] = r;
-  const models = Object.keys(BY).sort();
-  $("#model").innerHTML = models.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join("");
+  if (!TS) $("#bench").disabled = true;
+  fillModels();
+  $("#bench").onchange = () => { location.hash = ""; fillModels(); render(); };
   for (const el of ["#model", "#filter"]) $(el).onchange = () => { location.hash = ""; render(); };
   $("#search").oninput = render;
   window.onhashchange = render;
   render();
 }
 
+const isTS = () => $("#bench").value === "ts";
+const table = () => isTS() ? TSBY : BY;
+
+function fillModels() {
+  const models = Object.keys(table()).sort();
+  $("#model").innerHTML = models.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join("");
+}
+
 function render() {
   const h = location.hash.slice(1);
-  if (h) { const [m, c, t] = JSON.parse(decodeURIComponent(h)); $("#model").value = m; return showTrajectory(m, c, t); }
+  if (h) { const [m, c, t, b] = JSON.parse(decodeURIComponent(h)); $("#bench").value = b || "bfcl"; fillModels(); $("#model").value = m; return showTrajectory(m, c, t); }
   showMatrix($("#model").value);
 }
 
+const ok = r => isTS() ? r.similarity === 1 : r.valid;
+const link = (m, c, id) => encodeURIComponent(JSON.stringify([m, c, id, isTS() ? "ts" : "bfcl"]));
+
 function showMatrix(model) {
+  const BY = table();
   const conds = CONDS.filter(c => BY[model][c]);
-  const ids = Object.keys(BY[model][conds[0]]).sort((a, b) => num(a) - num(b));
+  const ids = Object.keys(BY[model][conds[0]]).sort((a, b) => isTS() ? a.localeCompare(b) : num(a) - num(b));
   const filter = $("#filter").value, q = $("#search").value.trim();
   const rows = ids.filter(id => {
     if (q && num(id) !== parseInt(q, 10)) return false;
-    const v = conds.map(c => BY[model][c][id]?.valid);
+    const v = conds.map(c => { const r = BY[model][c][id]; return r && ok(r); });
     if (filter === "diverge") return new Set(v).size > 1;
     if (filter === "d0pass") return v[0] === true;
     if (filter === "d0fail") return v[0] === false;
     return true;
   });
-  const rates = conds.map(c => { const s = INDEX.summary[`${model} ${c}`]; return `<div><span class="muted">${c}</span><b>${(100 * s.success_rate).toFixed(1)}%</b><span class="muted">${s.passed}/${s.tasks}</span></div>`; }).join("");
+  const rates = conds.map(c => { const s = (isTS() ? TS : INDEX).summary[`${model} ${c}`];
+    return isTS() ? `<div><span class="muted">${c}</span><b>${(100 * s.mean_similarity).toFixed(1)}</b><span class="muted">mean similarity · ${s.passed}/${s.scenarios} at 1.0</span></div>`
+                  : `<div><span class="muted">${c}</span><b>${(100 * s.success_rate).toFixed(1)}%</b><span class="muted">${s.passed}/${s.tasks}</span></div>`; }).join("");
   const head = `<tr><th></th>${conds.map(c => `<th>${c}</th>`).join("")}</tr>`;
-  const body = rows.map(id => `<tr><th class="task">${num(id)}</th>${conds.map(c => {
-    const r = BY[model][c][id]; const link = encodeURIComponent(JSON.stringify([model, c, id]));
-    return `<td class="cell ${cls(r)}" title="${esc(r.error_type || "pass")} · ${r.num_tool_calls} calls" onclick="location.hash='${link}'">${glyph(r)}</td>`;
+  const body = rows.map(id => `<tr><th class="task">${isTS() ? esc(id) : num(id)}</th>${conds.map(c => {
+    const r = BY[model][c][id];
+    if (!r) return `<td></td>`;
+    const title = isTS() ? `similarity ${r.similarity.toFixed(2)}${r.error_type ? " · " + r.error_type : ""}` : `${esc(r.error_type || "pass")} · ${r.num_tool_calls} calls`;
+    return `<td class="cell ${cls(r)}" title="${title}" onclick="location.hash='${link(model, c, id)}'">${isTS() ? r.similarity.toFixed(2) : glyph(r)}</td>`;
   }).join("")}</tr>`).join("");
   $("#status").textContent = `${rows.length} of ${ids.length} tasks`;
   $("#main").innerHTML = `<div class="rates">${rates}</div>
@@ -140,30 +165,48 @@ function showMatrix(model) {
 }
 
 async function showTrajectory(model, cond, id) {
+  const BY = table();
   const row = BY[model][cond][id];
   $("#status").textContent = "loading…";
-  const d = await (await fetch(RUN + row.file)).json();
+  const d = await (await fetch(RUN + (isTS() ? "toolsandbox/" : "") + row.file)).json();
   $("#status").textContent = "";
-  const tabs = CONDS.filter(c => BY[model][c]).map(c => { const r = BY[model][c][id];
-    return `<a class="${cls(r)}${c === cond ? " cur" : ""}" href="#${encodeURIComponent(JSON.stringify([model, c, id]))}">${c} ${glyph(r)}</a>`; }).join("");
+  const tabs = CONDS.filter(c => BY[model][c]?.[id]).map(c => { const r = BY[model][c][id];
+    return `<a class="${cls(r)}${c === cond ? " cur" : ""}" href="#${link(model, c, id)}">${c} ${isTS() ? r.similarity.toFixed(2) : glyph(r)}</a>`; }).join("");
   const provider = d.api_calls.map(c => c.response?.body?.provider).find(Boolean) || "–";
   const t = d.totals;
-  const kv = [["verdict", row.valid ? "pass" : row.error_type || "fail"], ["turns", row.num_turns], ["API calls", row.api_calls],
-    ["tool calls", `${row.num_tool_calls} (${row.num_failed_tool_calls} failed)`], ["tokens", `${t.prompt_tokens.toLocaleString()} in / ${t.completion_tokens.toLocaleString()} out`],
-    ["cost", `$${t.cost_usd.toFixed(4)}`], ["wall time", `${row.wall_time_s.toFixed(0)} s`], ["provider", provider], ["classes", d.task.involved_classes.join(", ")]]
+  const kv = (isTS()
+    ? [["similarity", d.result.similarity.toFixed(3)], ["milestones", d.result.milestone_similarity.toFixed(3)], ["minefields", d.result.minefield_similarity.toFixed(3)],
+       ["messages", d.result.turn_count], ["agent calls", row.api_calls], ["user-simulator calls", d.user_totals.api_calls],
+       ["tokens", `${t.prompt_tokens.toLocaleString()} in / ${t.completion_tokens.toLocaleString()} out`], ["reasoning tokens", t.reasoning_tokens],
+       ["cost", `$${t.cost_usd.toFixed(4)} + $${d.user_totals.cost_usd.toFixed(4)} user`], ["provider", provider], ["categories", d.categories.filter(c => !/DISTRACTION|ALL_TOOLS/.test(c)).join(", ").toLowerCase()]]
+    : [["verdict", row.valid ? "pass" : row.error_type || "fail"], ["turns", row.num_turns], ["API calls", row.api_calls],
+       ["tool calls", `${row.num_tool_calls} (${row.num_failed_tool_calls} failed)`], ["tokens", `${t.prompt_tokens.toLocaleString()} in / ${t.completion_tokens.toLocaleString()} out`],
+       ["reasoning tokens", t.reasoning_tokens], ["cost", `$${t.cost_usd.toFixed(4)}`], ["wall time", `${row.wall_time_s.toFixed(0)} s`], ["provider", provider], ["classes", d.task.involved_classes.join(", ")]])
     .map(([k, v]) => `<span>${k} <b>${esc(v)}</b></span>`).join("");
 
   $("#main").innerHTML = `<p><a href="#" onclick="location.hash='';return false">← back to ${esc(short(model))}</a></p>
     <h2 style="margin:4px 0">${esc(id)} · ${esc(short(model))} · ${cond}</h2>
     <div class="tabs">${tabs}</div>
     <div class="kv">${kv}</div>
-    ${d.error ? `<div class="box error"><b>Inference error.</b> ${esc(d.error.message)}</div>` : ""}
-    ${renderEval(d.evaluation)}
+    ${d.error ? `<div class="box error"><b>${isTS() ? "Scenario error" : "Inference error"}.</b> ${esc(d.error.message)}</div>` : ""}
+    ${isTS() ? renderTS(d) : renderEval(d.evaluation)}
     <h3>Transcript</h3>${renderTranscript(d)}
-    <details class="box"><summary>Tools sent to the model (${d.tools_sent.length})</summary>${renderTools(d)}</details>
-    <details class="box"><summary>Task definition</summary><pre>${esc(JSON.stringify(d.task, null, 2))}</pre></details>
-    <details class="box"><summary>BFCL result (decoded calls per step)</summary><pre>${esc(JSON.stringify(d.bfcl_result, null, 2))}</pre></details>`;
+    <details class="box"><summary>Tools sent to the model (${(d.tools_sent || []).length})</summary>${renderTools(d)}</details>
+    ${isTS() ? `<details class="box"><summary>ToolSandbox conversation.json (milestone matches, database updates)</summary><pre id="conv">loading…</pre></details>`
+             : `<details class="box"><summary>Task definition</summary><pre>${esc(JSON.stringify(d.task, null, 2))}</pre></details>
+    <details class="box"><summary>BFCL result (decoded calls per step)</summary><pre>${esc(JSON.stringify(d.bfcl_result, null, 2))}</pre></details>`}`;
+  if (isTS()) fetch(RUN + "toolsandbox/" + row.file.replace("ablation.json", "conversation.json"))
+    .then(r => r.ok ? r.json() : Promise.reject("not written: the play aborted with an exception (see the error above), which ToolSandbox scores as similarity 0"))
+    .then(c => { $("#conv").textContent = JSON.stringify(c, null, 2); }).catch(e => { $("#conv").textContent = String(e); });
   window.scrollTo(0, 0);
+}
+
+function renderTS(d) {
+  const r = d.result, ms = Object.entries(r.milestone_mapping || {});
+  const rows = ms.map(([i, [idx, sim]]) => `<tr><td>milestone ${i}</td><td>message ${idx}</td><td>${Number(sim).toFixed(3)}</td></tr>`).join("");
+  return `<div class="box${r.similarity === 1 ? "" : " error"}"><b>${r.similarity === 1 ? "Pass" : "Partial"} · similarity ${r.similarity.toFixed(3)}</b>
+    <div class="muted">Mean of the matched milestone similarities (each a geometric mean over its constraints), zeroed if a minefield is hit; 1.0 means every milestone was met exactly.</div>
+    ${rows ? `<table class="params"><tr><th>milestone</th><th>matched at</th><th>similarity</th></tr>${rows}</table>` : ""}</div>`;
 }
 
 function renderEval(ev) {
@@ -208,7 +251,7 @@ function renderLong(s) {
 
 function renderTools(d) {
   const tmap = d.name_maps?.tool || {}, pmap = d.name_maps?.param || {};
-  return d.tools_sent.map(t => {
+  return (d.tools_sent || []).map(t => {
     const f = t.function, props = f.parameters?.properties || {}, req = new Set(f.parameters?.required || []);
     const rows = Object.entries(props).map(([p, s]) => {
       const orig = pmap[f.name]?.[p]?.name; const extra = ["enum", "pattern", "items", "default"].filter(k => k in s).map(k => `${k}: ${JSON.stringify(s[k])}`).join("<br>");
