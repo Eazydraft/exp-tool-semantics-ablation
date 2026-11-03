@@ -1,19 +1,39 @@
-"""Write the paper's numeric tables as LaTeX fragments from runs/main/analysis.json.
+"""Write the paper's numeric tables as LaTeX fragments from runs/main/analysis.json and index.json.
 
     python3 paper/tables.py   ->  paper/tables/*.tex
+
+Seven model configurations are treated alike: four models, three of them in both reasoning
+settings. D6 and D7 exist for the default setting of each model only; the repeated Haiku D0 run
+is the model id anthropic/claude-haiku-5.5-rerun.
 """
 import json
+import random
+from collections import Counter
+from math import comb
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "paper" / "tables"
 OUT.mkdir(exist_ok=True)
 A = json.load(open(ROOT / "runs" / "main" / "analysis.json"))
-S, B, P = A["success"], A["behaviour"], A["paired"]
-MODELS = ["openai/gpt-6-luna", "anthropic/claude-haiku-5.5", "qwen/qwen3-30b-a3b-instruct-2507", "google/gemma-4-26b-a4b-it"]
-SHORT = {"openai/gpt-6-luna": "GPT-6 Luna", "anthropic/claude-haiku-5.5": "Claude Haiku 5.5",
-         "qwen/qwen3-30b-a3b-instruct-2507": "Qwen3-30B-A3B", "google/gemma-4-26b-a4b-it": "Gemma 4 26B-A4B"}
+INDEX = json.load(open(ROOT / "runs" / "main" / "index.json"))["trajectories"]
+
+# (model id, label, has D6/D7); order groups each model's two reasoning settings together
+CONFIGS = [("openai/gpt-6-luna", "GPT-6 Luna, reasoning", True),
+           ("openai/gpt-6-luna-nothink", "GPT-6 Luna, no reasoning", False),
+           ("anthropic/claude-haiku-5.5", "Claude Haiku 5.5, reasoning", True),
+           ("anthropic/claude-haiku-5.5-nothink", "Claude Haiku 5.5, no reasoning", False),
+           ("qwen/qwen3-30b-a3b-instruct-2507", "Qwen3-30B-A3B, no reasoning", True),
+           ("google/gemma-4-26b-a4b-it", "Gemma 4 26B-A4B, no reasoning", True),
+           ("google/gemma-4-26b-a4b-it-think", "Gemma 4 26B-A4B, reasoning", False)]
+MODELS = [m for m, _, _ in CONFIGS]
+SHORT = {m: lab for m, lab, _ in CONFIGS}
+DEFAULTS = [m for m, _, d67 in CONFIGS if d67]                 # the four runs that also have D6, D7
+RERUN = "anthropic/claude-haiku-5.5-rerun"                     # second launch of Claude Haiku 5.5 D0
+S, B, P, PER_TASK = A["success"], A["behaviour"], A["paired"], A["per_task"]
 CONDS = ["D0", "D1", "D2", "D3", "D4", "D5"]
+N_COMPARISONS = 5 * len(MODELS)
+ALPHA = 0.05 / N_COMPARISONS                                   # Bonferroni over the 35 ablation-vs-D0 comparisons
 tex = lambda s: s.replace("_", r"\_").replace("#", r"\#").replace("%", r"\%").replace("&", r"\&")
 pct = lambda x: f"{x*100:.1f}"
 
@@ -22,31 +42,55 @@ def write(name, rows):
     (OUT / f"{name}.tex").write_text("\n".join(rows) + "%")  # no trailing newline: avoids a stray space token inside tabular
 
 
+def fmt_p(p):
+    return "$<$0.0001" if p < 1e-4 else f"{p:.4f}"
+
+
+def block(rows_per_model, models=MODELS):
+    """Join per-model row lists with \\addlinespace between models."""
+    out = []
+    for i, rows in enumerate(rows_per_model):
+        out += rows
+        if i < len(rows_per_model) - 1:
+            out.append(r"\addlinespace")
+    return out
+
+
 # success rates + sensitivity score
-rows = []
-for m in MODELS:
-    rows.append(f"{SHORT[m]} & " + " & ".join(pct(S[m][c]) for c in CONDS) + " \\\\")
-write("success", rows)
+write("success", [f"{SHORT[m]} & " + " & ".join(pct(S[m][c]) for c in CONDS) + " \\\\" for m in MODELS])
 write("robustness", [f"{SHORT[m]} & {A['robustness'][m]['D1-D4']:.3f} & {A['robustness'][m]['D1-D5']:.3f} \\\\" for m in MODELS])
 
 # paired stats
 rows = []
 for m in MODELS:
+    rm = []
     for i, c in enumerate(CONDS[1:]):
         p = P[m][c]
-        pv = "$<$0.0001" if p["p_mcnemar"] < 1e-4 else f"{p['p_mcnemar']:.4f}"
-        sig = r"\textbf{yes}" if p["p_mcnemar"] < 0.0025 else "no"
+        sig = r"\textbf{yes}" if p["p_mcnemar"] < ALPHA else "no"
         first = SHORT[m] if i == 0 else ""
-        rows.append(f"{first} & {c} & {p['both']} & {p['d0_only']} & {p['abl_only']} & {p['neither']} & {p['diff_pp']:+.1f} & [{p['ci95'][0]:.1f}, {p['ci95'][1]:.1f}] & {pv} & {sig} \\\\")
-    if m != MODELS[-1]:
-        rows.append(r"\addlinespace")
-write("paired", rows)
+        rm.append(f"{first} & {c} & {p['both']} & {p['d0_only']} & {p['abl_only']} & {p['neither']} & {p['diff_pp']:+.1f} & [{p['ci95'][0]:.1f}, {p['ci95'][1]:.1f}] & {fmt_p(p['p_mcnemar'])} & {sig} \\\\")
+    rows.append(rm)
+write("paired", block(rows))
 
-# wrong parameters (pooled)
-rows = []
+# wrong parameters, pooled over the seven configurations (full counts, no top-k cutoff per run)
+d2, d0, per_model, desc = Counter(), Counter(), {}, {}
+for m in MODELS:
+    full = A["wrong_params_full"][m]
+    per_model[m] = {(t, p): n for t, p, n in full["D2"]}
+    for t, p, n in full["D2"]:
+        d2[(t, p)] += n
+    for t, p, n in full["D0"]:
+        d0[(t, p)] += n
 for r in A["wrong_params_pooled"]:
-    pm = " & ".join(str(r["per_model"][m]) for m in MODELS)
-    rows.append(f"\\code{{{tex(r['tool'])}.\\allowbreak {tex(r['param'])}}} & \\emph{{{tex(r['description'].strip())}}} & \\textbf{{{r['n_d2']}}} & {r['n_d0']} & {pm} \\\\")
+    desc[(r["tool"], r["param"])] = r["description"]
+for m in MODELS:
+    for r in A["wrong_params"][m]["D2"]:
+        desc.setdefault((r["tool"], r["param"]), r["description"])
+rows = []
+for key, n in sorted(d2.items(), key=lambda kv: kv[1] - d0[kv[0]], reverse=True)[:10]:
+    t, p = key
+    pm = " & ".join(str(per_model[m].get(key, 0)) for m in MODELS)
+    rows.append(f"\\code{{{tex(t)}.\\allowbreak {tex(p)}}} & \\emph{{{tex(desc.get(key, '').strip())}}} & \\textbf{{{n}}} & {d0[key]} & {pm} \\\\")
 write("wrongparams", rows)
 
 # selection vs arguments
@@ -72,14 +116,14 @@ write("divergence", rows)
 # behaviour (appendix)
 rows = []
 for m in MODELS:
+    rm = []
     for i, c in enumerate(CONDS):
         b = B[m][c]
         first = SHORT[m] if i == 0 else ""
         cps = "--" if b["calls_per_success"] is None else f"{b['calls_per_success']:.1f}"
-        rows.append(f"{first} & {c} & {b['n_calls']:.1f} & {b['n_steps']:.1f} & {b['n_on_path']:.1f} & {b['n_off_path']:.1f} & {b['n_exec_errors']:.2f} & {b['n_repeated']:.2f} & {b['n_distinct_tools']:.1f} & {cps} \\\\")
-    if m != MODELS[-1]:
-        rows.append(r"\addlinespace")
-write("behaviour", rows)
+        rm.append(f"{first} & {c} & {b['n_calls']:.1f} & {b['n_steps']:.1f} & {b['n_on_path']:.1f} & {b['n_off_path']:.1f} & {b['n_exec_errors']:.2f} & {b['n_repeated']:.2f} & {b['n_distinct_tools']:.1f} & {cps} \\\\")
+    rows.append(rm)
+write("behaviour", block(rows))
 
 # recovery
 rows = []
@@ -96,32 +140,45 @@ write("recovery", rows)
 ERR = ["multi_turn:instance_state_mismatch", "multi_turn:execution_response_mismatch", "multi_turn:empty_turn_model_response", "multi_turn:force_terminated", "inference_error"]
 rows = []
 for m in MODELS:
+    rm = []
     for i, c in enumerate(CONDS):
         e = B[m][c]["error_types"]
         first = SHORT[m] if i == 0 else ""
-        rows.append(f"{first} & {c} & " + " & ".join(str(e.get(k, 0)) for k in ERR) + f" & {sum(e.values())} \\\\")
-    if m != MODELS[-1]:
-        rows.append(r"\addlinespace")
-write("failures", rows)
+        rm.append(f"{first} & {c} & " + " & ".join(str(e.get(k, 0)) for k in ERR) + f" & {sum(e.values())} \\\\")
+    rows.append(rm)
+write("failures", block(rows))
 
 # tokens and cost (appendix)
 rows = []
 for m in MODELS:
+    rm = []
     for i, c in enumerate(CONDS):
         b = B[m][c]
         first = SHORT[m] if i == 0 else ""
-        rows.append(f"{first} & {c} & {b['prompt_tokens']:,.0f} & {b['completion_tokens']:,.0f} & {b['cost_usd']:.4f} \\\\")
-    if m != MODELS[-1]:
-        rows.append(r"\addlinespace")
-write("cost", rows)
+        rm.append(f"{first} & {c} & {b['prompt_tokens']:,.0f} & {b['completion_tokens']:,.0f} & {b['cost_usd']:.4f} \\\\")
+    rows.append(rm)
+write("cost", block(rows))
+
+# reasoning tokens per task by condition, from the index
+by = {}
+for r in INDEX:
+    if r["benchmark"] == "bfcl":
+        by.setdefault((r["model"], r["condition"]), []).append(r.get("reasoning_tokens") or 0)
+rows = []
+for m in MODELS:
+    cells = [f"{sum(by[(m, c)]) / len(by[(m, c)]):,.0f}" for c in CONDS]
+    rows.append(f"{SHORT[m]} & " + " & ".join(cells) + " \\\\")
+write("tokens", rows)
 
 # a few scalars used in the text
 macros = [f"\\newcommand{{\\totalcost}}{{{A['cost_usd']:.2f}}}", f"\\newcommand{{\\ntasks}}{{{A['n_tasks']}}}",
-          f"\\newcommand{{\\bfclcommit}}{{{A['run']['bfcl_commit'][:10]}}}"]
+          f"\\newcommand{{\\bfclcommit}}{{{A['run']['bfcl_commit'][:10]}}}", f"\\newcommand{{\\ncomparisons}}{{{N_COMPARISONS}}}",
+          f"\\newcommand{{\\alphabonf}}{{{ALPHA:.4f}}}"]
 write("macros", macros)
 print("wrote", sorted(p.name for p in OUT.glob("*.tex")))
 
-# Appendix: full case-study trajectories (one longtable per model), from analysis.json "cases"
+
+# Appendix: full case-study trajectories (one longtable per default run), from analysis.json "cases"
 def texs(s):
     out = []
     for ch in str(s):
@@ -155,7 +212,7 @@ lines = []
 ERRLABEL = {"multi_turn:instance_state_mismatch": "wrong final state", "multi_turn:execution_response_mismatch": "required output missing",
             "multi_turn:empty_turn_model_response": "turn ended without a call", "multi_turn:force_terminated": "20-step limit", None: ""}
 COLS = ["D0", "D2", "D5"]
-for m in MODELS:
+for m in DEFAULTS:
     cs = A["cases"].get(m)
     if not cs:
         continue
@@ -202,10 +259,8 @@ for m in MODELS:
 (OUT / "cases.tex").write_text("\n".join(lines) + "%")
 print("wrote cases.tex")
 
-# ---- Follow-up conditions (D6, D7) and the D0 rerun: tables computed from per-task verdicts -----------
-from math import comb
-import random
 
+# ---- D6, D7 and the repeated D0 run: tables computed from per-task verdicts --------------------------------
 
 def mcnemar_exact(b, c):
     n = b + c
@@ -226,46 +281,38 @@ def paired(valid_a, valid_b, seed=0):
                 ci=(samples[50], samples[1949]), p=mcnemar_exact(a_only, b_only))
 
 
-def fmt_p(p):
-    return "$<$0.0001" if p < 1e-4 else f"{p:.4f}"
-
-
 def valid_vec(m, c):
-    return [t["valid"] for t in A["per_task"][m][c]]
+    return [t["valid"] for t in PER_TASK[m][c]]
 
 
 if "D6" in A["conditions"] and "D7" in A["conditions"]:
     rows = []
-    for m in MODELS:
-        first = True
+    for m in DEFAULTS:
+        rm, first = [], True
         for c in ["D6", "D7"]:
             for base in ["D0", "D2"]:
                 r = paired(valid_vec(m, base), valid_vec(m, c))
                 label = SHORT[m] if first else ""
                 first = False
-                rows.append(f"{label} & {c} vs {base} & {pct(S[m][base])} & {pct(S[m][c])} & {r['a_only']} & {r['b_only']} & {r['diff']:+.1f} & [{r['ci'][0]:.1f}, {r['ci'][1]:.1f}] & {fmt_p(r['p'])} \\\\")
-        if m != MODELS[-1]:
-            rows.append(r"\addlinespace")
-    write("followup", rows)
-    # six-parameter vs other tasks, all relevant conditions
-    sp = A["six_param_tasks"]["per_model"]
+                rm.append(f"{label} & {c} vs {base} & {pct(S[m][base])} & {pct(S[m][c])} & {r['a_only']} & {r['b_only']} & {r['diff']:+.1f} & [{r['ci'][0]:.1f}, {r['ci'][1]:.1f}] & {fmt_p(r['p'])} \\\\")
+        rows.append(rm)
+    write("followup", block(rows))
+    # six-parameter vs other tasks: D0 and D2 for every configuration, D6 and D7 where they exist
     rows = []
     for m in MODELS:
-        r = sp[m]
+        r = A["six_param_tasks"]["per_model"][m]
         cells = [f"{r['d0_only_six']}/{r['d0_only']}"]
         for c in ["D0", "D2", "D6", "D7"]:
-            cells += [pct(r[f"{c}_six"]), pct(r[f"{c}_other"])]
+            cells += [pct(r[f"{c}_six"]), pct(r[f"{c}_other"])] if f"{c}_six" in r else ["--", "--"]
         rows.append(f"{SHORT[m]} & " + " & ".join(cells) + " \\\\")
     write("sixparam", rows)
 
-# D0 rerun (Claude Haiku 5.5): run-to-run noise, from the rerun's index.json
-rerun = ROOT / "runs" / "main" / "rerun" / "index.json"
-if rerun.exists():
-    R = json.load(open(rerun))
+# repeated D0 run (Claude Haiku 5.5 with reasoning, launched twice): run-to-run noise
+if RERUN in PER_TASK:
     m = "anthropic/claude-haiku-5.5"
-    second = {r["id"]: bool(r["valid"]) for r in R["trajectories"] if r["model"] == m and r["condition"] == "D0"}
-    ids = [t["id"] for t in A["per_task"][m]["D0"]]
-    first = {t["id"]: t["valid"] for t in A["per_task"][m]["D0"]}
+    second = {t["id"]: bool(t["valid"]) for t in PER_TASK[RERUN]["D0"]}
+    ids = [t["id"] for t in PER_TASK[m]["D0"]]
+    first = {t["id"]: t["valid"] for t in PER_TASK[m]["D0"]}
     r = paired([first[i] for i in ids], [second[i] for i in ids])
     rows = [f"D0 run 1 vs D0 run 2 & {r['both']} & {r['a_only']} & {r['b_only']} & {r['neither']} & {r['diff']:+.1f} & [{r['ci'][0]:.1f}, {r['ci'][1]:.1f}] & {fmt_p(r['p'])} \\\\"]
     for c in ["D1", "D2", "D3", "D4", "D5", "D6", "D7"]:
@@ -280,46 +327,14 @@ if rerun.exists():
               f"\\newcommand{{\\rerunaonly}}{{{r['a_only']}}}", f"\\newcommand{{\\rerunbonly}}{{{r['b_only']}}}", f"\\newcommand{{\\rerundiff}}{{{r['diff']:+.1f}}}",
               f"\\newcommand{{\\rerunp}}{{{fmt_p(r['p'])}}}"]
     write("rerunmacros", macros)
-print("follow-up tables done")
+print("D6/D7 and rerun tables done")
 
 
-# ---- Reasoning-controlled pairs (runs/main/reasoning) and ToolSandbox (runs/main/toolsandbox) ---------------
-PAIRS = [("openai/gpt-6-luna", "openai/gpt-6-luna-nothink", "on", "off"),
-         ("anthropic/claude-haiku-5.5", "anthropic/claude-haiku-5.5-nothink", "on", "off"),
-         ("google/gemma-4-26b-a4b-it", "google/gemma-4-26b-a4b-it-think", "off", "on")]
-reasoning = ROOT / "runs" / "main" / "reasoning" / "index.json"
-if reasoning.exists():
-    main_rows = json.load(open(ROOT / "runs" / "main" / "index.json"))["trajectories"]
-    var_rows = json.load(open(reasoning))["trajectories"]
-    by = {}
-    for r in main_rows + var_rows:
-        by.setdefault((r["model"], r["condition"]), {})[r["id"]] = r
-    ids = sorted(by[("openai/gpt-6-luna", "D0")])
-
-    def vec(m, c):
-        return [bool(by[(m, c)][i]["valid"]) for i in ids]
-
-    def tok(m):
-        return sum(by[(m, "D0")][i]["reasoning_tokens"] for i in ids) / len(ids)
-
-    rows = []
-    for base, var, lab_base, lab_var in PAIRS:
-        for m, lab, first in [(base, lab_base + "$^{\\ast}$", True), (var, lab_var, False)]:
-            if (m, "D0") not in by:
-                continue
-            succ = [pct(sum(vec(m, c)) / len(ids)) for c in CONDS]
-            d2, d4 = paired(vec(m, "D0"), vec(m, "D2")), paired(vec(m, "D0"), vec(m, "D4"))
-            rows.append(f"{SHORT[base] if first else ''} & {lab} & {tok(m):.0f} & " + " & ".join(succ) +
-                        f" & {d2['diff']:+.1f} [{d2['ci'][0]:.1f}, {d2['ci'][1]:.1f}] & {fmt_p(d2['p'])}"
-                        f" & {d4['diff']:+.1f} [{d4['ci'][0]:.1f}, {d4['ci'][1]:.1f}] & {fmt_p(d4['p'])} \\\\")
-        if base != PAIRS[-1][0]:
-            rows.append(r"\addlinespace")
-    write("reasoning", rows)
-    print("reasoning table:", *rows, sep="\n")
-
-toolsandbox = ROOT / "runs" / "main" / "toolsandbox" / "index.json"
-if toolsandbox.exists():
-    T = json.load(open(toolsandbox))["trajectories"]
+# ---- ToolSandbox: the four models, default reasoning setting ----------------------------------------------
+TS_SHORT = {"openai/gpt-6-luna": "GPT-6 Luna", "anthropic/claude-haiku-5.5": "Claude Haiku 5.5",
+            "qwen/qwen3-30b-a3b-instruct-2507": "Qwen3-30B-A3B", "google/gemma-4-26b-a4b-it": "Gemma 4 26B-A4B"}
+T = [r for r in INDEX if r["benchmark"] == "toolsandbox"]
+if T:
     sims = {}
     for r in T:
         sims.setdefault((r["model"], r["condition"]), {})[r["id"]] = r
@@ -344,18 +359,18 @@ if toolsandbox.exists():
         return s[50], s[1949]
 
     rows, prows = [], []
-    for m in MODELS:
+    for m in DEFAULTS:
         cells = [f"{sum(sim(m, c)) / len(names) * 100:.1f}" for c in CONDS] + [pct(sum(passed(m, c)) / len(names)) for c in CONDS]
-        rows.append(f"{SHORT[m]} & " + " & ".join(cells) + " \\\\")
+        rows.append(f"{TS_SHORT[m]} & " + " & ".join(cells) + " \\\\")
         first = True
         for c in CONDS[1:]:
             diffs = [b - a for a, b in zip(sim(m, "D0"), sim(m, c))]
             lo, hi = boot_ci(diffs); r = paired(passed(m, "D0"), passed(m, c))
-            prows.append(f"{SHORT[m] if first else ''} & {c} & {sum(sim(m, 'D0')) / len(names) * 100:.1f} & {sum(sim(m, c)) / len(names) * 100:.1f}"
+            prows.append(f"{TS_SHORT[m] if first else ''} & {c} & {sum(sim(m, 'D0')) / len(names) * 100:.1f} & {sum(sim(m, c)) / len(names) * 100:.1f}"
                          f" & {sum(diffs) / len(names) * 100:+.1f} & [{lo:.1f}, {hi:.1f}] & {fmt_p(signflip(diffs))}"
                          f" & {pct(sum(passed(m, 'D0')) / len(names))} & {pct(sum(passed(m, c)) / len(names))} & {r['a_only']}/{r['b_only']} & {fmt_p(r['p'])} \\\\")
             first = False
-        if m != MODELS[-1]:
+        if m != DEFAULTS[-1]:
             prows.append(r"\addlinespace")
     write("toolsandbox", rows)
     write("toolsandboxpaired", prows)
@@ -367,9 +382,9 @@ if toolsandbox.exists():
     for key, label in CATS:
         sub = [n for n in names if key in cats[n]]
         cells = []
-        for m in MODELS:
+        for m in DEFAULTS:
             for c in ["D0", "D2"]:
                 cells.append(f"{sum(sims[(m, c)][n]['similarity'] for n in sub) / len(sub) * 100:.1f}")
         crows.append(f"{label} & {len(sub)} & " + " & ".join(cells) + " \\\\")
     write("toolsandboxcats", crows)
-    print("toolsandbox tables:", *rows, *prows, sep="\n")
+    print("toolsandbox tables done")
