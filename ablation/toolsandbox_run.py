@@ -9,11 +9,11 @@ simulated by gpt-4o-2024-05-13 as in the ToolSandbox paper, reached through Open
 agents. The agent is the stock OpenAI-API agent with two changes: the tool schemas pass through
 `apply_condition` on the way out, and the model's calls are translated back on the way in.
 
-Everything for one run lives under runs/<run-name>/toolsandbox/:
-    <registry>/trajectories/<scenario>/   ToolSandbox's own conversation.json, execution_context.json,
-                                          pretty_print.txt + our ablation.json (raw API calls, tools
-                                          sent, name maps, score)
-    index.json                            one row per scenario x model x condition + per-combo summary
+Plays are written next to the BFCL trajectories of the same run, in the same layout:
+    runs/<run-name>/trajectories/<registry>/<scenario>.json   raw API calls, tools sent, name maps,
+                                 score, plus ToolSandbox's own conversation, execution context and
+                                 pretty-printed transcript under "toolsandbox"
+    runs/<run-name>/index.json   shared with BFCL (ablation.index)
 """
 
 import argparse
@@ -22,6 +22,7 @@ import json
 import re
 import os
 import random
+import shutil
 import time
 import traceback
 from multiprocessing import get_context
@@ -38,6 +39,7 @@ from tool_sandbox.roles.openai_api_agent import OpenAIAPIAgent
 from tool_sandbox.roles.openai_api_user import OpenAIAPIUser
 
 from ablation.conditions import apply_condition, restore_call
+from ablation.index import build_index
 from ablation.models import BASE_MODELS, MODELS, api_model
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
@@ -182,7 +184,10 @@ _SCENARIOS = None
 def run_one(job: tuple) -> dict:
     """Play and score one scenario for one model x condition (runs in a worker process)."""
     global _SCENARIOS
-    name, model_id, condition, user_model, out_dir = job
+    name, model_id, condition, user_model, run_dir = job
+    # ToolSandbox writes three files per scenario under <output_directory>/trajectories/<name>/; they are
+    # folded into the single trajectory JSON below and the scratch directory is removed.
+    tmp_dir = run_dir / ".toolsandbox_tmp" / registry_dir(model_id, condition)
     if _SCENARIOS is None:
         _SCENARIOS = scenarios()
     scenario = _SCENARIOS[name]
@@ -190,7 +195,7 @@ def run_one(job: tuple) -> dict:
     roles = {RoleType.USER: user, RoleType.EXECUTION_ENVIRONMENT: ExecutionEnvironment(), RoleType.AGENT: agent}
     started_at, t0, error = now_iso(), time.time(), None
     try:
-        played = scenario.play_and_evaluate(roles=roles, output_directory=out_dir, scenario_name=name)
+        played = scenario.play_and_evaluate(roles=roles, output_directory=tmp_dir, scenario_name=name)
         ev = played.evaluation_result
         result = {"similarity": ev.similarity, "milestone_similarity": ev.milestone_similarity,
                   "minefield_similarity": ev.minefield_similarity, "turn_count": ev.turn_count,
@@ -202,6 +207,13 @@ def run_one(job: tuple) -> dict:
     finally:
         for role in roles.values():
             role.teardown()
+    scratch = tmp_dir / "trajectories" / name
+    extras = {
+        "conversation": _json_or_none(scratch / "conversation.json"),
+        "execution_context": _json_or_none(scratch / "execution_context.json"),
+        "pretty_print": (scratch / "pretty_print.txt").read_text() if (scratch / "pretty_print.txt").exists() else None,
+    }
+    shutil.rmtree(scratch, ignore_errors=True)
     doc = {
         "id": name, "benchmark": "toolsandbox", "model": model_id, "condition": condition,
         "user_model": user_model, "extra_body": agent.extra_body,
@@ -211,43 +223,17 @@ def run_one(job: tuple) -> dict:
         "error": error, "result": result,
         "tools_sent": agent.tools_sent, "name_maps": agent.maps,
         "api_calls": agent.calls, "user_api_calls": user.calls,
+        "toolsandbox": extras,
     }
-    path = out_dir / "trajectories" / name / "ablation.json"
+    path = run_dir / "trajectories" / registry_dir(model_id, condition) / f"{name}.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(doc, ensure_ascii=False, indent=1, default=str))
     return {"id": name, "model": model_id, "condition": condition, "similarity": result["similarity"],
             "error": error and error["type"]}
 
 
-# ---- index -----------------------------------------------------------------------------
-
-def build_index(root: Path):
-    rows = []
-    for path in sorted(root.glob("*/trajectories/*/ablation.json")):
-        d = json.loads(path.read_text())
-        rows.append({
-            "file": str(path.relative_to(root)), "id": d["id"], "model": d["model"], "condition": d["condition"],
-            "categories": d["categories"], "similarity": d["result"]["similarity"],
-            "pass": d["result"]["similarity"] == 1.0, "turn_count": d["result"]["turn_count"],
-            "error_type": d["error"] and d["error"]["type"],
-            **d["totals"], "user_cost_usd": d["user_totals"]["cost_usd"], "wall_time_s": d["wall_time_s"],
-        })
-    summary = {}
-    for r in rows:
-        s = summary.setdefault(f"{r['model']} {r['condition']}", {"scenarios": 0, "passed": 0, "similarity": 0.0, "cost_usd": 0.0, "user_cost_usd": 0.0})
-        s["scenarios"] += 1
-        s["passed"] += r["pass"]
-        s["similarity"] += r["similarity"]
-        s["cost_usd"] += r["cost_usd"]
-        s["user_cost_usd"] += r["user_cost_usd"]
-    for s in summary.values():
-        s["mean_similarity"] = s.pop("similarity") / s["scenarios"]
-        s["pass_rate"] = s["passed"] / s["scenarios"]
-    (root / "index.json").write_text(json.dumps({"summary": summary, "trajectories": rows}, indent=1))
-    print(f"index: {root / 'index.json'}  ({len(rows)} trajectories)")
-    for name, s in summary.items():
-        print(f"  {name:45s} similarity {s['mean_similarity']:.3f}  pass {s['passed']}/{s['scenarios']}  "
-              f"agent ${s['cost_usd']:.2f} user ${s['user_cost_usd']:.2f}")
+def _json_or_none(path: Path):
+    return json.loads(path.read_text()) if path.exists() else None
 
 
 # ---- main ------------------------------------------------------------------------------
@@ -260,20 +246,20 @@ def main():
     p.add_argument("--jobs", type=int, default=8, help="scenarios played in parallel (processes)")
     p.add_argument("--limit", type=int, help="only the first K scenarios (smoke test)")
     p.add_argument("--user-model", default=USER_MODEL)
-    p.add_argument("--run-name", default="main", help="results go to runs/<run-name>/toolsandbox/")
+    p.add_argument("--run-name", default="main", help="results go to runs/<run-name>/trajectories/")
     args = p.parse_args()
 
     load_dotenv(PROJECT_DIR / ".env")
     assert os.environ.get("OPENROUTER_API_KEY"), "OPENROUTER_API_KEY missing from .env"
     os.environ["TQDM_DISABLE"] = "1"  # one progress bar per worker is unreadable
-    root = PROJECT_DIR / "runs" / args.run_name / "toolsandbox"
-    root.mkdir(parents=True, exist_ok=True)
+    run_dir = PROJECT_DIR / "runs" / args.run_name
+    run_dir.mkdir(parents=True, exist_ok=True)
 
     if args.command == "run":
         names = list(scenarios(args.limit))
-        jobs = [(n, m, c, args.user_model, root / registry_dir(m, c))
+        jobs = [(n, m, c, args.user_model, run_dir)
                 for m in args.models for c in args.conditions for n in names
-                if not (root / registry_dir(m, c) / "trajectories" / n / "ablation.json").exists()]
+                if not (run_dir / "trajectories" / registry_dir(m, c) / f"{n}.json").exists()]
         print(f"{len(jobs)} scenarios to play ({len(names)} per model x condition; done ones are skipped)", flush=True)
         done = 0
         with get_context("spawn").Pool(min(args.jobs, max(len(jobs), 1))) as pool:
@@ -281,7 +267,8 @@ def main():
                 done += 1
                 print(f"[{done}/{len(jobs)} {time.strftime('%H:%M:%S')}] {r['model']} {r['condition']} {r['id']}: "
                       f"similarity {r['similarity']:.2f}{' ERROR ' + r['error'] if r['error'] else ''}", flush=True)
-    build_index(root)
+        shutil.rmtree(run_dir / ".toolsandbox_tmp", ignore_errors=True)
+    build_index(run_dir)
 
 
 if __name__ == "__main__":

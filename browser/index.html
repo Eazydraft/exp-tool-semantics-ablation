@@ -68,7 +68,7 @@
 <body>
 <header>
   <h1>Trajectory browser</h1>
-  <label>Benchmark <select id="bench"><option value="bfcl">BFCL multi-turn</option><option value="ts">ToolSandbox</option></select></label>
+  <label>Benchmark <select id="bench"><option value="bfcl">BFCL multi-turn</option><option value="toolsandbox">ToolSandbox</option></select></label>
   <label>Model <select id="model"></select></label>
   <label>Show <select id="filter">
     <option value="all">all tasks</option>
@@ -83,8 +83,8 @@
 
 <script>
 const RUN = "../runs/main/";
-const CONDS = ["D0","D1","D2","D3","D4","D5","D6","D7","D0 run 2"];
-let INDEX, BY = {}, TS, TSBY = {};   // BY[model][cond][taskId] -> index row; TSBY likewise for ToolSandbox
+const CONDS = ["D0","D1","D2","D3","D4","D5","D6","D7"];
+let INDEX, BY = { bfcl: {}, toolsandbox: {} };   // BY[benchmark][model][cond][taskId] -> index row
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const num = id => parseInt(id.split("_").pop(), 10);
@@ -94,22 +94,11 @@ const cls = r => r.inference_error ? "err" : ok(r) ? "pass" : "fail";
 const glyph = r => r.inference_error ? "!" : ok(r) ? "✓" : "✗";
 
 async function init() {
+  // One index for the whole run: BFCL tasks and ToolSandbox scenarios, every model configuration
+  // (reasoning variants and the repeated run are model ids like the others).
   INDEX = await (await fetch(RUN + "index.json")).json();
-  // The repeated D0 run (noise floor) lives in its own sub-run; show it as one more column.
-  const rerun = await fetch(RUN + "rerun/index.json").then(r => r.ok ? r.json() : null).catch(() => null);
-  for (const r of rerun?.trajectories || []) {
-    INDEX.trajectories.push({ ...r, condition: "D0 run 2", file: "rerun/" + r.file });
-    for (const [k, v] of Object.entries(rerun.summary)) INDEX.summary[k.replace(/ D0$/, " D0 run 2")] = v;
-  }
-  // Reasoning-controlled pairs: the *-nothink/*-think variants are extra models in their own sub-run.
-  const reasoning = await fetch(RUN + "reasoning/index.json").then(r => r.ok ? r.json() : null).catch(() => null);
-  for (const r of reasoning?.trajectories || []) INDEX.trajectories.push({ ...r, file: "reasoning/" + r.file });
-  Object.assign(INDEX.summary, reasoning?.summary || {});
-  // ToolSandbox: same page, different index and verdict.
-  TS = await fetch(RUN + "toolsandbox/index.json").then(r => r.ok ? r.json() : null).catch(() => null);
-  for (const r of TS?.trajectories || []) ((TSBY[r.model] ??= {})[r.condition] ??= {})[r.id] = r;
-  for (const r of INDEX.trajectories) ((BY[r.model] ??= {})[r.condition] ??= {})[r.id] = r;
-  if (!TS) $("#bench").disabled = true;
+  for (const r of INDEX.trajectories) (((BY[r.benchmark] ??= {})[r.model] ??= {})[r.condition] ??= {})[r.id] = r;
+  if (!Object.keys(BY.toolsandbox).length) $("#bench").disabled = true;
   fillModels();
   $("#bench").onchange = () => { location.hash = ""; fillModels(); render(); };
   for (const el of ["#model", "#filter"]) $(el).onchange = () => { location.hash = ""; render(); };
@@ -118,8 +107,9 @@ async function init() {
   render();
 }
 
-const isTS = () => $("#bench").value === "ts";
-const table = () => isTS() ? TSBY : BY;
+const bench = () => $("#bench").value;
+const isTS = () => bench() === "toolsandbox";
+const table = () => BY[bench()];
 
 function fillModels() {
   const models = Object.keys(table()).sort();
@@ -133,7 +123,7 @@ function render() {
 }
 
 const ok = r => isTS() ? r.similarity === 1 : r.valid;
-const link = (m, c, id) => encodeURIComponent(JSON.stringify([m, c, id, isTS() ? "ts" : "bfcl"]));
+const link = (m, c, id) => encodeURIComponent(JSON.stringify([m, c, id, bench()]));
 
 function showMatrix(model) {
   const BY = table();
@@ -148,7 +138,7 @@ function showMatrix(model) {
     if (filter === "d0fail") return v[0] === false;
     return true;
   });
-  const rates = conds.map(c => { const s = (isTS() ? TS : INDEX).summary[`${model} ${c}`];
+  const rates = conds.map(c => { const s = INDEX.summary[bench()][`${model} ${c}`];
     return isTS() ? `<div><span class="muted">${c}</span><b>${(100 * s.mean_similarity).toFixed(1)}</b><span class="muted">mean similarity · ${s.passed}/${s.scenarios} at 1.0</span></div>`
                   : `<div><span class="muted">${c}</span><b>${(100 * s.success_rate).toFixed(1)}%</b><span class="muted">${s.passed}/${s.tasks}</span></div>`; }).join("");
   const head = `<tr><th></th>${conds.map(c => `<th>${c}</th>`).join("")}</tr>`;
@@ -168,7 +158,7 @@ async function showTrajectory(model, cond, id) {
   const BY = table();
   const row = BY[model][cond][id];
   $("#status").textContent = "loading…";
-  const d = await (await fetch(RUN + (isTS() ? "toolsandbox/" : "") + row.file)).json();
+  const d = await (await fetch(RUN + row.file)).json();
   $("#status").textContent = "";
   const tabs = CONDS.filter(c => BY[model][c]?.[id]).map(c => { const r = BY[model][c][id];
     return `<a class="${cls(r)}${c === cond ? " cur" : ""}" href="#${link(model, c, id)}">${c} ${isTS() ? r.similarity.toFixed(2) : glyph(r)}</a>`; }).join("");
@@ -192,12 +182,10 @@ async function showTrajectory(model, cond, id) {
     ${isTS() ? renderTS(d) : renderEval(d.evaluation)}
     <h3>Transcript</h3>${renderTranscript(d)}
     <details class="box"><summary>Tools sent to the model (${(d.tools_sent || []).length})</summary>${renderTools(d)}</details>
-    ${isTS() ? `<details class="box"><summary>ToolSandbox conversation.json (milestone matches, database updates)</summary><pre id="conv">loading…</pre></details>`
+    ${isTS() ? `<details class="box"><summary>ToolSandbox conversation (milestone matches, database updates)</summary><pre>${esc(d.toolsandbox?.conversation ? JSON.stringify(d.toolsandbox.conversation, null, 2) : "not written: the play aborted with an exception (see the error above), which ToolSandbox scores as similarity 0")}</pre></details>
+    <details class="box"><summary>ToolSandbox pretty-printed transcript</summary><pre>${esc(d.toolsandbox?.pretty_print || "")}</pre></details>`
              : `<details class="box"><summary>Task definition</summary><pre>${esc(JSON.stringify(d.task, null, 2))}</pre></details>
     <details class="box"><summary>BFCL result (decoded calls per step)</summary><pre>${esc(JSON.stringify(d.bfcl_result, null, 2))}</pre></details>`}`;
-  if (isTS()) fetch(RUN + "toolsandbox/" + row.file.replace("ablation.json", "conversation.json"))
-    .then(r => r.ok ? r.json() : Promise.reject("not written: the play aborted with an exception (see the error above), which ToolSandbox scores as similarity 0"))
-    .then(c => { $("#conv").textContent = JSON.stringify(c, null, 2); }).catch(e => { $("#conv").textContent = String(e); });
   window.scrollTo(0, 0);
 }
 

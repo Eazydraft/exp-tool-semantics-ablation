@@ -2,10 +2,10 @@
 # One-command ToolSandbox run of the ablation. ToolSandbox pins old openai/polars versions, so it
 # gets its own virtualenv (.venv-toolsandbox, created on first use).
 #
-#   ./run_toolsandbox.sh                        # 4 models x D0..D5 x 91 scenarios -> runs/main/toolsandbox/
+#   ./run_toolsandbox.sh                        # 4 models x D0..D5 x 91 scenarios -> runs/main/trajectories/
 #   LIMIT=2 JOBS=2 ./run_toolsandbox.sh --models anthropic/claude-haiku-5.5 --conditions D0   # smoke test
 #   ./run_toolsandbox.sh index                  # rebuild index.json only
-# Re-running resumes: scenarios that already have an ablation.json are skipped.
+# Re-running resumes: scenarios that already have a trajectory file are skipped.
 set -euo pipefail
 cd "$(dirname "$0")"
 

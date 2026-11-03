@@ -162,6 +162,7 @@ class AblationHandler(OpenAICompletionsHandler):
         }
         doc = {
             "id": test_entry["id"],
+            "benchmark": "bfcl",
             "model": self.model_id,
             "condition": self.condition,
             "registry_name": self.registry_name,

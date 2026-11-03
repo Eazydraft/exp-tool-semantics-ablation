@@ -5,9 +5,10 @@
 Everything for one run lives under runs/<run-name>/:
     result/<registry>/...        BFCL's own result files (needed by its evaluator)
     score/<registry>/...         BFCL's own score files + leaderboard CSVs
-    trajectories/<registry>/<task_id>.json   one file per trajectory (raw, complete)
+    trajectories/<registry>/<task_id>.json   one file per trajectory (raw, complete); ToolSandbox
+                                 scenarios (ablation.toolsandbox_run) use the same layout
     logs/<registry>.log          generation log per model x condition
-    index.json                   one row per trajectory file + per-combo summary
+    index.json                   one row per trajectory file of either benchmark + per-combo summary
 """
 
 import argparse
@@ -25,6 +26,7 @@ from types import SimpleNamespace
 from dotenv import load_dotenv
 
 from ablation.conditions import CONDITIONS, registry_name
+from ablation.index import build_index
 from ablation.models import BASE_MODELS, MODELS, api_model
 
 # NOTE: bfcl_eval (and ablation.handler, which imports it) is only imported inside functions,
@@ -163,49 +165,6 @@ def evaluate(run_dir: Path, registries: list[str]):
             path.write_text(json.dumps(doc, ensure_ascii=False, indent=1))
 
 
-# ---- index -----------------------------------------------------------------------
-
-def build_index(run_dir: Path):
-    rows = []
-    for path in sorted((run_dir / "trajectories").rglob("*.json")):
-        doc = json.loads(path.read_text())
-        turns = doc["bfcl_result"] if isinstance(doc["bfcl_result"], list) else []
-        tool_results = [m for turn in doc["bfcl_metadata"].get("inference_log", []) if isinstance(turn, dict)
-                        for step in turn.values() if isinstance(step, list) for m in step if m.get("role") == "tool"]
-        ev = doc.get("evaluation") or {}
-        rows.append({
-            "file": str(path.relative_to(run_dir)),
-            "id": doc["id"], "model": doc["model"], "condition": doc["condition"],
-            "valid": ev.get("valid"),
-            "error_type": (ev.get("error") or {}).get("error_type"),
-            "inference_error": doc["error"] is not None,
-            "num_turns": len(turns),
-            "num_steps": sum(len(t) for t in turns),
-            "num_tool_calls": sum(len(step) for t in turns for step in t if isinstance(step, list)),
-            "num_failed_tool_calls": sum(1 for r in tool_results if str(r["content"]).startswith("Error during execution")),
-            **doc["totals"],
-            "wall_time_s": doc["wall_time_s"],
-            "started_at": doc["started_at"], "finished_at": doc["finished_at"],
-        })
-
-    summary = {}
-    for r in rows:
-        s = summary.setdefault(f"{r['model']} {r['condition']}", {"tasks": 0, "evaluated": 0, "passed": 0, "cost_usd": 0.0})
-        s["tasks"] += 1
-        s["evaluated"] += r["valid"] is not None
-        s["passed"] += r["valid"] is True
-        s["cost_usd"] += r["cost_usd"]
-    for s in summary.values():
-        s["success_rate"] = s["passed"] / s["evaluated"] if s["evaluated"] else None
-
-    (run_dir / "index.json").write_text(json.dumps(
-        {"run": json.loads((run_dir / "run_config.json").read_text()), "summary": summary, "trajectories": rows},
-        indent=1))
-    print(f"index: {run_dir / 'index.json'}  ({len(rows)} trajectories)")
-    for name, s in summary.items():
-        print(f"  {name:45s} {s['passed']}/{s['evaluated']} passed  ${s['cost_usd']:.4f}")
-
-
 # ---- run config ----------------------------------------------------------------
 
 def record_launch(args, run_dir: Path):
@@ -252,7 +211,7 @@ def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("command", nargs="?", default="all", choices=["all", "generate", "evaluate", "index", "generate-one"])
     p.add_argument("--models", nargs="+", default=BASE_MODELS, choices=list(MODELS),
-                   help="base models by default; the *-think/*-nothink reasoning variants on request")
+                   help="base models by default; the *-think/*-nothink reasoning variants and the -rerun alias on request")
     p.add_argument("--conditions", nargs="+", default=list(CONDITIONS), choices=list(CONDITIONS))
     p.add_argument("--threads", type=int, default=8, help="parallel tasks per model x condition")
     p.add_argument("--jobs", type=int, default=4, help="model x condition combos run in parallel")
