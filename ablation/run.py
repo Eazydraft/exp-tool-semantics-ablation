@@ -84,7 +84,9 @@ def generate_one(args, registry: str):
 
     run_dir = Path(os.environ["BFCL_PROJECT_ROOT"])
     AblationHandler.trajectory_dir = run_dir / "trajectories"
-    AblationHandler.run_info = json.loads((run_dir / "run_config.json").read_text())
+    # Passed by the parent rather than read from run_config.json, which a concurrent launch into the
+    # same run directory may have changed since (that mislabelled the main run's trajectories).
+    AblationHandler.run_info = json.loads(os.environ["ABLATION_LAUNCH"])
 
     # Same namespace `bfcl generate` builds from its CLI flags; GPU/vLLM options are unused here.
     generation_main(SimpleNamespace(
@@ -96,9 +98,10 @@ def generate_one(args, registry: str):
     ))
 
 
-def generate_all(args, run_dir: Path, registries: list[str]):
+def generate_all(args, run_dir: Path, registries: list[str], launch: dict):
     """Run each model x condition in its own subprocess, `--jobs` at a time."""
     (run_dir / "logs").mkdir(exist_ok=True)
+    env = {**os.environ, "ABLATION_LAUNCH": json.dumps({**launch, "conditions_spec": CONDITIONS})}
     ids = task_ids(args)
     if ids:  # written once here, read by every job (BFCL's --run-ids mechanism)
         (run_dir / "test_case_ids_to_generate.json").write_text(json.dumps({TEST_CATEGORY: ids}))
@@ -114,7 +117,7 @@ def generate_all(args, run_dir: Path, registries: list[str]):
         if args.task_ids:
             cmd += ["--task-ids", *map(str, args.task_ids)]
         with open(log, "a") as f:
-            code = subprocess.run(cmd, cwd=PROJECT_DIR, stdout=f, stderr=subprocess.STDOUT).returncode
+            code = subprocess.run(cmd, cwd=PROJECT_DIR, env=env, stdout=f, stderr=subprocess.STDOUT).returncode
         print(f"[{'ok' if code == 0 else 'FAILED exit ' + str(code)}] {registry}  (log: {log})", flush=True)
         return code
 
@@ -207,6 +210,39 @@ def build_index(run_dir: Path):
         print(f"  {name:45s} {s['passed']}/{s['evaluated']} passed  ${s['cost_usd']:.4f}")
 
 
+# ---- run config ----------------------------------------------------------------
+
+def record_launch(args, run_dir: Path):
+    """Append this launch to run_config.json; models/conditions are the union over all launches.
+
+    A run directory is usually filled by several launches (main study, follow-ups, redos), so the
+    config must accumulate rather than describe only the latest one. Returns this launch's record.
+    """
+    # ponytail: unlocked read-modify-write; two launches starting in the same second can drop one
+    # record. Add a file lock if launches are ever scripted to start together.
+    path = run_dir / "run_config.json"
+    cfg = json.loads(path.read_text()) if path.exists() else {}
+    launches = cfg.get("launches")
+    if launches is None:  # pre-launch-history format: the file itself describes one launch
+        launches = [{k: v for k, v in cfg.items() if k != "conditions_spec"}] if cfg else []
+    bfcl_commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=BFCL_DIR, capture_output=True, text=True).stdout.strip()
+    launch = {
+        "run_name": args.run_name, "command": args.command, "started_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+        "models": args.models, "conditions": args.conditions,
+        "temperature": args.temperature, "threads": args.threads, "limit": args.limit, "task_ids": args.task_ids,
+        "test_category": TEST_CATEGORY, "bfcl_commit": bfcl_commit,
+    }
+    launches.append(launch)
+    path.write_text(json.dumps({
+        "run_name": args.run_name,
+        "models": list(dict.fromkeys(m for l in launches for m in l["models"])),
+        "conditions": list(dict.fromkeys(c for l in launches for c in l["conditions"])),
+        "conditions_spec": CONDITIONS,
+        "launches": launches,
+    }, indent=1))
+    return launch
+
+
 # ---- main ------------------------------------------------------------------------
 
 def main():
@@ -234,16 +270,9 @@ def main():
     if args.command == "generate-one":
         return generate_one(args, args.registry)
 
-    bfcl_commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=BFCL_DIR, capture_output=True, text=True).stdout.strip()
-    (run_dir / "run_config.json").write_text(json.dumps({
-        "run_name": args.run_name, "models": args.models, "conditions": args.conditions,
-        "temperature": args.temperature, "threads": args.threads, "limit": args.limit, "task_ids": args.task_ids,
-        "test_category": TEST_CATEGORY, "bfcl_commit": bfcl_commit, "conditions_spec": CONDITIONS,
-    }, indent=1))
-
     registries = [registry_name(m, c) for m in args.models for c in args.conditions]
     if args.command in ("all", "generate"):
-        generate_all(args, run_dir, registries)
+        generate_all(args, run_dir, registries, record_launch(args, run_dir))
     if args.command in ("all", "evaluate"):
         evaluate(run_dir, registries)
     if args.command in ("all", "evaluate", "index"):
