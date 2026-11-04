@@ -1,4 +1,4 @@
-"""The same documentation conditions on Apple's ToolSandbox (run through ./run_toolsandbox.sh).
+"""The same documentation conditions on Apple's ToolSandbox (run through ./run.sh toolsandbox).
 
     python -m ablation.toolsandbox_run [--models ...] [--conditions ...] [--jobs N] [--limit K]
 

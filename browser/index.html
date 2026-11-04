@@ -68,7 +68,7 @@
 <body>
 <header>
   <h1>Trajectory browser</h1>
-  <label>Benchmark <select id="bench"><option value="bfcl">BFCL multi-turn</option><option value="toolsandbox">ToolSandbox</option></select></label>
+  <label>Benchmark <select id="bench"></select></label>
   <label>Model <select id="model"></select></label>
   <label>Show <select id="filter">
     <option value="all">all tasks</option>
@@ -82,23 +82,25 @@
 <main id="main"></main>
 
 <script>
+// Reads runs/main/index.json (one row per trajectory, every benchmark) and the trajectory files it
+// points to. Nothing is precomputed here: the matrix, the verdict and the transcript come from the
+// files as written by the runners.
 const RUN = "../runs/main/";
-const CONDS = ["D0","D1","D2","D3","D4","D5","D6","D7"];
-let INDEX, BY = { bfcl: {}, toolsandbox: {} };   // BY[benchmark][model][cond][taskId] -> index row
+const BENCH_NAMES = { bfcl: "BFCL multi-turn", toolsandbox: "ToolSandbox", tau2: "τ²-bench airline" };
+let INDEX, CONDS = [], BY = {};   // BY[benchmark][model][cond][taskId] -> index row
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const num = id => parseInt(id.split("_").pop(), 10);
 const short = m => m.split("/").pop();
 const pretty = v => { if (typeof v === "string") { try { v = JSON.parse(v); } catch {} } return typeof v === "string" ? v : JSON.stringify(v, null, 2); };
-const cls = r => r.inference_error ? "err" : ok(r) ? "pass" : "fail";
-const glyph = r => r.inference_error ? "!" : ok(r) ? "✓" : "✗";
+const fmt = n => Number(n || 0).toLocaleString();
 
 async function init() {
-  // One index for the whole run: BFCL tasks and ToolSandbox scenarios, every model configuration
-  // (reasoning variants and the repeated run are model ids like the others).
   INDEX = await (await fetch(RUN + "index.json")).json();
-  for (const r of INDEX.trajectories) (((BY[r.benchmark] ??= {})[r.model] ??= {})[r.condition] ??= {})[r.id] = r;
-  if (!Object.keys(BY.toolsandbox).length) $("#bench").disabled = true;
+  // tau2 tasks may have several trials: trial 1 keeps the task id, later trials are keyed "<id> t<n>".
+  for (const r of INDEX.trajectories) ((((BY[r.benchmark] ??= {})[r.model] ??= {})[r.condition] ??= {})[r.trial > 1 ? `${r.id} t${r.trial}` : r.id] = r);
+  CONDS = [...new Set(INDEX.trajectories.map(r => r.condition))].sort();
+  $("#bench").innerHTML = Object.keys(BY).sort().map(b => `<option value="${b}">${esc(BENCH_NAMES[b] || b)}</option>`).join("");
   fillModels();
   $("#bench").onchange = () => { location.hash = ""; fillModels(); render(); };
   for (const el of ["#model", "#filter"]) $(el).onchange = () => { location.hash = ""; render(); };
@@ -110,6 +112,11 @@ async function init() {
 const bench = () => $("#bench").value;
 const isTS = () => bench() === "toolsandbox";
 const table = () => BY[bench()];
+// Verdict per benchmark: BFCL's evaluator, ToolSandbox's similarity (1.0 = every milestone met), tau2's reward.
+const ok = r => isTS() ? r.similarity === 1 : bench() === "tau2" ? r.pass : r.valid;
+const cls = r => r.inference_error ? "err" : ok(r) ? "pass" : "fail";
+const glyph = r => r.inference_error ? "!" : ok(r) ? "✓" : "✗";
+const link = (m, c, id) => encodeURIComponent(JSON.stringify([m, c, id, bench()]));
 
 function fillModels() {
   const models = Object.keys(table()).sort();
@@ -122,36 +129,72 @@ function render() {
   showMatrix($("#model").value);
 }
 
-const ok = r => isTS() ? r.similarity === 1 : r.valid;
-const link = (m, c, id) => encodeURIComponent(JSON.stringify([m, c, id, bench()]));
+function rateCell(c, s) {
+  if (isTS()) return `<div><span class="muted">${c}</span><b>${(100 * s.mean_similarity).toFixed(1)}</b><span class="muted">mean similarity · ${s.passed}/${s.scenarios} at 1.0</span></div>`;
+  const n = s.tasks ?? s.evaluated;
+  return `<div><span class="muted">${c}</span><b>${(100 * s.success_rate).toFixed(1)}%</b><span class="muted">${s.passed}/${n}</span></div>`;
+}
+
+function cellTitle(r) {
+  if (isTS()) return `similarity ${r.similarity.toFixed(2)}${r.error_type ? " · " + r.error_type : ""}`;
+  if (bench() === "tau2") return `${r.pass ? "pass" : "fail"} · ${String(r.termination_reason).split(".").pop().toLowerCase()} · ${r.num_tool_calls} calls`;
+  return `${esc(r.error_type || "pass")} · ${r.num_tool_calls} calls`;
+}
 
 function showMatrix(model) {
   const BY = table();
   const conds = CONDS.filter(c => BY[model][c]);
-  const ids = Object.keys(BY[model][conds[0]]).sort((a, b) => isTS() ? a.localeCompare(b) : num(a) - num(b));
+  const ids = Object.keys(BY[model][conds[0]]).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   const filter = $("#filter").value, q = $("#search").value.trim();
   const rows = ids.filter(id => {
-    if (q && num(id) !== parseInt(q, 10)) return false;
+    if (q && (bench() === "bfcl" ? num(id) !== parseInt(q, 10) : !id.startsWith(q))) return false;
     const v = conds.map(c => { const r = BY[model][c][id]; return r && ok(r); });
     if (filter === "diverge") return new Set(v).size > 1;
     if (filter === "d0pass") return v[0] === true;
     if (filter === "d0fail") return v[0] === false;
     return true;
   });
-  const rates = conds.map(c => { const s = INDEX.summary[bench()][`${model} ${c}`];
-    return isTS() ? `<div><span class="muted">${c}</span><b>${(100 * s.mean_similarity).toFixed(1)}</b><span class="muted">mean similarity · ${s.passed}/${s.scenarios} at 1.0</span></div>`
-                  : `<div><span class="muted">${c}</span><b>${(100 * s.success_rate).toFixed(1)}%</b><span class="muted">${s.passed}/${s.tasks}</span></div>`; }).join("");
+  const rates = conds.map(c => rateCell(c, INDEX.summary[bench()][`${model} ${c}`])).join("");
   const head = `<tr><th></th>${conds.map(c => `<th>${c}</th>`).join("")}</tr>`;
-  const body = rows.map(id => `<tr><th class="task">${isTS() ? esc(id) : num(id)}</th>${conds.map(c => {
+  const body = rows.map(id => `<tr><th class="task">${bench() === "bfcl" ? num(id) : esc(id)}</th>${conds.map(c => {
     const r = BY[model][c][id];
     if (!r) return `<td></td>`;
-    const title = isTS() ? `similarity ${r.similarity.toFixed(2)}${r.error_type ? " · " + r.error_type : ""}` : `${esc(r.error_type || "pass")} · ${r.num_tool_calls} calls`;
-    return `<td class="cell ${cls(r)}" title="${title}" onclick="location.hash='${link(model, c, id)}'">${isTS() ? r.similarity.toFixed(2) : glyph(r)}</td>`;
+    return `<td class="cell ${cls(r)}" title="${cellTitle(r)}" onclick="location.hash='${link(model, c, id)}'">${isTS() ? r.similarity.toFixed(2) : glyph(r)}</td>`;
   }).join("")}</tr>`).join("");
   $("#status").textContent = `${rows.length} of ${ids.length} tasks`;
   $("#main").innerHTML = `<div class="rates">${rates}</div>
     <div class="legend"><span class="p">pass</span><span class="f">fail</span><span class="e">inference error</span><span class="muted">Click a cell to open the trajectory.</span></div>
     <table class="matrix">${head}${body}</table>`;
+}
+
+// The runners record API calls in two shapes: BFCL and ToolSandbox keep the raw HTTP exchange
+// ({request: {body}, response: {status_code, body}}), tau2 the client call ({request, response}).
+const reqOf = c => c.request?.body ?? c.request ?? {};
+const resOf = c => c.response?.body ?? c.response ?? {};
+
+function headerFacts(d, row) {
+  const t = d.totals, provider = (d.api_calls || []).map(c => resOf(c).provider).find(Boolean) || "–";
+  const tokens = `${fmt(t.prompt_tokens)} in / ${fmt(t.completion_tokens)} out`;
+  if (isTS()) return [["similarity", d.result.similarity.toFixed(3)], ["milestones", d.result.milestone_similarity.toFixed(3)], ["minefields", d.result.minefield_similarity.toFixed(3)],
+    ["messages", d.result.turn_count], ["agent calls", row.api_calls], ["user-simulator calls", d.user_totals.api_calls], ["tokens", tokens], ["reasoning tokens", t.reasoning_tokens],
+    ["cost", `$${t.cost_usd.toFixed(4)} + $${d.user_totals.cost_usd.toFixed(4)} user`], ["provider", provider],
+    ["categories", d.categories.filter(c => !/DISTRACTION|ALL_TOOLS/.test(c)).join(", ").toLowerCase()]];
+  if (bench() === "tau2") { const rb = d.result.reward_info?.reward_breakdown || {};
+    return [["reward", d.result.reward], ["ended by", String(d.result.termination_reason).split(".").pop().toLowerCase()],
+      ["DB check", rb.DB ?? "–"], ["communicate check", rb.COMMUNICATE ?? "–"], ["messages", row.num_messages], ["tool calls", row.num_tool_calls],
+      ["agent calls", row.api_calls], ["user-simulator calls", d.user_totals.api_calls], ["tokens", tokens], ["reasoning tokens", t.reasoning_tokens],
+      ["cost", `$${t.cost_usd.toFixed(4)} + $${d.user_totals.cost_usd.toFixed(4)} user + $${(d.judge_totals?.cost_usd || 0).toFixed(4)} judge`], ["provider", provider]]; }
+  return [["verdict", row.valid ? "pass" : row.error_type || "fail"], ["turns", row.num_turns], ["API calls", row.api_calls],
+    ["tool calls", `${row.num_tool_calls} (${row.num_failed_tool_calls} failed)`], ["tokens", tokens], ["reasoning tokens", t.reasoning_tokens],
+    ["cost", `$${t.cost_usd.toFixed(4)}`], ["wall time", `${row.wall_time_s.toFixed(0)} s`], ["provider", provider], ["classes", d.task.involved_classes.join(", ")]];
+}
+
+function extras(d) {
+  const box = (title, v) => `<details class="box"><summary>${title}</summary><pre>${esc(typeof v === "string" ? v : JSON.stringify(v, null, 2))}</pre></details>`;
+  if (isTS()) return box("ToolSandbox conversation (milestone matches, database updates)", d.toolsandbox?.conversation ?? "not written: the play aborted with an exception (see the error above), which ToolSandbox scores as similarity 0")
+    + box("ToolSandbox pretty-printed transcript", d.toolsandbox?.pretty_print || "");
+  if (bench() === "tau2") return box("Reward details", d.result.reward_info) + box("tau2 simulation record", d.tau2);
+  return box("Task definition", d.task) + box("BFCL result (decoded calls per step)", d.bfcl_result);
 }
 
 async function showTrajectory(model, cond, id) {
@@ -162,30 +205,18 @@ async function showTrajectory(model, cond, id) {
   $("#status").textContent = "";
   const tabs = CONDS.filter(c => BY[model][c]?.[id]).map(c => { const r = BY[model][c][id];
     return `<a class="${cls(r)}${c === cond ? " cur" : ""}" href="#${link(model, c, id)}">${c} ${isTS() ? r.similarity.toFixed(2) : glyph(r)}</a>`; }).join("");
-  const provider = d.api_calls.map(c => c.response?.body?.provider).find(Boolean) || "–";
-  const t = d.totals;
-  const kv = (isTS()
-    ? [["similarity", d.result.similarity.toFixed(3)], ["milestones", d.result.milestone_similarity.toFixed(3)], ["minefields", d.result.minefield_similarity.toFixed(3)],
-       ["messages", d.result.turn_count], ["agent calls", row.api_calls], ["user-simulator calls", d.user_totals.api_calls],
-       ["tokens", `${t.prompt_tokens.toLocaleString()} in / ${t.completion_tokens.toLocaleString()} out`], ["reasoning tokens", t.reasoning_tokens],
-       ["cost", `$${t.cost_usd.toFixed(4)} + $${d.user_totals.cost_usd.toFixed(4)} user`], ["provider", provider], ["categories", d.categories.filter(c => !/DISTRACTION|ALL_TOOLS/.test(c)).join(", ").toLowerCase()]]
-    : [["verdict", row.valid ? "pass" : row.error_type || "fail"], ["turns", row.num_turns], ["API calls", row.api_calls],
-       ["tool calls", `${row.num_tool_calls} (${row.num_failed_tool_calls} failed)`], ["tokens", `${t.prompt_tokens.toLocaleString()} in / ${t.completion_tokens.toLocaleString()} out`],
-       ["reasoning tokens", t.reasoning_tokens], ["cost", `$${t.cost_usd.toFixed(4)}`], ["wall time", `${row.wall_time_s.toFixed(0)} s`], ["provider", provider], ["classes", d.task.involved_classes.join(", ")]])
-    .map(([k, v]) => `<span>${k} <b>${esc(v)}</b></span>`).join("");
-
+  const kv = headerFacts(d, row).map(([k, v]) => `<span>${k} <b>${esc(v)}</b></span>`).join("");
+  const verdict = isTS() ? renderTS(d) : bench() === "tau2" ? renderTau2(d) : renderEval(d.evaluation);
+  const transcript = bench() === "tau2" ? renderMessages(d.tau2?.messages || []) : renderTranscript(d);
   $("#main").innerHTML = `<p><a href="#" onclick="location.hash='';return false">← back to ${esc(short(model))}</a></p>
     <h2 style="margin:4px 0">${esc(id)} · ${esc(short(model))} · ${cond}</h2>
     <div class="tabs">${tabs}</div>
     <div class="kv">${kv}</div>
     ${d.error ? `<div class="box error"><b>${isTS() ? "Scenario error" : "Inference error"}.</b> ${esc(d.error.message)}</div>` : ""}
-    ${isTS() ? renderTS(d) : renderEval(d.evaluation)}
-    <h3>Transcript</h3>${renderTranscript(d)}
+    ${verdict}
+    <h3>Transcript</h3>${transcript}
     <details class="box"><summary>Tools sent to the model (${(d.tools_sent || []).length})</summary>${renderTools(d)}</details>
-    ${isTS() ? `<details class="box"><summary>ToolSandbox conversation (milestone matches, database updates)</summary><pre>${esc(d.toolsandbox?.conversation ? JSON.stringify(d.toolsandbox.conversation, null, 2) : "not written: the play aborted with an exception (see the error above), which ToolSandbox scores as similarity 0")}</pre></details>
-    <details class="box"><summary>ToolSandbox pretty-printed transcript</summary><pre>${esc(d.toolsandbox?.pretty_print || "")}</pre></details>`
-             : `<details class="box"><summary>Task definition</summary><pre>${esc(JSON.stringify(d.task, null, 2))}</pre></details>
-    <details class="box"><summary>BFCL result (decoded calls per step)</summary><pre>${esc(JSON.stringify(d.bfcl_result, null, 2))}</pre></details>`}`;
+    ${extras(d)}`;
   window.scrollTo(0, 0);
 }
 
@@ -197,11 +228,20 @@ function renderTS(d) {
     ${rows ? `<table class="params"><tr><th>milestone</th><th>matched at</th><th>similarity</th></tr>${rows}</table>` : ""}</div>`;
 }
 
+function renderTau2(d) {
+  const r = d.result, info = r.reward_info || {}, pass = r.reward === 1;
+  const checks = (info.communicate_checks || []).map(c => `<tr><td>${esc(c.info ?? JSON.stringify(c))}</td><td>${c.met ? "met" : "not met"}</td><td class="muted">${esc(c.justification || "")}</td></tr>`).join("");
+  return `<div class="box${pass ? "" : " error"}"><b>${pass ? "Pass" : "Fail"} · reward ${r.reward}</b>
+    <div class="muted">Reward is 1 only if the final database matches the one the ground-truth actions produce${info.reward_basis?.includes("COMMUNICATE") ? " and every required piece of information was communicated to the user" : ""}.</div>
+    <div>database ${info.db_check?.db_match ? "matches" : "differs"}${checks ? "" : " · no communicate checks on this task"}</div>
+    ${checks ? `<table class="params"><tr><th>information to communicate</th><th></th><th>judge</th></tr>${checks}</table>` : ""}</div>`;
+}
+
 function renderEval(ev) {
   if (ev.valid) return `<div class="box"><b>Pass.</b> Final state and execution responses match the ground truth in every turn.</div>`;
   const e = ev.error || {}; let body = "";
   const diffs = e.details?.differences;
-  if (diffs) body += Object.entries(diffs).map(([k, v]) => `<div class="diff"><div><h4>${esc(k)} · model</h4><pre>${esc(v.model)}</pre></div><div><h4>${esc(k)} · ground truth</h4><pre>${esc(v.ground_truth)}</pre></div></div>`).join("");
+  if (diffs) body += Object.entries(diffs).map(([k, v]) => `<div class="diff"><div><h4>${esc(k)} · model</h4><pre>${esc(pretty(v.model))}</pre></div><div><h4>${esc(k)} · ground truth</h4><pre>${esc(pretty(v.ground_truth))}</pre></div></div>`).join("");
   if (e.details?.missing_items) body += `<h4 class="muted">Ground-truth execution responses the model never produced</h4><pre>${esc(e.details.missing_items.join("\n"))}</pre>`;
   const rest = Object.fromEntries(Object.entries(e.details || {}).filter(([k]) => !["differences", "missing_items"].includes(k)));
   if (Object.keys(rest).length) body += `<details><summary class="muted">Other checker details</summary><pre>${esc(JSON.stringify(rest, null, 2))}</pre></details>`;
@@ -212,24 +252,34 @@ function renderEval(ev) {
 // since the previous request plus the response form a linear transcript.
 function renderTranscript(d) {
   let prev = 0, out = "", turn = 0;
-  d.api_calls.forEach((c, i) => {
-    const msgs = c.request?.body?.messages || [];
+  (d.api_calls || []).forEach((c, i) => {
+    const req = reqOf(c), res = resOf(c), msgs = req.messages || [];
     const fresh = msgs.length >= prev ? msgs.slice(prev) : msgs;
     if (msgs.length < prev) out += `<div class="turn bad">History shrank before call ${i + 1}; showing the full request.</div>`;
     for (const m of fresh) { if (m.role === "user") out += `<div class="turn">Turn ${++turn}</div>`; out += renderMsg(m); }
-    const r = c.response || {}, choice = r.body?.choices?.[0];
-    const meta = `call ${i + 1}/${d.api_calls.length} · ${c.latency_s?.toFixed(1)} s · ${r.body?.usage?.prompt_tokens ?? "?"} in / ${r.body?.usage?.completion_tokens ?? "?"} out${choice ? " · " + choice.finish_reason : ""}`;
+    const choice = res.choices?.[0];
+    const meta = `call ${i + 1}/${d.api_calls.length} · ${c.latency_s?.toFixed(1)} s · ${res.usage?.prompt_tokens ?? "?"} in / ${res.usage?.completion_tokens ?? "?"} out${choice ? " · " + choice.finish_reason : ""}`;
     if (choice) { out += renderMsg(choice.message, meta); prev = msgs.length + 1; }
-    else { out += `<div class="msg tool"><div class="role">response · HTTP ${r.status_code}</div><pre>${esc(JSON.stringify(r.body, null, 2))}</pre></div>`; prev = msgs.length; }
+    else { out += `<div class="msg tool"><div class="role">response${c.response?.status_code ? " · HTTP " + c.response.status_code : ""}</div><pre>${esc(JSON.stringify(res, null, 2))}</pre></div>`; prev = msgs.length; }
   });
   return out || `<p class="muted">No API calls were recorded.</p>`;
+}
+
+// tau2 keeps its own message log (agent, user, tool results), which is the transcript the evaluator saw.
+function renderMessages(msgs) {
+  let out = "", turn = 0;
+  for (const m of msgs) { if (m.role === "user") out += `<div class="turn">Turn ${++turn}</div>`; out += renderMsg(m); }
+  return out || `<p class="muted">No messages were recorded.</p>`;
 }
 
 function renderMsg(m, meta) {
   let body = "";
   if (m.reasoning) body += `<details><summary class="muted">reasoning</summary><div class="text">${esc(m.reasoning)}</div></details>`;
   if (m.content) body += m.role === "tool" ? renderLong(pretty(m.content)) : `<div class="text">${esc(m.content)}</div>`;
-  for (const tc of m.tool_calls || []) { const a = pretty(tc.function.arguments); body += `<div class="call"><b>${esc(tc.function.name)}</b>(${a.length > 90 ? `<pre>${esc(a)}</pre>` : esc(a.replace(/\s*\n\s*/g, " "))})</div>`; }
+  for (const tc of m.tool_calls || []) {  // OpenAI shape {function: {name, arguments}} or tau2's {name, arguments}
+    const name = tc.function?.name ?? tc.name, a = pretty(tc.function?.arguments ?? tc.arguments);
+    body += `<div class="call"><b>${esc(name)}</b>(${a.length > 90 ? `<pre>${esc(a)}</pre>` : esc(a.replace(/\s*\n\s*/g, " "))})</div>`;
+  }
   return `<div class="msg ${m.role}"><div class="role">${m.role}${meta ? " · " + esc(meta) : ""}</div>${body || '<span class="muted">(empty)</span>'}</div>`;
 }
 
@@ -237,12 +287,13 @@ function renderLong(s) {
   return s.length > 600 ? `<details><summary class="muted">${esc(s.slice(0, 200))}… (${s.length} chars)</summary><pre>${esc(s)}</pre></details>` : `<pre>${esc(s)}</pre>`;
 }
 
+// The schemas exactly as sent, with the original name beside each generic one (from the name maps).
 function renderTools(d) {
   const tmap = d.name_maps?.tool || {}, pmap = d.name_maps?.param || {};
   return (d.tools_sent || []).map(t => {
-    const f = t.function, props = f.parameters?.properties || {}, req = new Set(f.parameters?.required || []);
+    const f = t.function || t, props = f.parameters?.properties || {}, req = new Set(f.parameters?.required || []);
     const rows = Object.entries(props).map(([p, s]) => {
-      const orig = pmap[f.name]?.[p]?.name; const extra = ["enum", "pattern", "items", "default"].filter(k => k in s).map(k => `${k}: ${JSON.stringify(s[k])}`).join("<br>");
+      const orig = pmap[f.name]?.[p]?.name; const extra = ["enum", "pattern", "items", "default"].filter(k => k in s).map(k => `${k}: ${esc(JSON.stringify(s[k]))}`).join("<br>");
       return `<tr><td><code>${esc(p)}</code>${orig && orig !== p ? ` <span class="orig">(${esc(orig)})</span>` : ""}${req.has(p) ? "" : ' <span class="muted">optional</span>'}</td><td><code>${esc(s.type || "")}</code></td><td>${esc(s.description || "") || '<span class="muted">—</span>'}${extra ? `<div class="muted">${extra}</div>` : ""}</td></tr>`;
     }).join("");
     return `<div class="tool-def"><div class="name">${esc(f.name)}${tmap[f.name] ? ` <span class="orig">(${esc(tmap[f.name])})</span>` : ""}</div>
@@ -251,7 +302,7 @@ function renderTools(d) {
   }).join("");
 }
 
-init().catch(e => { $("#main").innerHTML = `<p class="box error">Could not load ${RUN}index.json: ${esc(e)}. Start the browser with <code>./browse.sh</code> from the repository root.</p>`; });
+init().catch(e => { $("#main").innerHTML = `<p class="box error">Could not load ${RUN}index.json: ${esc(e)}. Start the browser with <code>./run.sh browse</code> from the repository root.</p>`; });
 </script>
 </body>
 </html>

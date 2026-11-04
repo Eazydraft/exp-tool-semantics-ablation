@@ -1,4 +1,4 @@
-"""Documentation ablation conditions (experiment-design.md, section 1).
+"""Documentation ablation conditions (paper, Section 4.2).
 
 `apply_condition` takes BFCL's original function docs for one task and returns
   (a) the ablated docs that are shown to the model, and
@@ -20,11 +20,14 @@ CONDITIONS = {
     "D3": dict(tool_names=False, tool_desc=True, param_names=True, param_desc=True),
     "D4": dict(tool_names=True, tool_desc=True, param_names=False, param_desc=True),
     "D5": dict(tool_names=False, tool_desc=False, param_names=False, param_desc=False),
-    # Follow-ups to D2 (reviewer request): what if the information the descriptions carried
+    # Follow-ups to D2: what if the information the descriptions carried
     # is expressed structurally instead (D6), or kept only for the six parameters that
     # accounted for most D2 errors (D7)?
     "D6": dict(tool_names=True, tool_desc=True, param_names=True, param_desc=False, structure=True),
     "D7": dict(tool_names=True, tool_desc=True, param_names=True, param_desc=False, keep_desc=True),
+    # D8 removes parameter names and parameter descriptions together (tool names and descriptions
+    # kept): the direct test of how far those two carriers restate each other.
+    "D8": dict(tool_names=True, tool_desc=True, param_names=False, param_desc=False),
 }
 
 # The six parameters whose values went wrong most in D2 (paper, Table 5).

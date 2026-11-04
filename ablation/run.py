@@ -1,6 +1,6 @@
 """Runner: register model x condition combos in BFCL, generate, evaluate, index.
 
-    python -m ablation.run [--models ...] [--conditions ...] [--threads N] [--jobs J] [--limit K]
+    ./run.sh bfcl [generate|evaluate|index] [--models ...] [--conditions ...] [--limit K]   (python -m ablation.run)
 
 Everything for one run lives under runs/<run-name>/:
     result/<registry>/...        BFCL's own result files (needed by its evaluator)

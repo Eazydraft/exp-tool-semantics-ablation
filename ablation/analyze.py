@@ -1,4 +1,4 @@
-"""Trajectory analysis for one run (bfcl_trajectory_analysis_plan_updated.md).
+"""Trajectory analysis of the BFCL run.
 
     python -m ablation.analyze --run-name main      ->  runs/main/analysis.json
 
@@ -205,7 +205,8 @@ def main():
         feat[row["model"]][row["condition"]][row["id"]] = analyze_trajectory(doc, gt[row["id"]])
         if i % 500 == 0:
             print(f"  {i}/{len(index['trajectories'])}")
-    task_ids = sorted(feat[models[0]]["D0"], key=lambda t: int(t.rsplit("_", 1)[1]))
+    with_d0 = [m for m in models if feat[m]["D0"]]  # a repeated launch of one ablation (e.g. the Luna D2 rerun) has no D0 of its own
+    task_ids = sorted(feat[with_d0[0]]["D0"], key=lambda t: int(t.rsplit("_", 1)[1]))
     # Not every model has every condition (D6/D7 were run for the default reasoning setting only).
     conds = {m: [c for c in CONDITIONS if feat[m][c]] for m in models}
     abl_conds = {m: [c for c in conds[m] if c != "D0"] for m in models}
@@ -220,7 +221,7 @@ def main():
 
     # 1. success, heatmap, robustness
     out["success"] = {m: {c: mean(m, c, "valid") for c in conds[m]} for m in models}
-    out["pp_change"] = {m: {c: (out["success"][m][c] - out["success"][m]["D0"]) * 100 for c in abl_conds[m]} for m in models}
+    out["pp_change"] = {m: {c: (out["success"][m][c] - out["success"][m]["D0"]) * 100 for c in abl_conds[m]} for m in with_d0}
     out["robustness"] = {m: {
         "D1-D4": sum((out["success"][m]["D0"] - out["success"][m][c]) / out["success"][m]["D0"] for c in SINGLE) / 4,
         "D1-D5": sum((out["success"][m]["D0"] - out["success"][m][c]) / out["success"][m]["D0"] for c in SINGLE + ["D5"]) / 5,
@@ -228,7 +229,7 @@ def main():
 
     # paired stats vs D0
     out["paired"] = {}
-    for m in models:
+    for m in with_d0:
         base = [bool(feat[m]["D0"][t]["valid"]) for t in task_ids]
         out["paired"][m] = {}
         for c in abl_conds[m]:
@@ -269,7 +270,7 @@ def main():
 
     # 3. documentation-to-error linkage: which parameters go wrong more often than in D0
     out["wrong_params"] = {}
-    for m in models:
+    for m in with_d0:
         d0 = Counter(wp for t in task_ids for wp in feat[m]["D0"][t]["wrong_params"])
         out["wrong_params"][m] = {}
         for c in abl_conds[m]:
@@ -295,7 +296,7 @@ def main():
         out["wrong_params_pooled"].append({"tool": tool, "param": param, "n_d2": n, "n_d0": pooled["D0"][(tool, param)],
                                            "per_model": per_model, "description": desc})
 
-    # 3b. task-level attribution of the D2 drop to the six parameters of Table 5 (reviewer request)
+    # 3b. task-level attribution of the D2 drop to the six parameters of the wrong-parameters table
     SIX = {("place_order", "order_type"), ("startEngine", "ignitionMode"), ("estimate_distance", "cityA"),
            ("estimate_distance", "cityB"), ("post_tweet", "tags"), ("post_tweet", "mentions")}
     six_tasks = [t for t in task_ids if any((n, k) in SIX for turn in gt[t]["turns"] for n, a in turn for k in a)]

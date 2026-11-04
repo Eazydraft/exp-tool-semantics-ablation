@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Rebuild figures, tables and the PDF from runs/main/analysis.json.
-#   ./paper/build.sh          -> paper/main.pdf
+#   ./run.sh paper  (./paper/build.sh)   -> paper/main.pdf
 set -euo pipefail
 cd "$(dirname "$0")/.."
 uv run --with matplotlib python paper/figures.py

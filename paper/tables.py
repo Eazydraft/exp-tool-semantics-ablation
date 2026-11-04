@@ -287,7 +287,8 @@ def paired(valid_a, valid_b, seed=0):
     rng = random.Random(seed); n = len(diffs)
     samples = sorted(sum(diffs[rng.randrange(n)] for _ in range(n)) / n * 100 for _ in range(2000))
     return dict(both=both, a_only=a_only, b_only=b_only, neither=neither, diff=sum(diffs) / n * 100,
-                ci=(samples[50], samples[1949]), p=mcnemar_exact(a_only, b_only))
+                ci=(samples[50], samples[1949]), p=mcnemar_exact(a_only, b_only),
+                bound=max(abs(samples[50]), abs(samples[1949])))  # equivalence bound: the change is smaller than this
 
 
 def valid_vec(m, c):
@@ -306,15 +307,63 @@ if "D6" in A["conditions"] and "D7" in A["conditions"]:
                 rm.append(f"{label} & {c} vs {base} & {pct(S[m][base])} & {pct(S[m][c])} & {r['a_only']} & {r['b_only']} & {r['diff']:+.1f} & [{r['ci'][0]:.1f}, {r['ci'][1]:.1f}] & {fmt_p(r['p'])} \\\\")
         rows.append(rm)
     write("followup", block(rows))
-    # six-parameter vs other tasks: D0 and D2 for every configuration, D6 and D7 where they exist
+    # six-parameter vs other tasks: D0 and D2 for every configuration, D6 to D8 where they exist
     rows = []
     for m in MODELS:
         r = A["six_param_tasks"]["per_model"][m]
         cells = [f"{r['d0_only_six']}/{r['d0_only']}"]
-        for c in ["D0", "D2", "D6", "D7"]:
+        for c in ["D0", "D2", "D6", "D7", "D8"]:
             cells += [pct(r[f"{c}_six"]), pct(r[f"{c}_other"])] if f"{c}_six" in r else ["--", "--"]
         rows.append(f"{SHORT[m]} & " + " & ".join(cells) + " \\\\")
     write("sixparam", rows)
+    shares = [A["six_param_tasks"]["per_model"][m]["d0_only_six"] / A["six_param_tasks"]["per_model"][m]["d0_only"] * 100 for m in MODELS]
+    write("sixparammacros", [f"\\newcommand{{\\sixsharemin}}{{{min(shares):.0f}}}", f"\\newcommand{{\\sixsharemax}}{{{max(shares):.0f}}}"])
+
+# D8 (generic parameter names and blank descriptions together) against D0, D2 and D4
+if "D8" in A["conditions"]:
+    rows, macros = [], []
+    for m in DEFAULTS:
+        rm, first = [], True
+        for base in ["D0", "D2", "D4"]:
+            r = paired(valid_vec(m, base), valid_vec(m, "D8"))
+            label = SHORT[m] if first else ""
+            first = False
+            rm.append(f"{label} & D8 vs {base} & {pct(S[m][base])} & {pct(S[m]['D8'])} & {r['a_only']} & {r['b_only']} & {r['diff']:+.1f} & [{r['ci'][0]:.1f}, {r['ci'][1]:.1f}] & {r['bound']:.1f} & {fmt_p(r['p'])} \\\\")
+        rows.append(rm)
+    write("names", block(rows))
+    vs = {b: [paired(valid_vec(m, b), valid_vec(m, "D8")) for m in DEFAULTS] for b in ["D0", "D2", "D4"]}
+    diffs = lambda b: ", ".join(f"{r['diff']:+.1f}" for r in vs[b])
+    rng8 = lambda xs, f="{:.1f}": f"{f.format(min(xs))} to {f.format(max(xs))}"
+    macros = [f"\\newcommand{{\\deight}}{{{', '.join(f'{S[m]['D8']*100:.1f}' for m in DEFAULTS)}}}",
+              f"\\newcommand{{\\deightrange}}{{{rng8([S[m]['D8']*100 for m in DEFAULTS])}}}",
+              f"\\newcommand{{\\deightvsdtworange}}{{{rng8([-r['diff'] for r in vs['D2']])}}}",
+              f"\\newcommand{{\\deightvsdfourrange}}{{{rng8([-r['diff'] for r in vs['D4']])}}}",
+              f"\\newcommand{{\\deightvsdzero}}{{{diffs('D0')}}}",
+              f"\\newcommand{{\\deightvsdtwo}}{{{diffs('D2')}}}",
+              f"\\newcommand{{\\deightvsdfour}}{{{diffs('D4')}}}",
+              f"\\newcommand{{\\deightvsdtwobound}}{{{min(r['bound'] for r in vs['D2']):.1f} to {max(r['bound'] for r in vs['D2']):.1f}}}",
+              f"\\newcommand{{\\deightvsdtwopmax}}{{{fmt_p(max(r['p'] for r in vs['D2']))}}}"]
+    six = A["six_param_tasks"]["per_model"]
+    rng = lambda xs: f"{min(xs):.1f} to {max(xs):.1f}"
+    macros += [f"\\newcommand{{\\deightsixmax}}{{{max(six[m]['D8_six'] for m in DEFAULTS)*100:.1f}}}",
+               f"\\newcommand{{\\deightotherdrop}}{{{rng([(six[m]['D0_other'] - six[m]['D8_other'])*100 for m in DEFAULTS])}}}",
+               f"\\newcommand{{\\dtwootherabs}}{{{max(abs(six[m]['D0_other'] - six[m]['D2_other'])*100 for m in DEFAULTS):.1f}}}",
+               f"\\newcommand{{\\deightargacc}}{{{rng([B[m]['D8']['argument_acc_given_tool']*100 for m in DEFAULTS])}}}",
+               f"\\newcommand{{\\dtwoargacc}}{{{rng([B[m]['D2']['argument_acc_given_tool']*100 for m in DEFAULTS])}}}",
+               f"\\newcommand{{\\dzeroargacc}}{{{rng([B[m]['D0']['argument_acc_given_tool']*100 for m in DEFAULTS])}}}"]
+    LUNA, LUNA_RERUN = "openai/gpt-6-luna", "openai/gpt-6-luna-rerun"
+    if LUNA_RERUN in PER_TASK and "D2" in PER_TASK[LUNA_RERUN]:
+        second = {t["id"]: bool(t["valid"]) for t in PER_TASK[LUNA_RERUN]["D2"]}
+        ids = [t["id"] for t in PER_TASK[LUNA]["D2"]]
+        rr = paired(valid_vec(LUNA, "D2"), [second[i] for i in ids])          # D2 run 1 vs D2 run 2
+        r8 = paired([second[i] for i in ids], valid_vec(LUNA, "D8"))          # D2 run 2 vs D8 (launched the same day)
+        macros += [f"\\newcommand{{\\lunadtworerun}}{{{sum(second.values())/len(ids)*100:.1f}}}",
+                   f"\\newcommand{{\\lunadtwodiff}}{{{rr['diff']:+.1f}}}", f"\\newcommand{{\\lunadtwodiffci}}{{[{rr['ci'][0]:.1f}, {rr['ci'][1]:.1f}]}}",
+                   f"\\newcommand{{\\lunadtwodiscordant}}{{{rr['a_only']} and {rr['b_only']}}}",
+                   f"\\newcommand{{\\deightvslunarerun}}{{{r8['diff']:+.1f}}}", f"\\newcommand{{\\deightvslunarerunci}}{{[{r8['ci'][0]:.1f}, {r8['ci'][1]:.1f}]}}",
+                   f"\\newcommand{{\\deightvslunarerunp}}{{{fmt_p(r8['p'])}}}"]
+    write("namesmacros", macros)
+    print("D8 table done")
 
 # repeated D0 run (Claude Haiku 5.5 with reasoning, launched twice): run-to-run noise
 if RERUN in PER_TASK:
@@ -397,3 +446,128 @@ if T:
         crows.append(f"{label} & {len(sub)} & " + " & ".join(cells) + " \\\\")
     write("toolsandboxcats", crows)
     print("toolsandbox tables done")
+
+
+# ---- tau2-bench airline, the information audit and the divergence splits -------------------------------------
+X = json.load(open(ROOT / "runs" / "main" / "analysis_extra.json"))
+AU = json.load(open(ROOT / "runs" / "main" / "audit.json"))
+T2 = [r for r in INDEX if r["benchmark"] == "tau2" and r.get("trial", 1) == 1]  # the single-trial study; extra trials below
+if T2:
+    passed = {}
+    for r in T2:
+        passed.setdefault((r["model"], r["condition"]), {})[str(r["id"])] = bool(r["pass"])
+    ids = sorted(passed[("openai/gpt-6-luna", "D0")], key=int)
+    N_T2 = 5 * len(DEFAULTS)
+    ALPHA_T2 = 0.05 / N_T2  # Bonferroni over the 20 tau2 comparisons
+    rows, prows = [], []
+    for m in DEFAULTS:
+        base = [passed[(m, "D0")][i] for i in ids]
+        cells = [pct(sum(base) / len(ids))]
+        first = True
+        for c in CONDS[1:]:
+            abl = [passed[(m, c)][i] for i in ids]
+            r = paired(base, abl)
+            cell = f"{pct(sum(abl) / len(ids))} (${r['diff']:+.1f}$)"
+            cells.append(rf"\textbf{{{cell}}}$^*$" if r["p"] < ALPHA_T2 else cell)
+            sig = r"\textbf{yes}" if r["p"] < ALPHA_T2 else "no"
+            prows.append(f"{TS_SHORT[m] if first else ''} & {c} & {r['both']} & {r['a_only']} & {r['b_only']} & {r['neither']} & {r['diff']:+.1f}"
+                         f" & [{r['ci'][0]:.1f}, {r['ci'][1]:.1f}] & {r['bound']:.1f} & {fmt_p(r['p'])} & {sig} \\\\")
+            first = False
+        rows.append(f"{TS_SHORT[m]} & " + " & ".join(cells) + " \\\\")
+        if m != DEFAULTS[-1]:
+            prows.append(r"\addlinespace")
+    write("tau2", rows)
+    write("tau2paired", prows)
+    pr = {(m, c): paired([passed[(m, "D0")][i] for i in ids], [passed[(m, c)][i] for i in ids]) for m in DEFAULTS for c in CONDS[1:]}
+    single = [pr[(m, c)]["bound"] for m in DEFAULTS for c in ["D1", "D2", "D3", "D4"]]
+    others = [pr[(m, c)]["diff"] for m in DEFAULTS for c in ["D1", "D3", "D4"]]
+    d2b = [pr[(m, "D2")]["bound"] for m in DEFAULTS]
+    d2d = [pr[(m, "D2")]["diff"] for m in DEFAULTS]
+    write("tau2macros", [f"\\newcommand{{\\tautwodtwobounds}}{{{', '.join(f'{b:.0f}' for b in d2b[:-1])} and {d2b[-1]:.0f}}}",
+                         f"\\newcommand{{\\tautwodtworange}}{{${min(d2d):+.1f}$ to ${max(d2d):+.1f}$}}",
+                         f"\\newcommand{{\\tautwosinglebounds}}{{{min(single):.0f} to {max(single):.0f}}}",
+                         f"\\newcommand{{\\tautwootherrange}}{{${min(others):+.1f}$ to ${max(others):+.1f}$}}"])
+    # D0 and D2 run for several trials: trial-averaged success, D2 against D0 on per-task means, D0 trial-to-trial noise
+    TT = X.get("tau2_trials", {})
+    if TT:
+        rows, macros = [], []
+        for m in DEFAULTS:
+            e = TT[m]; d = e["d2_vs_d0"]; pairs = e["d0_trial_pairs"]
+            noise = [abs(pr["diff"]) for pr in pairs]
+            rows.append(f"{TS_SHORT[m]} & {e['n_trials']['D0']} & {pct(e['success']['D0'])} & {pct(e['success']['D2'])} & {d['diff']:+.1f}"
+                        f" & [{d['ci'][0]:.1f}, {d['ci'][1]:.1f}] & {d['bound']:.1f} & {d['p_signflip']:.3f} & {min(noise):.1f} to {max(noise):.1f} \\\\")
+        bounds = [TT[m]["d2_vs_d0"]["bound"] for m in DEFAULTS]
+        noise = [abs(pr["diff"]) for m in DEFAULTS for pr in TT[m]["d0_trial_pairs"]]
+        macros = [f"\\newcommand{{\\tautrials}}{{{TT[DEFAULTS[0]]['n_trials']['D0']}}}",
+                  f"\\newcommand{{\\tautrialdiff}}{{{', '.join(f'{TT[m]['d2_vs_d0']['diff']:+.1f}' for m in DEFAULTS)}}}",
+                  f"\\newcommand{{\\tautrialbound}}{{{min(bounds):.1f} to {max(bounds):.1f}}}",
+                  f"\\newcommand{{\\tautrialpmin}}{{{min(TT[m]['d2_vs_d0']['p_signflip'] for m in DEFAULTS):.2f}}}",
+                  f"\\newcommand{{\\tautrialdiffrange}}{{${min(TT[m]['d2_vs_d0']['diff'] for m in DEFAULTS):+.1f}$ to ${max(TT[m]['d2_vs_d0']['diff'] for m in DEFAULTS):+.1f}$}}",
+                  f"\\newcommand{{\\taunoise}}{{{min(noise):.1f} to {max(noise):.1f}}}"]
+        write("tau2trials", rows)
+        write("tau2trialsmacros", macros)
+        print("tau2 trials table done")
+    # where the reward is lost and how the simulations end (appendix)
+    rows = []
+    for m in DEFAULTS:
+        rm = []
+        for i, c in enumerate(CONDS):
+            b = X["tau2"]["breakdown"][f"{m} {c}"]
+            t = b["termination"]
+            rm.append(f"{TS_SHORT[m] if i == 0 else ''} & {c} & {b['failed']} & {b['db_fail']} & {b['comm_fail']} & {b['both']} & "
+                      f"{t.get('max_steps', 0)} & {t.get('too_many_errors', 0)} & {b['mean_tool_calls']:.1f} \\\\")
+        rows.append(rm)
+    write("tau2breakdown", block(rows))
+    # earliest divergence of failed tasks, D0 / D2 / D5, with the failed tasks that made an off-path state-changing call
+    rows = []
+    for m in DEFAULTS:
+        cells = []
+        for c in ["D0", "D2", "D5"]:
+            b = X["tau2"]["breakdown"][f"{m} {c}"]
+            d = b["divergence_kinds"]
+            cells += [str(d.get("wrong_arguments", 0)), str(d.get("tool_not_called", 0)), str(d.get("none", 0)), str(b["failed_with_off_path_write"])]
+        rows.append(f"{TS_SHORT[m]} & " + " & ".join(cells) + " \\\\")
+    write("tau2divergence", rows)
+    rows = []
+    for m in DEFAULTS:
+        cells = []
+        for c in ["D0", "D2", "D5"]:
+            d = X["toolsandbox_divergence"][f"{m} {c}"]
+            cells += [str(d.get("wrong_arguments", 0)), str(d.get("tool_not_called", 0)), str(d.get("tools_ok", 0)), str(d.get("aborted", 0))]
+        rows.append(f"{TS_SHORT[m]} & " + " & ".join(cells) + " \\\\")
+    write("toolsandboxdivergence", rows)
+    print("tau2 tables done")
+
+# the information audit: where each ground-truth argument's constraint is stated, per benchmark
+LABELS = [("bfcl", "BFCL multi-turn"), ("toolsandbox", "ToolSandbox"), ("tau2", r"$\tau^2$-bench airline")]
+rows, prows = [], []
+for b, label in LABELS:
+    s = AU[b]["summary"]
+    cl, k = s["classes"], s["constraint_kinds"]
+    rows.append(f"{label} & {s['n_calls']} & {s['n_arguments']} & {s['n_parameters']} & {cl['desc_only']} & {cl['desc_and_structure']} & {cl['structure_only']} "
+                f"& {cl['copied']} & {cl['constructed']} & {s['desc_constraint_and_copied']} & {k.get('enum', 0)} & {k.get('format', 0)} & {k.get('entity', 0)} & {len(s['desc_only_parameters'])} \\\\")
+    carriers = s["tools_by_carriers"]
+    n3, n2 = carriers.get("3", 0), carriers.get("2", 0)
+    prows.append(f"{label} & {s['tool_instances']} & {n3} & {n2} & {n2 / s['tool_instances'] * 100:.0f}\\% & "
+                 + ", ".join(f"\\code{{{tex(t)}}}" for t, _ in sorted(s["tools_sharing_signature"].items(), key=lambda kv: -kv[1])[:4]) + " \\\\")
+write("audit", rows)
+write("purpose", prows)
+au_macros = []
+for b, _ in LABELS:
+    s = AU[b]["summary"]
+    cl = s["classes"]
+    key = {"bfcl": "bfcl", "toolsandbox": "ts", "tau2": "tau"}[b]
+    au_macros += [f"\\newcommand{{\\au{key}args}}{{{s['n_arguments']}}}", f"\\newcommand{{\\au{key}desconly}}{{{cl['desc_only']}}}",
+                  f"\\newcommand{{\\au{key}desconlypct}}{{{cl['desc_only'] / s['n_arguments'] * 100:.1f}}}",
+                  f"\\newcommand{{\\au{key}copiedpct}}{{{(cl['copied']) / s['n_arguments'] * 100:.0f}}}",
+                  f"\\newcommand{{\\au{key}desconlyparams}}{{{len(s['desc_only_parameters'])}}}",
+                  f"\\newcommand{{\\au{key}sharedpct}}{{{s['calls_on_shared_signature_tools'] / s['tool_instances'] * 100:.0f}}}",
+                  f"\\newcommand{{\\au{key}descverbatim}}{{{s['desc_constraint_and_copied']}}}"]
+write("auditmacros", au_macros)
+print("audit tables done")
+# the parameters whose description is the only statement of a constraint, per benchmark (appendix)
+rows = []
+for b, label in LABELS:
+    ps = AU[b]["summary"]["desc_only_parameters"]
+    rows.append(f"\\item[{label}:] " + ", ".join(f"\\code{{{tex(p).replace(chr(92) + '_', chr(92) + '_' + chr(92) + 'allowbreak{}').replace('.', '.' + chr(92) + 'allowbreak{}')}}}" for p in ps) + ".")
+write("auditparams", rows)

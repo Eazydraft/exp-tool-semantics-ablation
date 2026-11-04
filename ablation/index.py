@@ -1,11 +1,11 @@
 """One index over every trajectory of a run, whichever benchmark produced it.
 
-    python -m ablation.run index        ->  runs/<run-name>/index.json
+    ./run.sh index        ->  runs/<run-name>/index.json
 
-Trajectory files live at runs/<run-name>/trajectories/<model>-<condition>/<id>.json. BFCL tasks and
-ToolSandbox scenarios share that layout and differ in their verdict: BFCL's is a pass/fail from its
-evaluator, ToolSandbox's a similarity in [0, 1]. Every row carries `benchmark`, and the per-combo
-summary is nested by benchmark.
+Trajectory files live at runs/<run-name>/trajectories/<model>-<condition>/<id>.json. BFCL tasks,
+ToolSandbox scenarios and tau2 (airline) tasks share that layout and differ in their verdict: BFCL's is
+a pass/fail from its evaluator, ToolSandbox's a similarity in [0, 1], tau2's a reward in {0, 1} from its
+DB and communicate checks. Every row carries `benchmark`, and the per-combo summary is nested by benchmark.
 """
 
 import json
@@ -22,6 +22,14 @@ def row_for(path: Path, run_dir: Path) -> dict:
             "pass": doc["result"]["similarity"] == 1.0, "turn_count": doc["result"]["turn_count"],
             "error_type": doc["error"] and doc["error"]["type"],
             **doc["totals"], "user_cost_usd": doc["user_totals"]["cost_usd"],
+        })
+    elif row["benchmark"] == "tau2":
+        r = doc["result"]
+        row.update({
+            "trial": doc.get("trial", 1), "reward": r["reward"], "pass": r["reward"] == 1.0, "termination_reason": r["termination_reason"],
+            "num_messages": len(doc["tau2"].get("messages") or []),
+            "num_tool_calls": sum(len(m.get("tool_calls") or []) for m in doc["tau2"].get("messages") or []),
+            **doc["totals"], "user_cost_usd": doc["user_totals"]["cost_usd"], "judge_cost_usd": doc["judge_totals"]["cost_usd"],
         })
     else:
         turns = doc["bfcl_result"] if isinstance(doc["bfcl_result"], list) else []
@@ -43,10 +51,16 @@ def row_for(path: Path, run_dir: Path) -> dict:
 
 
 def summarise(rows: list) -> dict:
-    summary = {"bfcl": {}, "toolsandbox": {}}
+    summary = {"bfcl": {}, "toolsandbox": {}, "tau2": {}}
     for r in rows:
         key = f"{r['model']} {r['condition']}"
-        if r["benchmark"] == "toolsandbox":
+        if r["benchmark"] == "tau2":
+            s = summary["tau2"].setdefault(key, {"tasks": 0, "passed": 0, "cost_usd": 0.0, "judge_cost_usd": 0.0})
+            s["tasks"] += 1
+            s["passed"] += r["pass"]
+            s["cost_usd"] += r["cost_usd"] + r["user_cost_usd"]
+            s["judge_cost_usd"] += r["judge_cost_usd"]
+        elif r["benchmark"] == "toolsandbox":
             s = summary["toolsandbox"].setdefault(key, {"scenarios": 0, "passed": 0, "similarity": 0.0, "cost_usd": 0.0, "user_cost_usd": 0.0})
             s["scenarios"] += 1
             s["passed"] += r["pass"]
@@ -64,6 +78,8 @@ def summarise(rows: list) -> dict:
         s["pass_rate"] = s["passed"] / s["scenarios"]
     for s in summary["bfcl"].values():
         s["success_rate"] = s["passed"] / s["evaluated"] if s["evaluated"] else None
+    for s in summary["tau2"].values():
+        s["success_rate"] = s["passed"] / s["tasks"]
     return summary
 
 
@@ -75,6 +91,8 @@ def build_index(run_dir: Path):
     print(f"index: {run_dir / 'index.json'}  ({len(rows)} trajectories)")
     for name, s in summary["bfcl"].items():
         print(f"  bfcl        {name:45s} {s['passed']}/{s['evaluated']} passed  ${s['cost_usd']:.4f}")
+    for name, s in summary["tau2"].items():
+        print(f"  tau2        {name:45s} {s['passed']}/{s['tasks']} passed  agent+user ${s['cost_usd']:.2f} judges ${s['judge_cost_usd']:.2f}")
     for name, s in summary["toolsandbox"].items():
         print(f"  toolsandbox {name:45s} similarity {s['mean_similarity']:.3f}  pass {s['passed']}/{s['scenarios']}  "
               f"agent ${s['cost_usd']:.2f} user ${s['user_cost_usd']:.2f}")
