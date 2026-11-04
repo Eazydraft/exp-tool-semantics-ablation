@@ -57,7 +57,16 @@ def block(rows_per_model, models=MODELS):
 
 
 # success rates + sensitivity score
-write("success", [f"{SHORT[m]} & " + " & ".join(pct(S[m][c]) for c in CONDS) + " \\\\" for m in MODELS])
+def success_cell(m, c):
+    """D0: success; D1-D5: success with the paired change versus D0, bold and starred when significant."""
+    if c == "D0":
+        return pct(S[m][c])
+    q = P[m][c]
+    cell = f"{pct(S[m][c])} (${q['diff_pp']:+.1f}$)"
+    return rf"\textbf{{{cell}}}$^*$" if q["p_mcnemar"] < ALPHA else cell
+
+
+write("success", [f"{SHORT[m]} & " + " & ".join(success_cell(m, c) for c in CONDS) + " \\\\" for m in MODELS])
 write("robustness", [f"{SHORT[m]} & {A['robustness'][m]['D1-D4']:.3f} & {A['robustness'][m]['D1-D5']:.3f} \\\\" for m in MODELS])
 
 # paired stats
