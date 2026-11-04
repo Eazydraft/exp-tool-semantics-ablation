@@ -27,6 +27,10 @@
 \newcommand{\tool}{\tau}
 \newcommand{\toolset}{\mathcal{T}}
 \setlength{\tabcolsep}{4.5pt}
+% Let floats share pages instead of each taking one: a page may be nearly all floats, and a float page
+% is only made when it would be at least 80% full.
+\renewcommand{\topfraction}{0.9}\renewcommand{\bottomfraction}{0.9}\renewcommand{\textfraction}{0.05}
+\renewcommand{\floatpagefraction}{0.8}\setcounter{topnumber}{3}\setcounter{bottomnumber}{3}\setcounter{totalnumber}{6}
 \input{tables/auditmacros}
 \input{tables/namesmacros}
 \input{tables/tau2trialsmacros}
@@ -37,6 +41,8 @@
 \usepackage{fancyhdr}
 \setlength{\headheight}{26pt}
 \fancypagestyle{firstpage}{\fancyhf{}\lhead{\includegraphics[height=20pt]{lucio-logo}}\cfoot{\thepage}\renewcommand{\headrulewidth}{0.4pt}}
+% Appendix pages carry a running head instead of a title block.
+\fancypagestyle{appendixpages}{\fancyhf{}\lhead{\small\scshape Appendix}\rhead{\small\nouppercase{\leftmark}}\cfoot{\thepage}\renewcommand{\headrulewidth}{0.4pt}}
 % article's title block opens with a 2em gap; pull the title up to the header rule instead.
 \makeatletter
 \renewcommand{\@maketitle}{\newpage\null%
@@ -85,6 +91,8 @@ Tool use has progressed from inserted API calls~\citep{schick2023toolformer} and
 Prior work treats documentation as one object to improve, by showing it can replace demonstrations~\citep{hsieh2023tooldoc} or by rewriting it~\citep{yuan2025easytool,qu2025draft,guo2026rewrite}; we ask which information in it is used and where it has to be. \citet{clouatre2026mcp} found, for two models, no measurable loss from moving parameter detail out of the tool description into per-parameter fields, the redundancy our D1 result shows. Robustness studies perturb the query, the toolkit, the interface or the outputs and find consistent degradation~\citep{rabinovich2025robustness,zheng2026toolrobustbench,xu2026agentperturb}, and \citet{chattopadhyay2026drift} find description and schema edits less harmful than distractor tools with overlapping descriptions, matching our D1/D3 nulls; none removes a component outright while holding the benchmark fixed. On the form of the interface, \citet{sigdel2026schemafirst} find that schema conditions reduce interface misuse but not semantic misuse, the design closest to our D6, and \citet{johnson2025nlt} find that replacing JSON tool calls with natural-language tool selection raises accuracy.
 
 \section{Background}\label{sec:background}
+
+This section fixes the terms the rest of the paper uses: the interface a model is shown (Section~\ref{sec:bg-interface}), the interaction loop and how stateful benchmarks score it (Section~\ref{sec:bg-loop}), and the two decisions a model makes at every step and the information each needs (Section~\ref{sec:bg-decisions}).
 
 \subsection{The function-calling interface}\label{sec:bg-interface}
 
@@ -261,26 +269,26 @@ This study used the BFCL harness, backends and evaluator~\citep{patil2025bfcl,go
 
 \clearpage
 \appendix
-\begin{center}{\LARGE\bfseries APPENDIX}\end{center}
-\vspace{0.5em}
+\pagestyle{appendixpages}
+\renewcommand{\sectionmark}[1]{\markboth{\thesection\quad #1}{}}
 
 \section{Additional results on BFCL}\label{app:tables}
 
-\begin{figure}[h]
+\begin{figure}[htbp]
 \centering
 \includegraphics[width=\linewidth]{fig1_success}
 \caption{Task success rate by condition for the seven configurations (lighter tint: the non-default reasoning setting). Each bar is 200 tasks; bars within a configuration are paired.}
 \label{fig:success}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[htbp]
 \centering
 \includegraphics[width=0.62\linewidth]{fig2_heatmap}
 \caption{Change in task success relative to D0, in percentage points. Starred, bold cells are significant at $p<0.0014$ (exact McNemar test, Table~\ref{tab:paired}).}
 \label{fig:heatmap}
 \end{figure}
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\footnotesize
 \caption{Each ablation versus D0 on the same 200 tasks: the two discordant cells, the paired difference $\Delta$ in percentage points with its 95\% task-level bootstrap interval (2\,000 resamples), the exact two-sided McNemar $p$, and the Bonferroni verdict for 35 comparisons ($p<0.0014$). Each configuration's D1 to D5 share a launch batch with its D0.}
 \label{tab:paired}
@@ -295,7 +303,7 @@ Model & Cond. & both pass & D0 only & abl.\ only & both fail & $\Delta$\pp & 95\
 \end{tabular}}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\footnotesize
 \caption{Run-to-run noise: a repeated D0 run of Claude Haiku~5.5 against the first, and each condition against both D0 runs. Same 200 tasks, same settings, eight hours apart; the second run is the only repeated D0 run in the study, and no comparison with it shares a batch.}
 \label{tab:rerun}
@@ -308,7 +316,7 @@ Comparison & both pass & first only & second only & both fail & $\Delta$\pp & 95
 \end{tabular}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\small
 \caption{Reasoning tokens per task by condition, mean over the 200 tasks.}
 \label{tab:tokens}
@@ -321,7 +329,7 @@ Model & D0 & D1 & D2 & D3 & D4 & D5 \\
 \end{tabular}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\small
 \caption{Documentation sensitivity score $S_m=\frac{1}{N}\sum_i (P_{m,0}-P_{m,i})/P_{m,0}$, the mean relative drop from D0 over D1--D4 and over D1--D5. Because it averages a large D2 loss with near-zero changes elsewhere, it understates the D2 effect and is reported for completeness only.}
 \label{tab:robustness}
@@ -343,14 +351,14 @@ Across the 1\,515 to 3\,927 tool calls each default configuration made in D3 and
 
 \paragraph{Haiku's D4 gain.} Haiku with reasoning passes 29 tasks only in D4 against 7 only in D0 ($p=0.0003$). The gain is absent with reasoning off ($-0.5$\pp), shrinks to $+5.0$\pp\ ($p=0.13$) against the repeated D0 run, and is diffuse: the 29 tasks span 16 backend combinations, 19 involve the six parameters of Table~\ref{tab:wrongparams} and 10 do not, and their D0 failures begin with a wrong argument in 12 cases, a never-called tool in 7 and no identifiable divergence in 10. We offer no mechanism for it.
 
-\begin{figure}[h]
+\begin{figure}[htbp]
 \centering
 \includegraphics[width=0.8\linewidth]{fig3_selection_vs_args}
 \caption{(a) Tool-selection accuracy. (b) Argument accuracy given the right tool. (c) First call of the task: share of tasks whose first call used a ground-truth tool (light) and used it with the ground-truth arguments (solid), for D0, D2 and D5. Numbers in Table~\ref{tab:selection}.}
 \label{fig:selection}
 \end{figure}
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\small
 \caption{Tool selection versus argument construction (\%). ``Sel.'' is tool-selection accuracy, ``Arg.'' argument accuracy given the right tool, ``1st tool'' the share of tasks whose first call used a ground-truth tool, ``1st exact'' the share whose first call matched a ground-truth call exactly.}
 \label{tab:selection}
@@ -366,14 +374,14 @@ Model & Sel. & Arg. & 1st tool & 1st exact & Sel. & Arg. & 1st tool & 1st exact 
 \end{tabular}}
 \end{table}
 
-\begin{figure}[h]
+\begin{figure}[htbp]
 \centering
 \includegraphics[width=\linewidth]{fig4_divergence}
 \caption{Earliest divergence in failed tasks: the first ground-truth call without an exact match, classified by whether the tool was called with wrong arguments (construction failure) or never called (selection failure); ``all calls matched'' means every ground-truth call was matched but the task still failed, usually through extra state-changing calls or a call made in a later turn than required.}
 \label{fig:divergence}
 \end{figure}
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\small
 \caption{Earliest divergence among failed BFCL tasks (counts). ``W.A.'': wrong arguments; ``N.C.'': tool never called; ``None'': every ground-truth call matched but the task failed.}
 \label{tab:divergence}
@@ -388,7 +396,7 @@ Model & W.A. & N.C. & None & W.A. & N.C. & None & W.A. & N.C. & None \\
 \end{tabular}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\footnotesize
 \caption{Parameters whose values go wrong when their description is removed. For every ground-truth call matched by the right tool but wrong arguments, the differing parameters were recorded. Counts are pooled over the seven configurations (1\,400 task runs per condition), sorted by D2$-$D0; D2 counts per configuration on the right ($-$: reasoning off, $+$: on). The second column quotes the description D2 removed.}
 \label{tab:wrongparams}
@@ -405,7 +413,7 @@ Tool.parameter & Removed description & D2 & D0 & Luna & Luna$^{-}$ & Haiku & Hai
 \end{threeparttable}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\footnotesize
 \caption{Success (\%) on the 91 tasks whose ground truth uses at least one of the six parameters of Table~\ref{tab:wrongparams} (``six'') and on the other 109 (``other''). The first column counts the tasks that pass in D0 and fail in D2 and, of those, how many are six-parameter tasks. D6 to D8 exist for each model's default reasoning setting.}
 \label{tab:sixparam}
@@ -421,14 +429,14 @@ Model & six / all & six & other & six & other & six & other & six & other & six 
 \end{tabular}}
 \end{table}
 
-\begin{figure}[h]
+\begin{figure}[htbp]
 \centering
 \includegraphics[width=0.8\linewidth]{fig10_followup}
 \caption{D6 and D7, each model in its default reasoning setting. Both blank every parameter description, as D2 does. D6 moves the prose-only constraints into the schema; D7 keeps only the six descriptions of Table~\ref{tab:wrongparams}. Paired tests in Table~\ref{tab:followup}.}
 \label{fig:followup}
 \end{figure}
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\footnotesize
 \caption{D6 and D7 against D0 and against D2 on the same 200 tasks (each model in its default reasoning setting): success of the base condition and of D6 or D7, the discordant cells, the paired difference with its 95\% bootstrap interval, and the exact McNemar $p$. D6 and D7 were launched three hours after D0 to D5 and do not share a batch with them.}
 \label{tab:followup}
@@ -443,7 +451,7 @@ Model & Comparison & base \% & D6/D7 \% & base only & D6/D7 only & $\Delta$\pp &
 \end{tabular}}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\footnotesize
 \caption{D8 (generic parameter names and blank parameter descriptions together, tool names and descriptions kept) against D0, D2 and D4 on the same 200 tasks (each model in its default reasoning setting): success of the base condition and of D8, the discordant cells, the paired difference with its 95\% bootstrap interval, its equivalence bound and the exact McNemar $p$. D8 was launched two days after D0 to D5 and shares a batch with none of them.}
 \label{tab:names}
@@ -461,7 +469,7 @@ Model & Comparison & base \% & D8 \% & base only & D8 only & $\Delta$\pp & 95\% 
 \FloatBarrier
 \section{The information audit in detail}\label{app:audit}
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\footnotesize
 \caption{How many carriers state each tool's purpose. A tool instance is one tool in one task's ground truth; every tool has a name and a description, and its signature counts as a third carrier when no tool offered alongside it in that task has the same parameter names and types. The last column lists the tools that most often share a signature.}
 \label{tab:purpose}
@@ -484,21 +492,21 @@ On BFCL, a boolean is the only structural constraint any ground-truth parameter 
 \FloatBarrier
 \section{Tool-use behaviour on BFCL}\label{app:behaviour}
 
-\begin{figure}[h]
+\begin{figure}[htbp]
 \centering
 \includegraphics[width=\linewidth]{fig5_calls}
 \caption{Composition of tool calls per task (mean over all 200 tasks, failures included): on-path calls, off-path calls that executed without error, and calls that returned an execution error.}
 \label{fig:calls}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[htbp]
 \centering
 \includegraphics[width=\linewidth]{fig7_ecdf}
 \caption{Empirical cumulative distribution of tool calls per task for D0, D2 and D5, all 200 tasks per curve. D2 shifts the distribution only slightly; D5 pulls it in opposite directions by model, Haiku rising steeply at 0 to 3 calls and Qwen3 stretching to the step cap.}
 \label{fig:ecdf}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[htbp]
 \centering
 \begin{minipage}[t]{0.5\linewidth}\centering
 \includegraphics[width=\linewidth]{fig9_recovery}
@@ -510,14 +518,14 @@ On BFCL, a boolean is the only structural constraint any ground-truth parameter 
 \label{fig:recovery}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[htbp]
 \centering
 \includegraphics[width=\linewidth]{fig6_failures}
 \caption{BFCL's terminal error per failed task, by condition. These are outcomes, not causes: a wrong final state can come from a wrong tool, a wrong argument or a missed step.}
 \label{fig:failures}
 \end{figure}
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\footnotesize
 \caption{Tool-use behaviour, mean per task over all 200 tasks (failures included). A repeated call has identical tool and arguments to an earlier call in the same task; ``calls/pass'' is the mean over passing tasks only.}
 \label{tab:behaviour}
@@ -531,7 +539,7 @@ Model & Cond. & calls & steps & on-path & off-path & failed & repeated & distinc
 \end{tabular}}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\small
 \caption{Recovery after an execution error: share of tasks containing at least one failed call that still passed, with the number of such tasks in parentheses.}
 \label{tab:recovery}
@@ -544,7 +552,7 @@ Model & D0 & D1 & D2 & D3 & D4 & D5 \\
 \end{tabular}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\footnotesize
 \caption{Terminal error assigned by BFCL per failed task. ``State'': wrong final state; ``Output'': required output missing; ``Empty'': turn ended without a tool call; ``Limit'': 20-step limit reached; ``Provider'': inference error.}
 \label{tab:failures}
@@ -564,14 +572,14 @@ Model & Cond. & State & Output & Empty & Limit & Provider & Total failed \\
 
 \paragraph{Setup.} ToolSandbox's 1\,032 scenarios are 129 base scenarios in eight variants that vary distraction tools and apply the benchmark's own augmentations; we take the 91 base scenarios that need none of the five tools backed by a paid web API, in the variant that offers every tool the scenario does not withhold (24 to 28 tools per scenario; 28 in 73 of the 91), so that tool selection is part of every task as on BFCL. The user simulator is reached through OpenRouter with the same seed in every condition. ToolSandbox executes each call as a Python statement named after the provider's tool-call id; two providers return ids that are not valid identifiers, which the unmodified harness turns into a syntax error on every call, so the harness rewrites such ids before execution. When a model emits arguments that are not valid JSON, ToolSandbox aborts the scenario; like its own runner we score it 0 (27 of 2\,184 plays, all Qwen3's). We report the mean similarity and the share of scenarios at similarity 1.0, and test paired differences with a sign-flip permutation test on the similarity and McNemar's test on the binary outcome.
 
-\begin{figure}[h]
+\begin{figure}[htbp]
 \centering
 \includegraphics[width=\linewidth]{fig11_toolsandbox}
 \caption{ToolSandbox mean similarity by condition (91 scenarios per bar). Removing any single component leaves every model within a few points of its baseline; removing all four costs 39 to 49 points.}
 \label{fig:toolsandbox}
 \end{figure}
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\footnotesize
 \caption{ToolSandbox results. Left: mean similarity ($\times 100$) over the 91 scenarios; right: share solved exactly (similarity 1.0).}
 \label{tab:toolsandbox}
@@ -595,7 +603,7 @@ Tool selection survives every single-component condition. Taking as reference ea
 
 Two features of ToolSandbox limit what can be read from it. Its 18 \emph{insufficient-information} scenarios, where the correct behaviour is to ask rather than act, score low for every model in every condition (24 to 74 at D0) and move by less than a point under D2. And the user is an LLM with the same seed in every condition but not deterministic, so each paired difference includes user noise; the sign-flip tests account for it but are not a substitute for a repeated run, which we did not make.
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\footnotesize
 \caption{ToolSandbox: every ablation against D0, paired over the 91 scenarios. Similarity columns are means ($\times 100$) with the bootstrap 95\% CI of the paired difference and a sign-flip permutation $p$ (10\,000 permutations); exact-match columns give the share at similarity 1.0, the discordant cells (only in D0 / only in the ablation) and the exact McNemar $p$.}
 \label{tab:toolsandboxpaired}
@@ -611,7 +619,7 @@ Model & Cond. & D0 & abl. & $\Delta$ & 95\% CI & $p$ & D0 \% & abl. \% & D0/abl.
 \end{tabular}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\footnotesize
 \caption{ToolSandbox mean similarity ($\times 100$) by scenario category, D0 against D2. Categories are ToolSandbox's own and overlap ($n$ is the number of the 91 scenarios in each).}
 \label{tab:toolsandboxcats}
@@ -627,7 +635,7 @@ Category & $n$ & D0 & D2 & D0 & D2 & D0 & D2 & D0 & D2 \\
 \end{tabular}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\small
 \caption{Earliest divergence among ToolSandbox plays below similarity 1 (counts). The earliest unmet milestone that needs a tool: that tool was called (``W.A.'') or never called (``N.C.''); ``tools ok'': every tool milestone met and only a reply milestone unmet; ``abort'': ToolSandbox aborted the play on malformed arguments.}
 \label{tab:toolsandboxdivergence}
@@ -648,7 +656,7 @@ Model & W.A. & N.C. & tools ok & abort & W.A. & N.C. & tools ok & abort & W.A. &
 
 \paragraph{Setup.} $\tau^2$-bench is used unmodified from its repository at version 2.0 (commit \code{19f13ea}), in text mode on the airline domain, with the benchmark's default step and error limits and one trial per task. The agent is the benchmark's own LLM agent with the tool schemas passed through the condition on the way out and the model's calls translated back on the way in, so the environment and the evaluator see original names. The user is simulated by GPT-4.1 and the communicate-information checks, which six of the 50 tasks carry, are judged by GPT-5.5 as the benchmark pins them; both are reached through OpenRouter like the agent, at temperature 0. The reward basis of the airline domain is the database state and the communicate checks, so the natural-language-assertion judge never runs. The four models ran in their default reasoning setting under D0 to D5 in one batch on 4 November 2026; no repeated run was made.
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\small
 \caption{$\tau^2$-bench airline task success (\%) per condition, 50 tasks per cell, with the paired change versus D0. Bold, starred cells are significant at the Bonferroni threshold for the 20 $\tau^2$ comparisons, $p<0.0025$ (exact McNemar test; discordant cells, intervals, equivalence bounds and $p$-values in Table~\ref{tab:tau2paired}).}
 \label{tab:tau2}
@@ -662,7 +670,7 @@ Model & D0 & D1 & D2 & D3 & D4 & D5 \\
 \end{tabular}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\footnotesize
 \caption{$\tau^2$-bench airline: each ablation versus D0 on the same 50 tasks: the discordant cells, the paired difference with its 95\% bootstrap interval, the equivalence bound (the largest change in either direction the interval allows), the exact McNemar $p$ and the Bonferroni verdict for 20 comparisons ($p<0.0025$).}
 \label{tab:tau2paired}
@@ -677,7 +685,7 @@ Model & Cond. & both pass & D0 only & abl.\ only & both fail & $\Delta$\pp & 95\
 \end{tabular}}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\footnotesize
 \caption{$\tau^2$-bench airline: D0 and D2 run for several trials (trial 1 is the run of Table~\ref{tab:tau2}; the later trials were launched two days after it, each with its own seed). Success is averaged over trials; $\Delta$ is the mean over tasks of the per-task difference in trial-averaged success, with its bootstrap 95\% interval, equivalence bound and a sign-flip permutation $p$ (10\,000 permutations). The last column is the range over pairs of D0 trials of the absolute difference in success, the benchmark's own trial-to-trial variation.}
 \label{tab:tau2trials}
@@ -691,7 +699,7 @@ Model & trials & D0 \% & D2 \% & $\Delta$\pp & 95\% CI & bound & $p$ & D0 trial 
 \end{tabular}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\footnotesize
 \caption{$\tau^2$-bench airline: where the reward is lost. Failed tasks, those failing the database check, those failing a communicate check, both; simulations ending at the step limit or the error limit; mean tool calls per task. Every other simulation ended with the agent or the user stopping.}
 \label{tab:tau2breakdown}
@@ -704,7 +712,7 @@ Model & Cond. & failed & DB fail & comm.\ fail & both & step limit & error limit
 \end{tabular}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\small
 \caption{Earliest divergence among failed $\tau^2$ tasks (counts). ``W.A.'': a ground-truth action's tool called with other arguments; ``N.C.'': never called; ``None'': every action matched but the task failed; ``write'': failed tasks containing a state-changing call (booking, cancellation, update or certificate) that the ground truth does not.}
 \label{tab:tau2divergence}
@@ -725,7 +733,7 @@ Model & W.A. & N.C. & None & write & W.A. & N.C. & None & write & W.A. & N.C. & 
 \FloatBarrier
 \section{Case studies}\label{app:cases}
 
-\begin{figure}[h]
+\begin{figure}[htbp]
 \centering
 \includegraphics[width=0.7\linewidth]{fig0_trajectory}
 \caption{One task under three conditions (Claude Haiku~5.5, BFCL task 78). With the original schema (D0) the hashtag goes in the \code{tags} list. Without parameter descriptions (D2) the first turn is identical, but the hashtag is folded into the tweet body and the final state no longer matches. With names and descriptions removed (D5) the model declines to guess which tool posts.}
