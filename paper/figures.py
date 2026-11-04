@@ -1,6 +1,9 @@
-"""Build the paper's figures from runs/main/analysis.json.
+"""Build the paper's figures from runs/main/analysis.json and index.json.
 
     uv run --with matplotlib python paper/figures.py      ->  paper/figures/*.pdf
+
+Seven model configurations are shown alike: four models, three of them in both reasoning
+settings. D6 and D7 exist for the default setting of each model only.
 """
 import json
 from pathlib import Path
@@ -14,17 +17,28 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "paper" / "figures"
 OUT.mkdir(exist_ok=True)
 A = json.load(open(ROOT / "runs" / "main" / "analysis.json"))
-S, B, P = A["success"], A["behaviour"], A["paired"]
+INDEX = json.load(open(ROOT / "runs" / "main" / "index.json"))
 
-MODELS = ["openai/gpt-6-luna", "anthropic/claude-haiku-5.5", "qwen/qwen3-30b-a3b-instruct-2507", "google/gemma-4-26b-a4b-it"]
-SHORT = {"openai/gpt-6-luna": "GPT-6 Luna", "anthropic/claude-haiku-5.5": "Claude Haiku 5.5",
-         "qwen/qwen3-30b-a3b-instruct-2507": "Qwen3-30B-A3B", "google/gemma-4-26b-a4b-it": "Gemma 4 26B-A4B"}
+# (model id, has D6/D7, legend label, axis label, colour). One hue per model; the lighter tint is the
+# non-default reasoning setting of the same model.
+CONFIGS = [("openai/gpt-6-luna", True, "GPT-6 Luna, reasoning", "Luna\nreasoning", "#2a78d6"),
+           ("openai/gpt-6-luna-nothink", False, "GPT-6 Luna, no reasoning", "Luna\nno reasoning", "#a3c4ee"),
+           ("anthropic/claude-haiku-5.5", True, "Claude Haiku 5.5, reasoning", "Haiku\nreasoning", "#eb6834"),
+           ("anthropic/claude-haiku-5.5-nothink", False, "Claude Haiku 5.5, no reasoning", "Haiku\nno reasoning", "#f7bda4"),
+           ("qwen/qwen3-30b-a3b-instruct-2507", True, "Qwen3-30B-A3B, no reasoning", "Qwen3\nno reasoning", "#1baf7a"),
+           ("google/gemma-4-26b-a4b-it", True, "Gemma 4 26B-A4B, no reasoning", "Gemma 4\nno reasoning", "#eda100"),
+           ("google/gemma-4-26b-a4b-it-think", False, "Gemma 4 26B-A4B, reasoning", "Gemma 4\nreasoning", "#f7dc96")]
+MODELS = [c[0] for c in CONFIGS]
+SHORT = {c[0]: c[2] for c in CONFIGS}
+AXLAB = {c[0]: c[3] for c in CONFIGS}
+MCOL = {c[0]: c[4] for c in CONFIGS}
+DEFAULTS = [c[0] for c in CONFIGS if c[1]]
+S, B, P, PP, PER_TASK = A["success"], A["behaviour"], A["paired"], A["pp_change"], A["per_task"]
 CONDS = ["D0", "D1", "D2", "D3", "D4", "D5"]
+ALPHA = 0.05 / (5 * len(MODELS))
 CLAB = {"D0": "D0\noriginal", "D1": "D1\nno tool\ndesc.", "D2": "D2\nno param.\ndesc.", "D3": "D3\ngeneric\ntool names",
         "D4": "D4\ngeneric\nparam. names", "D5": "D5\nall\nremoved"}
-# Validated categorical palette, fixed order (one hue per model), ordinal blues for D0/D2/D5.
-MCOL = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100"]
-CCOL = {"D0": "#1c5cab", "D2": "#3987e5", "#D5": "#86b6ef", "D5": "#86b6ef"}
+CCOL = {"D0": "#1c5cab", "D2": "#3987e5", "D5": "#86b6ef"}
 ONPATH, OFFPATH, FAILED = "#008300", "#6250d6", "#e34948"
 ERR = [("multi_turn:instance_state_mismatch", "wrong final state", "#e87ba4"),
        ("multi_turn:execution_response_mismatch", "required output missing", "#6250d6"),
@@ -56,28 +70,38 @@ def save(fig, name):
     plt.close(fig)
 
 
-# Figure 1: success rate by condition, grouped by model -----------------------------------
-fig, ax = plt.subplots(figsize=(6.6, 2.7))
-x, w = np.arange(len(CONDS)), 0.19
+def panels(n, ncols=4, height=2.0):
+    """A grid of n small panels, four per row, unused axes hidden."""
+    nrows = -(-n // ncols)
+    fig, axes = plt.subplots(nrows, ncols, figsize=(6.8, height * nrows), sharey=True, squeeze=False)
+    flat = axes.ravel()
+    for ax in flat[n:]:
+        ax.set_visible(False)
+    return fig, flat[:n]
+
+
+# Figure 1: success rate by condition, grouped by model configuration ----------------------
+fig, ax = plt.subplots(figsize=(6.8, 2.9))
+x, w = np.arange(len(CONDS)), 0.125
 for i, m in enumerate(MODELS):
     vals = [S[m][c] * 100 for c in CONDS]
-    ax.bar(x + (i - 1.5) * w, vals, w * 0.92, color=MCOL[i], label=SHORT[m], linewidth=0)
+    ax.bar(x + (i - 3) * w, vals, w * 0.9, color=MCOL[m], label=SHORT[m], linewidth=0)
 ax.set_xticks(x, [CLAB[c] for c in CONDS])
 ax.set_ylabel("task success (200 tasks)")
 tidy(ax, 100, pct=True)
-ax.legend(ncol=4, loc="upper center", bbox_to_anchor=(0.5, 1.14))
+ax.legend(ncol=4, loc="upper center", bbox_to_anchor=(0.5, 1.22), fontsize=6.8, handlelength=1.0, columnspacing=1.0)
 save(fig, "fig1_success")
 
 # Figure 2: paired change vs D0, heatmap (diverging blue / grey / red) ----------------------
-fig, ax = plt.subplots(figsize=(4.0, 1.9))
+fig, ax = plt.subplots(figsize=(4.4, 2.9))
 abl = CONDS[1:]
-M = np.array([[A["pp_change"][m][c] for c in abl] for m in MODELS])
+M = np.array([[PP[m][c] for c in abl] for m in MODELS])
 cmap = matplotlib.colors.LinearSegmentedColormap.from_list("div", ["#d03b3b", "#f0efec", "#2a78d6"])
 im = ax.imshow(M, cmap=cmap, vmin=-40, vmax=40, aspect="auto")
 for i in range(M.shape[0]):
     for j in range(M.shape[1]):
         v = M[i, j]
-        sig = P[MODELS[i]][abl[j]]["p_mcnemar"] < 0.0025
+        sig = P[MODELS[i]][abl[j]]["p_mcnemar"] < ALPHA
         ax.text(j, i, f"{v:+.1f}" + ("*" if sig else ""), ha="center", va="center", fontsize=7.5,
                 color="white" if abs(v) > 20 else "#0b0b0b", fontweight="bold" if sig else "normal")
 ax.set_xticks(range(len(abl)), abl)
@@ -92,65 +116,68 @@ cb.outline.set_visible(False)
 save(fig, "fig2_heatmap")
 
 # Figure 3: tool selection vs argument construction -----------------------------------------
-fig, axes = plt.subplots(1, 3, figsize=(6.8, 2.4), gridspec_kw={"width_ratios": [1, 1, 1.15], "wspace": 0.28})
+fig, axes = plt.subplots(1, 3, figsize=(6.8, 2.6), gridspec_kw={"width_ratios": [1, 1, 1.35], "wspace": 0.28})
 for ax, key, title in [(axes[0], "tool_selection_acc", "(a) tool selection"),
                        (axes[1], "argument_acc_given_tool", "(b) arguments | right tool")]:
-    for i, m in enumerate(MODELS):
-        ax.plot(range(6), [B[m][c][key] * 100 for c in CONDS], marker="o", ms=3.5, lw=1.4, color=MCOL[i], label=SHORT[m])
+    for m in MODELS:
+        ax.plot(range(6), [B[m][c][key] * 100 for c in CONDS], marker="o", ms=3, lw=1.3, color=MCOL[m], label=SHORT[m],
+                ls="-" if m in DEFAULTS else "--")
     ax.set_xticks(range(6), CONDS)
     ax.set_title(title, loc="left")
     tidy(ax, 100, pct=True)
 ax = axes[2]
-x, w = np.arange(len(MODELS)), 0.2
-for k, (c, alpha) in enumerate([("D0", 1.0), ("D2", 1.0), ("D5", 1.0)]):
+x, w = np.arange(len(MODELS)), 0.27
+for k, c in enumerate(["D0", "D2", "D5"]):
     tool = [B[m][c]["first_tool_ok"] * 100 for m in MODELS]
     exact = [B[m][c]["first_call_exact"] * 100 for m in MODELS]
     ax.bar(x + (k - 1) * w, tool, w * 0.9, color=CCOL[c], alpha=0.35, linewidth=0)
-    ax.bar(x + (k - 1) * w, exact, w * 0.9, color=CCOL[c], linewidth=0, label=f"{c}")
-ax.set_xticks(x, ["Luna", "Haiku", "Qwen3", "Gemma"])
+    ax.bar(x + (k - 1) * w, exact, w * 0.9, color=CCOL[c], linewidth=0, label=c)
+ax.set_xticks(x, [AXLAB[m] for m in MODELS], fontsize=5.6)
 ax.set_title("(c) first call of the task", loc="left")
 tidy(ax, 100, pct=True)
-ax.legend(ncol=3, loc="upper center", bbox_to_anchor=(0.5, -0.16), handlelength=1.0, columnspacing=0.8, title="light = right tool, solid = right tool and arguments", title_fontsize=7)
-axes[0].legend(loc="lower left", handlelength=1.2)
+ax.legend(ncol=3, loc="upper center", bbox_to_anchor=(0.5, -0.22), handlelength=1.0, columnspacing=0.8,
+          title="light = right tool, solid = right tool and arguments", title_fontsize=7)
+axes[0].legend(loc="lower left", handlelength=1.4, fontsize=5.8)
 save(fig, "fig3_selection_vs_args")
 
 # Figure 4: earliest divergence in failed tasks, D0 / D2 / D5 -------------------------------
-fig, ax = plt.subplots(figsize=(6.6, 2.2))
+fig, ax = plt.subplots(figsize=(6.8, 2.5))
 labels, wa, tnc, none = [], [], [], []
 for m in MODELS:
     for c in ["D0", "D2", "D5"]:
         d = B[m][c]["divergence_kinds"]
-        labels.append(f"{c}")
+        labels.append(c)
         wa.append(d.get("wrong_arguments", 0)); tnc.append(d.get("tool_not_called", 0)); none.append(d.get("none", 0))
 x = np.array([i + (i // 3) * 0.8 for i in range(len(labels))])
 ax.bar(x, wa, 0.8, color="#e87ba4", label="first unmatched call: wrong arguments", linewidth=0)
 ax.bar(x, tnc, 0.8, bottom=wa, color="#6250d6", label="first unmatched call: tool never called", linewidth=0)
 ax.bar(x, none, 0.8, bottom=np.array(wa) + np.array(tnc), color="#898781", label="all calls matched, still failed", linewidth=0)
-ax.set_xticks(x, labels)
+ax.set_xticks(x, labels, fontsize=6)
 for i, m in enumerate(MODELS):
-    ax.text(x[i * 3 + 1], 205, SHORT[m], ha="center", fontsize=7.5, color=TXT)
+    ax.text(x[i * 3 + 1], 205, AXLAB[m], ha="center", va="bottom", fontsize=6, color=TXT)
 ax.set_ylabel("failed tasks (of 200)")
-tidy(ax, 230)
+tidy(ax, 250)
 ax.set_yticks([0, 50, 100, 150, 200])
-ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.18), ncol=3)
+ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.14), ncol=3)
 save(fig, "fig4_divergence")
 
 # Figure 5: composition of calls per task (on-path / off-path / failed) ----------------------
-fig, axes = plt.subplots(1, 4, figsize=(6.8, 2.0), sharey=True)
-for ax, m, col in zip(axes, MODELS, MCOL):
+fig, axes = panels(len(MODELS))
+for ax, m in zip(axes, MODELS):
     on = [B[m][c]["n_on_path"] for c in CONDS]; off = [B[m][c]["n_off_path"] for c in CONDS]; er = [B[m][c]["n_exec_errors"] for c in CONDS]
     ax.bar(range(6), on, 0.7, color=ONPATH, linewidth=0, label="on-path")
     ax.bar(range(6), off, 0.7, bottom=on, color=OFFPATH, linewidth=0, label="off-path")
     ax.bar(range(6), er, 0.7, bottom=np.array(on) + np.array(off), color=FAILED, linewidth=0, label="execution error")
     ax.set_xticks(range(6), CONDS)
-    ax.set_title(SHORT[m], loc="left")
+    ax.set_title(SHORT[m], loc="left", fontsize=7.5)
     tidy(ax, 21)
-axes[0].set_ylabel("tool calls per task")
+axes[0].set_ylabel("tool calls per task"); axes[4].set_ylabel("tool calls per task")
 axes[0].legend(loc="upper left", handlelength=1.0)
+fig.subplots_adjust(hspace=0.45)
 save(fig, "fig5_calls")
 
 # Figure 6: failure outcomes per condition --------------------------------------------------
-fig, axes = plt.subplots(1, 4, figsize=(6.8, 2.0), sharey=True)
+fig, axes = panels(len(MODELS))
 for ax, m in zip(axes, MODELS):
     bottom = np.zeros(6)
     for key, label, col in ERR:
@@ -158,32 +185,35 @@ for ax, m in zip(axes, MODELS):
         ax.bar(range(6), vals, 0.7, bottom=bottom, color=col, linewidth=0, label=label)
         bottom += vals
     ax.set_xticks(range(6), CONDS)
-    ax.set_title(SHORT[m], loc="left")
+    ax.set_title(SHORT[m], loc="left", fontsize=7.5)
     tidy(ax, 200)
-axes[0].set_ylabel("failed tasks (of 200)")
+axes[0].set_ylabel("failed tasks (of 200)"); axes[4].set_ylabel("failed tasks (of 200)")
 h, l = axes[0].get_legend_handles_labels()
-fig.legend(h, l, loc="lower center", ncol=5, bbox_to_anchor=(0.5, -0.1))
+fig.legend(h, l, loc="lower center", ncol=5, bbox_to_anchor=(0.5, -0.03))
+fig.subplots_adjust(hspace=0.45)
 save(fig, "fig6_failures")
 
 # Figure 7: ECDF of calls per task, D0 vs D2 vs D5 --------------------------------------------
-fig, axes = plt.subplots(1, 4, figsize=(6.8, 1.9), sharey=True)
+fig, axes = panels(len(MODELS), height=1.9)
 for ax, m in zip(axes, MODELS):
     for c in ["D0", "D2", "D5"]:
-        xs = np.sort([t["calls"] for t in A["per_task"][m][c]])
+        xs = np.sort([t["calls"] for t in PER_TASK[m][c]])
         ys = np.arange(1, len(xs) + 1) / len(xs) * 100
         ax.step(np.concatenate([[0], xs]), np.concatenate([[0], ys]), where="post", color=CCOL[c], lw=1.4, label=c)
-    ax.set_xlim(0, 40); ax.set_title(SHORT[m], loc="left")
+    ax.set_xlim(0, 40); ax.set_title(SHORT[m], loc="left", fontsize=7.5)
     ax.set_xlabel("tool calls per task")
     tidy(ax, 100, pct=True)
-axes[0].set_ylabel("share of tasks")
+axes[0].set_ylabel("share of tasks"); axes[4].set_ylabel("share of tasks")
 axes[0].legend(loc="lower right", handlelength=1.2)
+fig.subplots_adjust(hspace=0.6)
 save(fig, "fig7_ecdf")
 
 # Figure 8: efficiency frontier -----------------------------------------------------------------
-fig, ax = plt.subplots(figsize=(3.6, 2.7))
-for i, m in enumerate(MODELS):
+fig, ax = plt.subplots(figsize=(3.8, 2.9))
+for m in MODELS:
     xs = [B[m][c]["n_calls"] for c in CONDS]; ys = [S[m][c] * 100 for c in CONDS]
-    ax.scatter(xs, ys, s=22, color=MCOL[i], label=SHORT[m], edgecolor="white", linewidth=0.6, zorder=3)
+    ax.scatter(xs, ys, s=22, color=MCOL[m], label=SHORT[m], edgecolor="white", linewidth=0.6, zorder=3,
+               marker="o" if m in DEFAULTS else "D")
     for c, xx, yy in zip(CONDS, xs, ys):
         if c in ("D2", "D5"):
             ax.annotate(c, (xx, yy), xytext=(4, 2), textcoords="offset points", fontsize=6.5, color=TXT)
@@ -191,19 +221,18 @@ ax.set_xlabel("mean tool calls per task"); ax.set_ylabel("task success")
 ax.set_xlim(0, 22)
 tidy(ax, 100, pct=True)
 ax.xaxis.grid(True, color=GRID, lw=0.6)
-ax.legend(loc="upper right", handlelength=1.0)
+ax.legend(loc="upper right", handlelength=1.0, fontsize=5.8)
 save(fig, "fig8_frontier")
 
 # Figure 9: recovery after an execution error (D2 only has usable denominators) ------------------
-fig, ax = plt.subplots(figsize=(3.4, 2.0))
+fig, ax = plt.subplots(figsize=(3.8, 2.2))
 x = np.arange(len(MODELS))
-for k, c in enumerate(["D2"]):
-    rates = [(B[m][c]["recovery_rate"] or 0) * 100 for m in MODELS]
-    ns = [round(B[m][c]["tasks_with_exec_error"] * A["n_tasks"]) for m in MODELS]
-    bars = ax.bar(x, rates, 0.5, color=CCOL[c], linewidth=0, label=c)
-    for b, n in zip(bars, ns):
-        ax.text(b.get_x() + b.get_width() / 2, b.get_height() + 1.5, f"n={n}", ha="center", fontsize=6.5, color=TXT)
-ax.set_xticks(x, ["Luna", "Haiku", "Qwen3", "Gemma 4"])
+rates = [(B[m]["D2"]["recovery_rate"] or 0) * 100 for m in MODELS]
+ns = [round(B[m]["D2"]["tasks_with_exec_error"] * A["n_tasks"]) for m in MODELS]
+bars = ax.bar(x, rates, 0.6, color=[MCOL[m] for m in MODELS], linewidth=0)
+for b, n in zip(bars, ns):
+    ax.text(b.get_x() + b.get_width() / 2, b.get_height() + 1.5, f"n={n}", ha="center", fontsize=6.5, color=TXT)
+ax.set_xticks(x, [AXLAB[m] for m in MODELS], fontsize=5.6)
 ax.set_ylabel("tasks passed after\nan execution error (D2)")
 tidy(ax, 40, pct=True)
 save(fig, "fig9_recovery")
@@ -272,59 +301,35 @@ fig.savefig(OUT / "fig0_trajectory.pdf")
 plt.close(fig)
 print("wrote fig0_trajectory.pdf")
 
-# Figure 10: follow-up conditions, if present in the analysis ---------------------------------------------
+# Figure 10: D6 and D7 (default reasoning setting of each model) ---------------------------------------------
 if "D6" in A["conditions"] and "D7" in A["conditions"]:
     fig, ax = plt.subplots(figsize=(6.6, 2.5))
     conds = ["D0", "D2", "D6", "D7"]
     lab = {"D0": "D0\noriginal", "D2": "D2\nno param. desc.", "D6": "D6\nno param. desc.,\nconstraints in schema", "D7": "D7\nno param. desc.,\nexcept six params"}
     x, w = np.arange(len(conds)), 0.19
-    for i, m in enumerate(MODELS):
+    for i, m in enumerate(DEFAULTS):
         vals = [S[m][c] * 100 for c in conds]
-        bars = ax.bar(x + (i - 1.5) * w, vals, w * 0.92, color=MCOL[i], label=SHORT[m], linewidth=0)
+        bars = ax.bar(x + (i - 1.5) * w, vals, w * 0.92, color=MCOL[m], label=SHORT[m], linewidth=0)
         for b, v in zip(bars, vals):
             ax.text(b.get_x() + b.get_width() / 2, v + 1.2, f"{v:.1f}", ha="center", fontsize=5.8, color=TXT)
     ax.set_xticks(x, [lab[c] for c in conds])
     ax.set_ylabel("task success (200 tasks)")
     tidy(ax, 100, pct=True)
-    ax.legend(ncol=4, loc="upper center", bbox_to_anchor=(0.5, 1.14))
+    ax.legend(ncol=4, loc="upper center", bbox_to_anchor=(0.5, 1.14), fontsize=6.8)
     save(fig, "fig10_followup")
     print("wrote fig10_followup.pdf")
 
-# Figure 11: ToolSandbox, mean similarity by condition ---------------------------------------------------
-TS = ROOT / "runs" / "main" / "toolsandbox" / "index.json"
-if TS.exists():
-    T = json.load(open(TS))["summary"]
+# Figure 11: ToolSandbox, mean similarity by condition (default reasoning setting) ----------------------------
+T = INDEX["summary"]["toolsandbox"]
+if T:
     fig, ax = plt.subplots(figsize=(6.6, 2.5))
     x, w = np.arange(len(CONDS)), 0.19
-    for i, m in enumerate(MODELS):
+    for i, m in enumerate(DEFAULTS):
         vals = [T[f"{m} {c}"]["mean_similarity"] * 100 for c in CONDS]
-        ax.bar(x + (i - 1.5) * w, vals, w * 0.92, color=MCOL[i], label=SHORT[m], linewidth=0)
+        ax.bar(x + (i - 1.5) * w, vals, w * 0.92, color=MCOL[m], label=SHORT[m], linewidth=0)
     ax.set_xticks(x, [CLAB[c] for c in CONDS])
     ax.set_ylabel("ToolSandbox similarity (91 scenarios)")
     tidy(ax, 100, pct=True)
-    ax.legend(ncol=4, loc="upper center", bbox_to_anchor=(0.5, 1.14))
+    ax.legend(ncol=4, loc="upper center", bbox_to_anchor=(0.5, 1.14), fontsize=6.8)
     save(fig, "fig11_toolsandbox")
     print("wrote fig11_toolsandbox.pdf")
-
-# Figure 12: reasoning-controlled pairs ---------------------------------------------------------------
-RS = ROOT / "runs" / "main" / "reasoning" / "index.json"
-if RS.exists():
-    R = json.load(open(RS))["summary"]
-    pairs = [("openai/gpt-6-luna", "openai/gpt-6-luna-nothink", "reasoning on (default)", "reasoning off"),
-             ("anthropic/claude-haiku-5.5", "anthropic/claude-haiku-5.5-nothink", "reasoning on (default)", "reasoning off"),
-             ("google/gemma-4-26b-a4b-it", "google/gemma-4-26b-a4b-it-think", "reasoning off (default)", "reasoning on")]
-    fig, axes = plt.subplots(1, 3, figsize=(6.6, 2.3), sharey=True)
-    x, w = np.arange(len(CONDS)), 0.36
-    for ax, (base, var, lb, lv) in zip(axes, pairs):
-        i = MODELS.index(base)
-        on_first = lb.startswith("reasoning on")
-        for j, (m, lab, col) in enumerate([(base, lb, MCOL[i]), (var, lv, "#b9b8b0")]):
-            vals = [(S[m][c] if m in S else R[f"{m} {c}"]["success_rate"]) * 100 for c in CONDS]
-            ax.bar(x + (j - 0.5) * w, vals, w * 0.92, color=col, label=lab, linewidth=0)
-        ax.set_title(SHORT[base])
-        ax.set_xticks(x, CONDS)
-        tidy(ax, 100, pct=True)
-        ax.legend(loc="upper right", fontsize=6.5)
-    axes[0].set_ylabel("task success (200 tasks)")
-    save(fig, "fig12_reasoning")
-    print("wrote fig12_reasoning.pdf")

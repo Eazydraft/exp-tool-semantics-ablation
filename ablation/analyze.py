@@ -192,6 +192,7 @@ def main():
 
     gt = load_ground_truth()
     index = json.loads((run_dir / "index.json").read_text())
+    index["trajectories"] = [r for r in index["trajectories"] if r.get("benchmark", "bfcl") == "bfcl"]
     models = list(dict.fromkeys(r["model"] for r in index["trajectories"]))
     for c in sorted({r["condition"] for r in index["trajectories"]} - set(CONDITIONS)):
         CONDITIONS.append(c)
@@ -205,6 +206,10 @@ def main():
         if i % 500 == 0:
             print(f"  {i}/{len(index['trajectories'])}")
     task_ids = sorted(feat[models[0]]["D0"], key=lambda t: int(t.rsplit("_", 1)[1]))
+    # Not every model has every condition (D6/D7 were run for the default reasoning setting only).
+    conds = {m: [c for c in CONDITIONS if feat[m][c]] for m in models}
+    abl_conds = {m: [c for c in conds[m] if c != "D0"] for m in models}
+    full = [m for m in models if all(c in conds[m] for c in SINGLE + ["D5"])]  # D0..D5 present
 
     def mean(m, c, key):
         xs = [feat[m][c][t][key] for t in task_ids]
@@ -214,19 +219,19 @@ def main():
            "cost_usd": sum(r["cost_usd"] for r in index["trajectories"])}
 
     # 1. success, heatmap, robustness
-    out["success"] = {m: {c: mean(m, c, "valid") for c in CONDITIONS} for m in models}
-    out["pp_change"] = {m: {c: (out["success"][m][c] - out["success"][m]["D0"]) * 100 for c in ABLATED} for m in models}
+    out["success"] = {m: {c: mean(m, c, "valid") for c in conds[m]} for m in models}
+    out["pp_change"] = {m: {c: (out["success"][m][c] - out["success"][m]["D0"]) * 100 for c in abl_conds[m]} for m in models}
     out["robustness"] = {m: {
         "D1-D4": sum((out["success"][m]["D0"] - out["success"][m][c]) / out["success"][m]["D0"] for c in SINGLE) / 4,
         "D1-D5": sum((out["success"][m]["D0"] - out["success"][m][c]) / out["success"][m]["D0"] for c in SINGLE + ["D5"]) / 5,
-    } for m in models}
+    } for m in full}
 
     # paired stats vs D0
     out["paired"] = {}
     for m in models:
         base = [bool(feat[m]["D0"][t]["valid"]) for t in task_ids]
         out["paired"][m] = {}
-        for c in ABLATED:
+        for c in abl_conds[m]:
             abl = [bool(feat[m][c][t]["valid"]) for t in task_ids]
             both = sum(a and b for a, b in zip(abl, base)); d0_only = sum(b and not a for a, b in zip(abl, base))
             abl_only = sum(a and not b for a, b in zip(abl, base)); neither = len(task_ids) - both - d0_only - abl_only
@@ -238,9 +243,9 @@ def main():
     # 2. behaviour metrics
     keys = ["n_calls", "n_steps", "n_exec_errors", "n_repeated", "n_off_path", "n_on_path", "n_distinct_tools",
             "prompt_tokens", "completion_tokens", "cost_usd"]
-    out["behaviour"] = {m: {c: {k: mean(m, c, k) for k in keys} for c in CONDITIONS} for m in models}
+    out["behaviour"] = {m: {c: {k: mean(m, c, k) for k in keys} for c in conds[m]} for m in models}
     for m in models:
-        for c in CONDITIONS:
+        for c in conds[m]:
             fs = [feat[m][c][t] for t in task_ids]
             b = out["behaviour"][m][c]
             b["first_tool_ok"] = sum(f["first_tool_ok"] for f in fs) / len(fs)
@@ -260,14 +265,14 @@ def main():
     # distributions for ECDF / scatter (all tasks, failures included)
     out["per_task"] = {m: {c: [{"id": t, "valid": bool(feat[m][c][t]["valid"]), "calls": feat[m][c][t]["n_calls"],
                                 "prompt_tokens": feat[m][c][t]["prompt_tokens"], "completion_tokens": feat[m][c][t]["completion_tokens"]}
-                               for t in task_ids] for c in CONDITIONS} for m in models}
+                               for t in task_ids] for c in conds[m]} for m in models}
 
     # 3. documentation-to-error linkage: which parameters go wrong more often than in D0
     out["wrong_params"] = {}
     for m in models:
         d0 = Counter(wp for t in task_ids for wp in feat[m]["D0"][t]["wrong_params"])
         out["wrong_params"][m] = {}
-        for c in ABLATED:
+        for c in abl_conds[m]:
             cnt = Counter(wp for t in task_ids for wp in feat[m][c][t]["wrong_params"])
             rows = sorted(((tool, param, n, d0[(tool, param)]) for (tool, param), n in cnt.items()),
                           key=lambda r: r[2] - r[3], reverse=True)[:8]
@@ -276,12 +281,17 @@ def main():
                                                          or next((gt[t]["param_desc"][tool][param] for t in task_ids if tool in gt[t]["param_desc"]), "")}
                                          for tool, param, n, n0 in rows]
 
+    # full per-model, per-condition counts of wrong parameters (so runs can be pooled later without a top-k cutoff)
+    out["wrong_params_full"] = {m: {c: [[tool, param, n] for (tool, param), n in
+                                        Counter(wp for t in task_ids for wp in feat[m][c][t]["wrong_params"]).items()]
+                                    for c in conds[m]} for m in models}
+
     # same linkage pooled over all models (the top parameters are shared), D2 vs D0
-    pooled = {c: Counter(wp for m in models for t in task_ids for wp in feat[m][c][t]["wrong_params"]) for c in ["D0", "D2"]}
+    pooled = {c: Counter(wp for m in full for t in task_ids for wp in feat[m][c][t]["wrong_params"]) for c in ["D0", "D2"]}
     out["wrong_params_pooled"] = []
     for (tool, param), n in sorted(pooled["D2"].items(), key=lambda kv: kv[1] - pooled["D0"][kv[0]], reverse=True)[:10]:
         desc = next((gt[t]["param_desc"][tool][param] for t in task_ids if tool in gt[t]["param_desc"]), "")
-        per_model = {m: sum(1 for t in task_ids for wp in feat[m]["D2"][t]["wrong_params"] if wp == (tool, param)) for m in models}
+        per_model = {m: sum(1 for t in task_ids for wp in feat[m]["D2"][t]["wrong_params"] if wp == (tool, param)) for m in full}
         out["wrong_params_pooled"].append({"tool": tool, "param": param, "n_d2": n, "n_d0": pooled["D0"][(tool, param)],
                                            "per_model": per_model, "description": desc})
 
@@ -291,17 +301,17 @@ def main():
     six_tasks = [t for t in task_ids if any((n, k) in SIX for turn in gt[t]["turns"] for n, a in turn for k in a)]
     other_tasks = [t for t in task_ids if t not in six_tasks]
     out["six_param_tasks"] = {"n_six": len(six_tasks), "n_other": len(other_tasks), "per_model": {}}
-    for m in models:
+    for m in full:
         d0_only = [t for t in task_ids if feat[m]["D0"][t]["valid"] and not feat[m]["D2"][t]["valid"]]
         row = {"d0_only": len(d0_only), "d0_only_six": sum(t in six_tasks for t in d0_only)}
-        for c in CONDITIONS:
+        for c in conds[m]:
             row[f"{c}_six"] = sum(bool(feat[m][c][t]["valid"]) for t in six_tasks) / len(six_tasks)
             row[f"{c}_other"] = sum(bool(feat[m][c][t]["valid"]) for t in other_tasks) / len(other_tasks)
         out["six_param_tasks"]["per_model"][m] = row
 
     # 4. case studies: per model, the simplest task that passes in D0 and fails in D2, shown in D0 / D2 / D5
     out["cases"] = {}
-    for m in models:
+    for m in full:
         cands = [t for t in task_ids if feat[m]["D0"][t]["valid"] and not feat[m]["D2"][t]["valid"]]
         if not cands:
             continue

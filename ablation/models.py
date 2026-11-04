@@ -7,6 +7,9 @@ The *-nothink / *-think entries are reasoning-controlled pairs of a base model: 
 with reasoning explicitly switched off (GPT-6 Luna and Claude Haiku 5.5 reason by default) or on
 (Gemma 4 does not). `extra_body` is merged into every request. Qwen3-30B-A3B-Instruct-2507 has
 no reasoning mode on OpenRouter (the thinking variant is a different checkpoint), so it has no pair.
+
+The *-rerun entry is the same model with the same settings launched a second time, so that a
+repeated run sits next to the first one in the same run directory (run-to-run noise floor).
 """
 
 MODELS = {
@@ -24,6 +27,7 @@ MODELS = {
     "google/gemma-4-26b-a4b-it-think": dict(
         org="Google", model="google/gemma-4-26b-a4b-it", input_price=0.064, output_price=0.191,
         extra_body={"reasoning": {"enabled": True}, "provider": {"order": ["DeepInfra"]}}),
+    "anthropic/claude-haiku-5.5-rerun": dict(org="Anthropic", model="anthropic/claude-haiku-5.5", input_price=0.10, output_price=0.50),
 }
 
 BASE_MODELS = [m for m, info in MODELS.items() if "model" not in info]
