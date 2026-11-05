@@ -30,7 +30,9 @@ CONFIGS = [("openai/gpt-6-luna", True, "GPT-6 Luna, reasoning", "Luna\nreasoning
            ("google/gemma-4-26b-a4b-it-think", False, "Gemma 4 26B-A4B, reasoning", "Gemma 4\nreasoning", "#f7dc96")]
 MODELS = [c[0] for c in CONFIGS]
 SHORT = {c[0]: c[2] for c in CONFIGS}
-AXLAB = {c[0]: c[3] for c in CONFIGS}
+AXLAB = {c[0]: c[3].replace("\nreasoning", ", reas.").replace("\nno reasoning", ", no reas.") for c in CONFIGS}   # one line, for rotated tick labels
+AXLAB2 = {c[0]: c[3] for c in CONFIGS}                              # two lines, for labels above bar groups
+TITLE = {c[0]: c[2].replace(", ", "\n(") + ")" for c in CONFIGS}   # two lines, for small-multiple titles
 MCOL = {c[0]: c[4] for c in CONFIGS}
 DEFAULTS = [c[0] for c in CONFIGS if c[1]]
 S, B, P, PP, PER_TASK = A["success"], A["behaviour"], A["paired"], A["pp_change"], A["per_task"]
@@ -132,7 +134,7 @@ for k, c in enumerate(["D0", "D2", "D5"]):
     exact = [B[m][c]["first_call_exact"] * 100 for m in MODELS]
     ax.bar(x + (k - 1) * w, tool, w * 0.9, color=CCOL[c], alpha=0.35, linewidth=0)
     ax.bar(x + (k - 1) * w, exact, w * 0.9, color=CCOL[c], linewidth=0, label=c)
-ax.set_xticks(x, [AXLAB[m] for m in MODELS], fontsize=5.6)
+ax.set_xticks(x, [AXLAB[m] for m in MODELS], fontsize=5.6, rotation=30, ha="right", rotation_mode="anchor")
 ax.set_title("(c) first call of the task", loc="left")
 tidy(ax, 100, pct=True)
 ax.legend(ncol=3, loc="upper center", bbox_to_anchor=(0.5, -0.22), handlelength=1.0, columnspacing=0.8,
@@ -154,7 +156,7 @@ ax.bar(x, tnc, 0.8, bottom=wa, color="#6250d6", label="first unmatched call: too
 ax.bar(x, none, 0.8, bottom=np.array(wa) + np.array(tnc), color="#898781", label="all calls matched, still failed", linewidth=0)
 ax.set_xticks(x, labels, fontsize=6)
 for i, m in enumerate(MODELS):
-    ax.text(x[i * 3 + 1], 205, AXLAB[m], ha="center", va="bottom", fontsize=6, color=TXT)
+    ax.text(x[i * 3 + 1], 205, AXLAB2[m], ha="center", va="bottom", fontsize=6, color=TXT)
 ax.set_ylabel("failed tasks (of 200)")
 tidy(ax, 250)
 ax.set_yticks([0, 50, 100, 150, 200])
@@ -169,7 +171,7 @@ for ax, m in zip(axes, MODELS):
     ax.bar(range(6), off, 0.7, bottom=on, color=OFFPATH, linewidth=0, label="off-path")
     ax.bar(range(6), er, 0.7, bottom=np.array(on) + np.array(off), color=FAILED, linewidth=0, label="execution error")
     ax.set_xticks(range(6), CONDS)
-    ax.set_title(SHORT[m], loc="left", fontsize=7.5)
+    ax.set_title(TITLE[m], loc="left", fontsize=7)
     tidy(ax, 21)
 axes[0].set_ylabel("tool calls per task"); axes[4].set_ylabel("tool calls per task")
 axes[0].legend(loc="upper left", handlelength=1.0)
@@ -185,7 +187,7 @@ for ax, m in zip(axes, MODELS):
         ax.bar(range(6), vals, 0.7, bottom=bottom, color=col, linewidth=0, label=label)
         bottom += vals
     ax.set_xticks(range(6), CONDS)
-    ax.set_title(SHORT[m], loc="left", fontsize=7.5)
+    ax.set_title(TITLE[m], loc="left", fontsize=7)
     tidy(ax, 200)
 axes[0].set_ylabel("failed tasks (of 200)"); axes[4].set_ylabel("failed tasks (of 200)")
 h, l = axes[0].get_legend_handles_labels()
@@ -200,7 +202,7 @@ for ax, m in zip(axes, MODELS):
         xs = np.sort([t["calls"] for t in PER_TASK[m][c]])
         ys = np.arange(1, len(xs) + 1) / len(xs) * 100
         ax.step(np.concatenate([[0], xs]), np.concatenate([[0], ys]), where="post", color=CCOL[c], lw=1.4, label=c)
-    ax.set_xlim(0, 40); ax.set_title(SHORT[m], loc="left", fontsize=7.5)
+    ax.set_xlim(0, 40); ax.set_title(TITLE[m], loc="left", fontsize=7)
     ax.set_xlabel("tool calls per task")
     tidy(ax, 100, pct=True)
 axes[0].set_ylabel("share of tasks"); axes[4].set_ylabel("share of tasks")
@@ -232,7 +234,7 @@ ns = [round(B[m]["D2"]["tasks_with_exec_error"] * A["n_tasks"]) for m in MODELS]
 bars = ax.bar(x, rates, 0.6, color=[MCOL[m] for m in MODELS], linewidth=0)
 for b, n in zip(bars, ns):
     ax.text(b.get_x() + b.get_width() / 2, b.get_height() + 1.5, f"n={n}", ha="center", fontsize=6.5, color=TXT)
-ax.set_xticks(x, [AXLAB[m] for m in MODELS], fontsize=5.6)
+ax.set_xticks(x, [AXLAB[m] for m in MODELS], fontsize=5.6, rotation=30, ha="right", rotation_mode="anchor")
 ax.set_ylabel("tasks passed after\nan execution error (D2)")
 tidy(ax, 40, pct=True)
 save(fig, "fig9_recovery")
@@ -301,18 +303,88 @@ fig.savefig(OUT / "fig0_trajectory.pdf")
 plt.close(fig)
 print("wrote fig0_trajectory.pdf")
 
+# Figure 12: schema size against task success, every condition, four default configurations ------------------
+X = json.load(open(ROOT / "runs" / "main" / "analysis_extra.json")) if (ROOT / "runs" / "main" / "analysis_extra.json").exists() else {}
+if "D6" in A["conditions"]:
+    fig, axes = plt.subplots(1, 3, figsize=(7.2, 2.9), gridspec_kw={"width_ratios": [1.0, 1.15, 0.85]})
+    conds_b = [c for c in ["D1", "D2", "D3", "D4", "D5", "D6", "D6a", "D6b", "D7", "D8", "D9"] if c in A["conditions"]]
+    pts = {c: [] for c in conds_b}
+    floors = []
+    for m in DEFAULTS:
+        base_tok, base_s = B[m]["D0"]["first_prompt_tokens"], S[m]["D0"] * 100
+        rr = m + "-rerun"
+        if rr in PER_TASK and "D0" in PER_TASK[rr]:
+            second = {t["id"]: t["valid"] for t in PER_TASK[rr]["D0"]}
+            floors.append(abs(sum(second[t["id"]] - t["valid"] for t in PER_TASK[m]["D0"]) / len(second) * 100))
+        for c in conds_b:
+            pts[c].append((B[m][c]["first_prompt_tokens"] / base_tok * 100, S[m][c] * 100 - base_s, m))
+    band = max(floors) if floors else 6.0
+    SHAPE = {"D2": "s", "D6": "D", "D6a": "P", "D9": "^"}   # the four conditions the text discusses; the rest are grey circles
+    def draw(ax, conds, focus, lab_nudge):
+        ax.axhspan(-band, band, color="#000000", alpha=0.05, lw=0)
+        for c in conds:
+            ps = sorted(pts[c])
+            for x, y, m in ps:
+                if c in focus:
+                    ax.scatter([x], [y], s=26 if SHAPE.get(c) == "P" else 22, marker=SHAPE.get(c, "o"), color=MCOL[m], edgecolor="white", linewidth=0.5, zorder=4)
+                else:
+                    ax.scatter([x], [y], s=14, marker="o", color="#b5b5b5", edgecolor="white", linewidth=0.4, zorder=3)
+            if c in focus:
+                cx, cy = sum(x for x, _, _ in ps) / len(ps), sum(y for _, y, _ in ps) / len(ps)
+                ax.annotate(c, (cx, cy), xytext=lab_nudge.get(c, (0, 7)), textcoords="offset points", fontsize=6.8, color=TXT, ha="center", fontweight="bold",
+                            arrowprops=dict(arrowstyle="-", color="#777777", lw=0.5, shrinkA=0, shrinkB=2) if c in lab_nudge else None)
+        ax.axhline(0, color=GRID, lw=0.8); ax.axvline(100, color=GRID, lw=0.8)
+    ax = axes[0]
+    draw(ax, conds_b, {"D1", "D5"}, {})
+    ax.add_patch(plt.Rectangle((78, -42), 25, 52, fill=False, ec="#555555", lw=0.6, ls="--"))
+    ax.set_xlim(20, 112); ax.set_ylim(-80, 14)
+    ax.set_xlabel("first-request tokens, % of D0"); ax.set_ylabel("task success, change from D0 (pp)")
+    ax.set_title("(a) BFCL, all conditions", loc="left")
+    for m in DEFAULTS:
+        ax.scatter([], [], s=20, color=MCOL[m], label=SHORT[m].split(",")[0])
+    ax.legend(loc="lower right", fontsize=5.6, handlelength=1.0, frameon=False)
+    ax = axes[1]
+    zoom = [c for c in conds_b if c not in ("D1", "D5")]
+    draw(ax, zoom, {"D2", "D6", "D6a", "D9"}, {"D6": (-22, 14), "D9": (24, -16), "D6a": (34, 6), "D2": (-20, 8)})
+    ax.set_xlim(78, 103); ax.set_ylim(-42, 10)
+    ax.set_xlabel("first-request tokens, % of D0"); ax.set_title("(b) BFCL, dashed box of (a)", loc="left")
+    handles = [ax.scatter([], [], marker=SHAPE[c], s=22, color="#777777", label=c) for c in ["D2", "D6", "D6a", "D9"]]
+    handles.append(ax.scatter([], [], marker="o", s=14, color="#b5b5b5", label="other conditions"))
+    ax = axes[2]
+    T2 = X.get("tau2", {})
+    if T2.get("first_prompt_tokens"):
+        pts2 = {c: [] for c in CONDS[1:]}
+        for m in DEFAULTS:
+            base_tok, base_s = T2["first_prompt_tokens"][f"{m} D0"], T2["success"][m]["D0"] * 100
+            for c in CONDS[1:]:
+                pts2[c].append((T2["first_prompt_tokens"][f"{m} {c}"] / base_tok * 100, T2["success"][m][c] * 100 - base_s, m))
+        nudge2 = {"D1": (-16, -9), "D2": (-12, 7), "D3": (8, -8), "D4": (12, 3), "D5": (0, 6)}
+        for c, ps in pts2.items():
+            ps = sorted(ps)
+            for x, y, m in ps:
+                ax.scatter([x], [y], s=20, marker=SHAPE.get(c, "o"), color=MCOL[m], edgecolor="white", linewidth=0.5, zorder=3)
+            cx, cy = sum(x for x, _, _ in ps) / len(ps), sum(y for _, y, _ in ps) / len(ps)
+            ax.annotate(c, (cx, cy), xytext=nudge2.get(c, (0, 6)), textcoords="offset points", fontsize=6.5, color=TXT, ha="center", fontweight="bold")
+        ax.axhline(0, color=GRID, lw=0.8); ax.axvline(100, color=GRID, lw=0.8)
+        ax.set_xlim(20, 112); ax.set_xlabel("first-request tokens, % of D0"); ax.set_title("(c) $\\tau^2$ airline", loc="left")
+    fig.legend(handles=handles, loc="lower center", ncol=len(handles), fontsize=5.8, handlelength=0.9, columnspacing=1.0, frameon=False, bbox_to_anchor=(0.5, -0.01))
+    fig.tight_layout(rect=(0, 0.06, 1, 1))
+    save(fig, "fig12_tokens_frontier")
+    print("wrote fig12_tokens_frontier.pdf")
+
 # Figure 10: D6 and D7 (default reasoning setting of each model) ---------------------------------------------
 if "D6" in A["conditions"] and "D7" in A["conditions"]:
     fig, ax = plt.subplots(figsize=(6.6, 2.5))
-    conds = ["D0", "D2", "D6", "D7"]
-    lab = {"D0": "D0\noriginal", "D2": "D2\nno param. desc.", "D6": "D6\nno param. desc.,\nconstraints in schema", "D7": "D7\nno param. desc.,\nexcept six params"}
+    conds = [c for c in ["D0", "D2", "D6a", "D6b", "D6", "D9", "D7"] if c in A["conditions"]]
+    lab = {"D0": "D0\noriginal", "D2": "D2\nno param.\ndesc.", "D6": "D6\nfields and\nrenames", "D7": "D7\nsix desc.\nkept",
+           "D6a": "D6a\nfields only", "D6b": "D6b\nrenames only", "D9": "D9\nin tool\ndescription"}
     x, w = np.arange(len(conds)), 0.19
     for i, m in enumerate(DEFAULTS):
         vals = [S[m][c] * 100 for c in conds]
         bars = ax.bar(x + (i - 1.5) * w, vals, w * 0.92, color=MCOL[m], label=SHORT[m], linewidth=0)
         for b, v in zip(bars, vals):
             ax.text(b.get_x() + b.get_width() / 2, v + 1.2, f"{v:.1f}", ha="center", fontsize=5.8, color=TXT)
-    ax.set_xticks(x, [lab[c] for c in conds])
+    ax.set_xticks(x, [lab[c] for c in conds], fontsize=7)
     ax.set_ylabel("task success (200 tasks)")
     tidy(ax, 100, pct=True)
     ax.legend(ncol=4, loc="upper center", bbox_to_anchor=(0.5, 1.14), fontsize=6.8)

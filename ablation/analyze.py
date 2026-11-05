@@ -96,6 +96,15 @@ def extract_calls(doc: dict) -> list[dict]:
     return calls
 
 
+def first_prompt_tokens(doc: dict) -> int:
+    """Prompt tokens of the task's first request: the tool schemas plus the first user turn."""
+    calls = doc.get("api_calls") or []
+    if not calls:
+        return 0
+    usage = ((calls[0].get("response") or {}).get("body") or {}).get("usage") or {}
+    return usage.get("prompt_tokens") or 0
+
+
 def analyze_trajectory(doc: dict, gt: dict) -> dict:
     calls = extract_calls(doc)
     ev = doc.get("evaluation") or {}
@@ -154,6 +163,7 @@ def analyze_trajectory(doc: dict, gt: dict) -> dict:
         "gt_total": gt_total, "gt_tool_hits": tool_hits, "gt_exact_hits": exact_hits,
         "wrong_params": wrong_params,
         "first_divergence": first_divergence,
+        "first_prompt_tokens": first_prompt_tokens(doc),
         "prompt_tokens": doc["totals"]["prompt_tokens"],
         "completion_tokens": doc["totals"]["completion_tokens"],
         "cost_usd": doc["totals"]["cost_usd"],
@@ -256,6 +266,7 @@ def main():
             b["argument_acc_given_tool"] = sum(f["gt_exact_hits"] for f in fs) / max(1, sum(f["gt_tool_hits"] for f in fs))
             b["gt_exact_coverage"] = sum(f["gt_exact_hits"] for f in fs) / sum(f["gt_total"] for f in fs)
             with_err = [f for f in fs if f["n_exec_errors"] > 0]
+            b["first_prompt_tokens"] = sum(f["first_prompt_tokens"] for f in fs) / len(fs)
             b["tasks_with_exec_error"] = len(with_err) / len(fs)
             b["recovery_rate"] = (sum(bool(f["valid"]) for f in with_err) / len(with_err)) if with_err else None
             succ = [f for f in fs if f["valid"]]
@@ -309,6 +320,24 @@ def main():
             row[f"{c}_six"] = sum(bool(feat[m][c][t]["valid"]) for t in six_tasks) / len(six_tasks)
             row[f"{c}_other"] = sum(bool(feat[m][c][t]["valid"]) for t in other_tasks) / len(other_tasks)
         out["six_param_tasks"]["per_model"][m] = row
+
+    # 3c. what the tasks lost at D2 begin with: a value differing only in case, another wrong value, or a tool never called
+    out["d2_loss_kind"] = {}
+    for m in full:
+        kinds = Counter()
+        for t in task_ids:
+            if not (feat[m]["D0"][t]["valid"] and not feat[m]["D2"][t]["valid"]):
+                continue
+            fd = feat[m]["D2"][t]["first_divergence"]
+            if not fd:
+                kinds["none"] += 1
+            elif fd["kind"] != "wrong_arguments":
+                kinds["tool_not_called"] += 1
+            else:
+                gt_args, got = fd["gt"][1], fd["closest"]["args"]
+                case_only = all(k in got and str(got[k]).lower() == str(v).lower() for k, v in gt_args.items() if k in fd["params"])
+                kinds["case_only" if case_only else "other_value"] += 1
+        out["d2_loss_kind"][m] = dict(kinds)
 
     # 4. case studies: per model, the simplest task that passes in D0 and fails in D2, shown in D0 / D2 / D5
     out["cases"] = {}

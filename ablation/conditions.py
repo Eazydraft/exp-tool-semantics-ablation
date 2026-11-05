@@ -28,6 +28,11 @@ CONDITIONS = {
     # D8 removes parameter names and parameter descriptions together (tool names and descriptions
     # kept): the direct test of how far those two carriers restate each other.
     "D8": dict(tool_names=True, tool_desc=True, param_names=False, param_desc=False),
+    # D6 split into its two moves: D6a adds the enums and patterns but keeps cityA/cityB; D6b only renames them.
+    "D6a": dict(tool_names=True, tool_desc=True, param_names=True, param_desc=False, structure=True, renames=False),
+    "D6b": dict(tool_names=True, tool_desc=True, param_names=True, param_desc=False, structure=True, fields=False),
+    # D9: the same constraints as D6, stated in prose in the tool description instead of in the schema (placement test).
+    "D9": dict(tool_names=True, tool_desc=True, param_names=True, param_desc=False, desc_constraints=True),
 }
 
 # The six parameters whose values went wrong most in D2 (paper, Table 5).
@@ -61,7 +66,12 @@ def apply_condition(functions: list[dict], condition_id: str) -> tuple[list[dict
             param_map[fn["name"]] = _rename_properties(params)
 
         if cfg.get("structure"):
-            param_map[fn["name"]] = _add_structure(original_name(fn, tool_map), params)
+            param_map[fn["name"]] = _add_structure(original_name(fn, tool_map), params,
+                                                   fields=cfg.get("fields", True), renames=cfg.get("renames", True))
+        if cfg.get("desc_constraints"):
+            sentences = _constraint_sentences(original_name(fn, tool_map), params)
+            if sentences:
+                fn["description"] = (fn.get("description", "") + " " + " ".join(sentences)).strip()
 
         if not cfg["param_desc"]:
             keep = {p for t, p in SIX_PARAMS if t == fn["name"]} if cfg.get("keep_desc") else set()
@@ -76,28 +86,52 @@ def original_name(fn: dict, tool_map: dict) -> str:
     return tool_map.get(fn["name"], fn["name"])
 
 
-def _add_structure(tool: str, params: dict) -> dict:
+def _prose_enum(tool: str, p: str, v: dict) -> list | None:
+    """The allowed-value list a parameter's description states in prose, if any."""
+    if "enum" in v:
+        return None
+    if (tool, p) in PROSE_ENUMS:
+        return PROSE_ENUMS[(tool, p)]
+    desc = v.get("description", "")
+    if "[Enum]:" in desc:
+        raw = desc.split("[Enum]:", 1)[1].strip().rstrip(".")
+        return [x.strip().strip("[]\"' ") for x in raw.strip("[]").split(",")]
+    return None
+
+
+def _constraint_sentences(tool: str, params: dict) -> list[str]:
+    """D9: the constraints D6 would make structural, as sentences for the tool description.
+    Must run before the parameter descriptions are blanked (it reads the prose enums from them)."""
+    out = []
+    for p, v in params["properties"].items():
+        vals = _prose_enum(tool, p, v)
+        if vals:
+            out.append(f"The parameter {p} must be one of: {', '.join(vals)}.")
+        if (tool, p) in ITEM_PATTERNS:
+            out.append(f"Each item of {p} must start with '{ITEM_PATTERNS[(tool, p)][1:]}'.")
+        if (tool, p) in RENAMES:
+            out.append(f"The parameter {p} is a zip code.")
+    return out
+
+
+def _add_structure(tool: str, params: dict, fields: bool = True, renames: bool = True) -> dict:
     """D6: move prose-only constraints into the schema. Enum lists written as "[Enum]: ..." in a
     description become `enum`; two zip-code parameters get names that say so; tags/mentions
-    get an item `pattern`. Returns the param-name map `_restore_value` expects."""
+    get an item `pattern`. Returns the param-name map `_restore_value` expects.
+    `fields` and `renames` switch the two moves off separately (D6b and D6a)."""
     props = params["properties"]
     pmap = {}
     for p in list(props):
         v = props[p]
-        desc = v.get("description", "")
-        if "enum" not in v:
-            if (tool, p) in PROSE_ENUMS:
-                v["enum"] = PROSE_ENUMS[(tool, p)]
-            elif "[Enum]:" in desc:
-                raw = desc.split("[Enum]:", 1)[1].strip().rstrip(".")
-                vals = [x.strip().strip("[]\"' ") for x in raw.strip("[]").split(",")]
-                if v.get("type") == "array" and "items" in v:
-                    v["items"]["enum"] = vals
-                else:
-                    v["enum"] = vals
-        if (tool, p) in ITEM_PATTERNS and "items" in v:
+        vals = _prose_enum(tool, p, v) if fields else None
+        if vals:
+            if v.get("type") == "array" and "items" in v:
+                v["items"]["enum"] = vals
+            else:
+                v["enum"] = vals
+        if fields and (tool, p) in ITEM_PATTERNS and "items" in v:
             v["items"]["pattern"] = ITEM_PATTERNS[(tool, p)]
-        if (tool, p) in RENAMES:
+        if renames and (tool, p) in RENAMES:
             new = RENAMES[(tool, p)]
             props[new] = props.pop(p)
             params["required"] = [new if r == p else r for r in params.get("required", [])]

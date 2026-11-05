@@ -1,4 +1,4 @@
-# Which Parts of a Tool's Documentation Does a Model Actually Need?
+# What Do Language Models Need to Know About Their Tools?
 
 Code, data and paper for an ablation of tool documentation in multi-turn tool use. Four models
 (GPT-6 Luna, Claude Haiku 5.5, Qwen3-30B-A3B-Instruct-2507, Gemma 4 26B-A4B) ran three benchmarks
@@ -77,6 +77,9 @@ results are in the paper and in `runs/main/analysis*.json`.
 | D6 | original | original | original | **removed**; prose-only constraints moved into the schema |
 | D7 | original | original | original | **removed**; the six descriptions that carry the D2 effect kept |
 | D8 | original | original | **generic** | **removed** |
+| D6a | original | original | original | **removed**; enums and patterns in schema (no renames) |
+| D6b | original | original | original (cityA/cityB renamed) | **removed** |
+| D9 | original | original, D6 constraints appended as sentences | original | **removed** |
 
 Generic tool names are `tool_01..tool_NN` in listing order; generic parameter names are `arg_1..arg_n`
 per tool, applied recursively to nested object keys. Structural fields (types, required lists, enums,
@@ -102,7 +105,7 @@ installation with `latexmk`.
 ## Running
 
 ```bash
-./run.sh bfcl                       # four models x D0..D8 x 200 tasks -> runs/main/
+./run.sh bfcl                       # four models x D0..D9 x 200 tasks -> runs/main/
 ./run.sh bfcl --models openai/gpt-6-luna-nothink anthropic/claude-haiku-5.5-nothink google/gemma-4-26b-a4b-it-think --conditions D0 D1 D2 D3 D4 D5
 ./run.sh bfcl --models anthropic/claude-haiku-5.5-rerun --conditions D0     # the repeated baseline
 ./run.sh toolsandbox                # four models x D0..D5 x 91 scenarios -> the same runs/main/
@@ -198,7 +201,7 @@ domain in text mode, one trial, with GPT-4.1 as the user and the benchmark's pin
 
 ```bibtex
 @misc{singh2026tooldocs,
-  title  = {Which Parts of a Tool's Documentation Does a Model Actually Need?},
+  title  = {What Do Language Models Need to Know About Their Tools?},
   author = {Singh, Randeep},
   year   = {2026},
   url    = {https://github.com/Eazydraft/exp-tool-semantics-ablation}

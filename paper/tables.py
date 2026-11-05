@@ -29,6 +29,7 @@ CONFIGS = [("openai/gpt-6-luna", "GPT-6 Luna, reasoning", True),
 MODELS = [m for m, _, _ in CONFIGS]
 SHORT = {m: lab for m, lab, _ in CONFIGS}
 DEFAULTS = [m for m, _, d67 in CONFIGS if d67]                 # the four runs that also have D6, D7
+TS_SHORT_MAIN = {"openai/gpt-6-luna": "GPT-6 Luna", "anthropic/claude-haiku-5.5": "Claude Haiku 5.5", "qwen/qwen3-30b-a3b-instruct-2507": "Qwen3-30B-A3B", "google/gemma-4-26b-a4b-it": "Gemma 4 26B-A4B"}
 RERUN = "anthropic/claude-haiku-5.5-rerun"                     # second launch of Claude Haiku 5.5 D0
 S, B, P, PER_TASK = A["success"], A["behaviour"], A["paired"], A["per_task"]
 CONDS = ["D0", "D1", "D2", "D3", "D4", "D5"]
@@ -44,6 +45,16 @@ def write(name, rows):
 
 def fmt_p(p):
     return "$<$0.0001" if p < 1e-4 else f"{p:.4f}"
+
+
+def fmt_peq(p):
+    """For use inside math after `p`: `<0.0001` or `=0.0113`."""
+    return "<0.0001" if p < 1e-4 else f"={p:.4f}"
+
+
+def fmt_prel(p):
+    """For use inside math after `p`: `<0.0001` or `\\leq 0.0051`."""
+    return "<0.0001" if p < 1e-4 else f"\\leq {p:.4f}"
 
 
 def block(rows_per_model, models=MODELS):
@@ -295,11 +306,12 @@ def valid_vec(m, c):
     return [t["valid"] for t in PER_TASK[m][c]]
 
 
+FOLLOWUPS = [c for c in ["D6", "D6a", "D6b", "D9", "D7"] if c in A["conditions"]]
 if "D6" in A["conditions"] and "D7" in A["conditions"]:
     rows = []
     for m in DEFAULTS:
         rm, first = [], True
-        for c in ["D6", "D7"]:
+        for c in FOLLOWUPS:
             for base in ["D0", "D2"]:
                 r = paired(valid_vec(m, base), valid_vec(m, c))
                 label = SHORT[m] if first else ""
@@ -307,6 +319,60 @@ if "D6" in A["conditions"] and "D7" in A["conditions"]:
                 rm.append(f"{label} & {c} vs {base} & {pct(S[m][base])} & {pct(S[m][c])} & {r['a_only']} & {r['b_only']} & {r['diff']:+.1f} & [{r['ci'][0]:.1f}, {r['ci'][1]:.1f}] & {fmt_p(r['p'])} \\\\")
         rows.append(rm)
     write("followup", block(rows))
+    fm = []
+    for c in ["D6a", "D6b", "D9"]:
+        if c in A["conditions"]:
+            succ = [S[m][c] * 100 for m in DEFAULTS]
+            vs0 = [paired(valid_vec(m, "D0"), valid_vec(m, c)) for m in DEFAULTS]
+            vs2 = [paired(valid_vec(m, "D2"), valid_vec(m, c)) for m in DEFAULTS]
+            vs6 = [paired(valid_vec(m, "D6"), valid_vec(m, c)) for m in DEFAULTS]
+            key = c.lower().replace("d6a", "dsixa").replace("d6b", "dsixb").replace("d9", "dnine")
+            fm += [f"\\newcommand{{\\{key}range}}{{{min(succ):.1f} to {max(succ):.1f}}}",
+                   f"\\newcommand{{\\{key}vsdzero}}{{${min(r['diff'] for r in vs0):+.1f}$ to ${max(r['diff'] for r in vs0):+.1f}$}}",
+                   f"\\newcommand{{\\{key}vsdzeropmin}}{{{fmt_p(min(r['p'] for r in vs0))}}}",
+                   f"\\newcommand{{\\{key}vsdtwo}}{{${min(r['diff'] for r in vs2):+.1f}$ to ${max(r['diff'] for r in vs2):+.1f}$}}",
+                   f"\\newcommand{{\\{key}vsdtwopmax}}{{{fmt_prel(max(r['p'] for r in vs2))}}}",
+                   f"\\newcommand{{\\{key}vsdsix}}{{${min(r['diff'] for r in vs6):+.1f}$ to ${max(r['diff'] for r in vs6):+.1f}$}}",
+                   f"\\newcommand{{\\{key}vsdsixpmin}}{{{fmt_p(min(r['p'] for r in vs6))}}}"]
+    # D6a, D6 and D9 against the second D0 run that was launched together with them (Luna, Qwen3, Gemma 4)
+    sb_rows, sb = [], {}
+    for m in DEFAULTS:
+        rr = m + "-rerun"
+        if m == "anthropic/claude-haiku-5.5" or rr not in PER_TASK or "D0" not in PER_TASK[rr]:
+            continue
+        second = {t["id"]: bool(t["valid"]) for t in PER_TASK[rr]["D0"]}
+        ids = [t["id"] for t in PER_TASK[m]["D0"]]
+        base = [second[i] for i in ids]
+        first = True
+        for c in ["D6a", "D6", "D9"]:
+            if c not in A["conditions"]:
+                continue
+            r = paired(base, valid_vec(m, c)); sb[(m, c)] = r
+            sb_rows.append(f"{TS_SHORT_MAIN[m] if first else ''} & {c} & {sum(base)/len(ids)*100:.1f} & {pct(S[m][c])} & {r['a_only']} & {r['b_only']} & {r['diff']:+.1f} & [{r['ci'][0]:.1f}, {r['ci'][1]:.1f}] & {r['bound']:.1f} & {fmt_p(r['p'])} \\\\")
+            first = False
+        sb_rows.append(r"\addlinespace")
+    if sb_rows:
+        write("samebatch", sb_rows[:-1])
+        g = "google/gemma-4-26b-a4b-it"; q = "qwen/qwen3-30b-a3b-instruct-2507"; l = "openai/gpt-6-luna"
+        fm += [f"\\newcommand{{\\gemmadninesb}}{{${sb[(g, 'D9')]['diff']:+.1f}$}}", f"\\newcommand{{\\gemmadninesbp}}{{{fmt_peq(sb[(g, 'D9')]['p'])}}}",
+               f"\\newcommand{{\\qwendninesb}}{{${sb[(q, 'D9')]['diff']:+.1f}$}}", f"\\newcommand{{\\qwendninesbp}}{{{fmt_peq(sb[(q, 'D9')]['p'])}}}",
+               f"\\newcommand{{\\qwendninesbci}}{{[${sb[(q, 'D9')]['ci'][0]:.1f}$, ${sb[(q, 'D9')]['ci'][1]:.1f}$]}}",
+               f"\\newcommand{{\\lunadninesb}}{{${sb[(l, 'D9')]['diff']:+.1f}$}}", f"\\newcommand{{\\lunadninesbp}}{{{fmt_peq(sb[(l, 'D9')]['p'])}}}",
+               f"\\newcommand{{\\gemmadsixasb}}{{${sb[(g, 'D6a')]['diff']:+.1f}$}}", f"\\newcommand{{\\gemmadsixasbp}}{{{fmt_peq(sb[(g, 'D6a')]['p'])}}}"]
+    d6 = [paired(valid_vec(m, "D0"), valid_vec(m, "D6")) for m in DEFAULTS]
+    fm += [f"\\newcommand{{\\dsixvsdzerobound}}{{{max(r['bound'] for r in d6):.1f}}}",
+           f"\\newcommand{{\\dsixvsdzeroboundrange}}{{{min(r['bound'] for r in d6):.1f} to {max(r['bound'] for r in d6):.1f}}}",
+           f"\\newcommand{{\\dsixvsdzeropmin}}{{{fmt_p(min(r['p'] for r in d6))}}}"]
+    write("followupmacros", fm)
+    cols = [c for c in ["D0", "D2", "D6a", "D6b", "D6", "D9"] if c in A["conditions"]]
+    rows = []
+    for m in DEFAULTS:
+        cells = [pct(S[m]["D0"])]
+        for c in cols[1:]:
+            r = paired(valid_vec(m, "D0"), valid_vec(m, c))
+            cells.append(f"{pct(S[m][c])} (${r['diff']:+.1f}$)")
+        rows.append(f"{TS_SHORT_MAIN[m]} & " + " & ".join(cells) + " \\\\")
+    write("followupmain", rows)
     # six-parameter vs other tasks: D0 and D2 for every configuration, D6 to D8 where they exist
     rows = []
     for m in MODELS:
@@ -314,10 +380,23 @@ if "D6" in A["conditions"] and "D7" in A["conditions"]:
         cells = [f"{r['d0_only_six']}/{r['d0_only']}"]
         for c in ["D0", "D2", "D6", "D7", "D8"]:
             cells += [pct(r[f"{c}_six"]), pct(r[f"{c}_other"])] if f"{c}_six" in r else ["--", "--"]
+        lk = A.get("d2_loss_kind", {}).get(m, {})
+        cells.append(f"{lk.get('case_only', 0)}/{sum(lk.values())}" if lk else "--")
         rows.append(f"{SHORT[m]} & " + " & ".join(cells) + " \\\\")
     write("sixparam", rows)
     shares = [A["six_param_tasks"]["per_model"][m]["d0_only_six"] / A["six_param_tasks"]["per_model"][m]["d0_only"] * 100 for m in MODELS]
-    write("sixparammacros", [f"\\newcommand{{\\sixsharemin}}{{{min(shares):.0f}}}", f"\\newcommand{{\\sixsharemax}}{{{max(shares):.0f}}}"])
+    # what the tasks lost at D2 begin with (share of D0-pass/D2-fail tasks whose first divergence differs only in case)
+    LK = A.get("d2_loss_kind", {})
+    case = [LK[m].get("case_only", 0) / sum(LK[m].values()) * 100 for m in MODELS if m in LK]
+    # first-request prompt tokens (the schemas plus the first user turn): reduction versus D0, four default configurations
+    cut = lambda c: [(1 - B[m][c]["first_prompt_tokens"] / B[m]["D0"]["first_prompt_tokens"]) * 100 for m in DEFAULTS]
+    write("sixparammacros", [f"\\newcommand{{\\sixsharemin}}{{{min(shares):.0f}}}", f"\\newcommand{{\\sixsharemax}}{{{max(shares):.0f}}}",
+                             f"\\newcommand{{\\dtwocaseonlyrange}}{{{min(case):.0f} to {max(case):.0f}}}",
+                             f"\\newcommand{{\\dtwocaseonlylist}}{{{', '.join(f'{LK[m].get('case_only', 0)} of {sum(LK[m].values())}' for m in MODELS if m in LK)}}}",
+                             f"\\newcommand{{\\tokdzero}}{{{min(B[m]['D0']['first_prompt_tokens'] for m in DEFAULTS):,.0f} to {max(B[m]['D0']['first_prompt_tokens'] for m in DEFAULTS):,.0f}}}",
+                             f"\\newcommand{{\\tokdonecut}}{{{min(cut('D1')):.0f} to {max(cut('D1')):.0f}}}",
+                             f"\\newcommand{{\\tokdtwocut}}{{{min(cut('D2')):.0f} to {max(cut('D2')):.0f}}}",
+                             f"\\newcommand{{\\tokdfivecut}}{{{min(cut('D5')):.0f} to {max(cut('D5')):.0f}}}"])
 
 # D8 (generic parameter names and blank descriptions together) against D0, D2 and D4
 if "D8" in A["conditions"]:
@@ -342,7 +421,7 @@ if "D8" in A["conditions"]:
               f"\\newcommand{{\\deightvsdtwo}}{{{diffs('D2')}}}",
               f"\\newcommand{{\\deightvsdfour}}{{{diffs('D4')}}}",
               f"\\newcommand{{\\deightvsdtwobound}}{{{min(r['bound'] for r in vs['D2']):.1f} to {max(r['bound'] for r in vs['D2']):.1f}}}",
-              f"\\newcommand{{\\deightvsdtwopmax}}{{{fmt_p(max(r['p'] for r in vs['D2']))}}}"]
+              f"\\newcommand{{\\deightvsdtwopmax}}{{{fmt_prel(max(r['p'] for r in vs['D2']))}}}"]
     six = A["six_param_tasks"]["per_model"]
     rng = lambda xs: f"{min(xs):.1f} to {max(xs):.1f}"
     macros += [f"\\newcommand{{\\deightsixmax}}{{{max(six[m]['D8_six'] for m in DEFAULTS)*100:.1f}}}",
@@ -358,12 +437,28 @@ if "D8" in A["conditions"]:
         rr = paired(valid_vec(LUNA, "D2"), [second[i] for i in ids])          # D2 run 1 vs D2 run 2
         r8 = paired([second[i] for i in ids], valid_vec(LUNA, "D8"))          # D2 run 2 vs D8 (launched the same day)
         macros += [f"\\newcommand{{\\lunadtworerun}}{{{sum(second.values())/len(ids)*100:.1f}}}",
-                   f"\\newcommand{{\\lunadtwodiff}}{{{rr['diff']:+.1f}}}", f"\\newcommand{{\\lunadtwodiffci}}{{[{rr['ci'][0]:.1f}, {rr['ci'][1]:.1f}]}}",
+                   f"\\newcommand{{\\lunadtwodiff}}{{${rr['diff']:+.1f}$}}", f"\\newcommand{{\\lunadtwodiffci}}{{[{rr['ci'][0]:.1f}, {rr['ci'][1]:.1f}]}}",
                    f"\\newcommand{{\\lunadtwodiscordant}}{{{rr['a_only']} and {rr['b_only']}}}",
-                   f"\\newcommand{{\\deightvslunarerun}}{{{r8['diff']:+.1f}}}", f"\\newcommand{{\\deightvslunarerunci}}{{[{r8['ci'][0]:.1f}, {r8['ci'][1]:.1f}]}}",
+                   f"\\newcommand{{\\deightvslunarerun}}{{${r8['diff']:+.1f}$}}", f"\\newcommand{{\\deightvslunarerunci}}{{[{r8['ci'][0]:.1f}, {r8['ci'][1]:.1f}]}}",
                    f"\\newcommand{{\\deightvslunarerunp}}{{{fmt_p(r8['p'])}}}"]
     write("namesmacros", macros)
     print("D8 table done")
+
+# repeated D0 runs: run-to-run noise per model (table noise.tex and macros)
+RERUNS = [(m, m + "-rerun") for m in DEFAULTS if m + "-rerun" in PER_TASK and "D0" in PER_TASK[m + "-rerun"]]
+if RERUNS:
+    rows, absdiff, disc = [], [], []
+    for m, r2 in RERUNS:
+        ids = [t["id"] for t in PER_TASK[m]["D0"]]
+        second = {t["id"]: bool(t["valid"]) for t in PER_TASK[r2]["D0"]}
+        r = paired(valid_vec(m, "D0"), [second[i] for i in ids])
+        rows.append(f"{SHORT[m]} & {pct(S[m]['D0'])} & {sum(second.values())/len(ids)*100:.1f} & {r['a_only']} & {r['b_only']} & {r['diff']:+.1f} & [{r['ci'][0]:.1f}, {r['ci'][1]:.1f}] & {fmt_p(r['p'])} \\\\")
+        absdiff.append(abs(r["diff"])); disc.append(r["a_only"] + r["b_only"])
+    write("noise", rows)
+    write("noisemacros", [f"\\newcommand{{\\noisemodels}}{{{len(RERUNS)}}}",
+                          f"\\newcommand{{\\noiseabsrange}}{{{min(absdiff):.1f} to {max(absdiff):.1f}}}",
+                          f"\\newcommand{{\\noisediscrange}}{{{min(disc)} to {max(disc)}}}"])
+    print("noise table done for", len(RERUNS), "models")
 
 # repeated D0 run (Claude Haiku 5.5 with reasoning, launched twice): run-to-run noise
 if RERUN in PER_TASK:

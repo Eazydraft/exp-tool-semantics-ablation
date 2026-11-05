@@ -162,7 +162,10 @@ def analyse_tau2(rows, out):
                 d = b["divergence_kinds"]
                 line.append(f"{c}: {d.get('wrong_arguments', 0):2d}/{d.get('tool_not_called', 0):2d}/{d.get('none', 0):2d} w{b['failed_with_off_path_write']:2d}")
         print(f"  {SHORT.get(m, m):22s} " + "   ".join(line))
-    out["tau2"] = {"success": succ, "paired": {f"{m} {c}": v for (m, c), v in pt.items()}, "breakdown": breakdown, "cost": cost_lines(rows)}
+    first_tokens = {f"{m} {c}": sum(r.get("first_prompt_tokens", 0) for r in combos[(m, c)].values()) / len(combos[(m, c)])
+                    for m in models for c in CONDITIONS if (m, c) in combos}
+    out["tau2"] = {"success": succ, "paired": {f"{m} {c}": v for (m, c), v in pt.items()}, "breakdown": breakdown, "cost": cost_lines(rows),
+                   "first_prompt_tokens": first_tokens}
     print(f"\ncost: {out['tau2']['cost']}")
 
 
@@ -282,6 +285,9 @@ def main():
         r["reward_info"] = doc["result"]["reward_info"] or {}
         calls = tau2_calls(doc)
         r["divergence"] = tau2_divergence(tasks[str(r["id"])], calls)
+        # the agent's first request carries the tool schemas; user-simulator calls come first in the log
+        r["first_prompt_tokens"] = next((((c.get("response") or {}).get("usage") or {}).get("prompt_tokens", 0)
+                                         for c in doc.get("api_calls", []) if (c.get("request") or {}).get("model") != doc.get("user_model")), 0)
         r["off_path_write"] = tau2_off_path_write(tasks[str(r["id"])], calls)
     analyse_tau2(tau2_rows, out)
     analyse_tau2_trials(all_tau2, out)

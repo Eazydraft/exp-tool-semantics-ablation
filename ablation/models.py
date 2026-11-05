@@ -29,6 +29,8 @@ MODELS = {
         extra_body={"reasoning": {"enabled": True}, "provider": {"order": ["DeepInfra"]}}),
     "anthropic/claude-haiku-5.5-rerun": dict(org="Anthropic", model="anthropic/claude-haiku-5.5", input_price=0.10, output_price=0.50),
     "openai/gpt-6-luna-rerun": dict(org="OpenAI", model="openai/gpt-6-luna", input_price=0.10, output_price=0.50),
+    "qwen/qwen3-30b-a3b-instruct-2507-rerun": dict(org="Qwen", model="qwen/qwen3-30b-a3b-instruct-2507", input_price=0.10, output_price=0.30),
+    "google/gemma-4-26b-a4b-it-rerun": dict(org="Google", model="google/gemma-4-26b-a4b-it", input_price=0.064, output_price=0.191),
 }
 
 BASE_MODELS = [m for m, info in MODELS.items() if "model" not in info]
