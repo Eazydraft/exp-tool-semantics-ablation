@@ -1,8 +1,8 @@
-\documentclass[11pt]{article}
-\usepackage[a4paper,margin=1in]{geometry}
+\documentclass[10pt]{article}
+\usepackage[a4paper,left=0.85in,right=0.85in,top=0.95in,bottom=0.95in]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
-% mathpazo dropped: Palatino math fonts not installed
+\usepackage{lmodern}  % Latin Modern, as in arXiv:2611.05306
 \usepackage{microtype}
 \usepackage{amsmath}
 \usepackage{booktabs}
@@ -16,7 +16,21 @@
 \definecolor{linkblue}{HTML}{1A0DAB}
 \usepackage[colorlinks=true,citecolor=linkblue,linkcolor=linkblue,urlcolor=linkblue,breaklinks]{hyperref}
 \usepackage{url}
-\captionsetup{font=small,labelfont=bf,skip=4pt}
+% Captions as "Figure 1 | ...", left-justified; paragraphs unindented with space between them;
+% section numbers with a trailing period and modest heading sizes.
+\DeclareCaptionLabelSeparator{bar}{ $|$ }
+\captionsetup{font=small,labelfont=bf,labelsep=bar,justification=justified,singlelinecheck=false,skip=5pt}
+\setlength{\parindent}{0pt}\setlength{\parskip}{0.55\baselineskip plus 1pt minus 1pt}
+% One vertical scale: paragraphs are separated by \parskip (about half a line); a run-in paragraph heading
+% adds a little under half a line more, a subsection about one line, a section about one and a half.
+\makeatletter
+\renewcommand{\@seccntformat}[1]{\csname the#1\endcsname.\quad}
+\renewcommand\section{\@startsection{section}{1}{\z@}{-3.4ex plus -.8ex minus -.3ex}{1.2ex plus .2ex}{\normalfont\large\bfseries}}
+\renewcommand\subsection{\@startsection{subsection}{2}{\z@}{-2.6ex plus -.6ex minus -.2ex}{0.8ex plus .2ex}{\normalfont\normalsize\bfseries}}
+\renewcommand\paragraph{\@startsection{paragraph}{4}{\z@}{2.0ex plus .5ex minus .2ex}{-1em}{\normalfont\normalsize\bfseries}}
+\makeatother
+\setlength{\textfloatsep}{14pt plus 2pt minus 2pt}\setlength{\intextsep}{12pt plus 2pt minus 2pt}\setlength{\floatsep}{10pt plus 2pt minus 2pt}
+\setlist{topsep=3pt,itemsep=3pt,parsep=0pt,partopsep=0pt}
 \graphicspath{{figures/}}
 \newcommand{\code}[1]{\texttt{#1}}
 \newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
@@ -46,22 +60,22 @@
 % paper title centred and the page number bottom right; appendix pages also say so on the left.
 \makeatletter\newcommand{\isodate}{\the\year-\two@digits{\month}-\two@digits{\day}}\makeatother
 \newcommand{\papertitle}{What Do Language Models Need to Know About Their Tools?}
-\fancypagestyle{firstpage}{\fancyhf{}\lhead{\includegraphics[height=20pt]{lucio-logo}}\rhead{\small\isodate}\renewcommand{\headrulewidth}{0.4pt}}
-\fancypagestyle{bodypages}{\fancyhf{}\chead{\small\itshape\papertitle}\rfoot{\thepage}\renewcommand{\headrulewidth}{0.4pt}\renewcommand{\footrulewidth}{0.4pt}}
-\fancypagestyle{appendixpages}{\fancyhf{}\lhead{\small\scshape Appendix}\chead{\small\itshape\papertitle}\rfoot{\thepage}\renewcommand{\headrulewidth}{0.4pt}\renewcommand{\footrulewidth}{0.4pt}}
+\fancypagestyle{firstpage}{\fancyhf{}\lhead{\includegraphics[height=20pt]{lucio-logo}}\rhead{\small\isodate}\lfoot{\footnotesize\copyright\ \the\year\ Lucio AI. Licensed CC BY 4.0.}\renewcommand{\headrulewidth}{0.4pt}\renewcommand{\footrulewidth}{0.4pt}}
+\fancypagestyle{bodypages}{\fancyhf{}\chead{\small\papertitle}\rfoot{\thepage}\renewcommand{\headrulewidth}{0.4pt}\renewcommand{\footrulewidth}{0.4pt}}
+\fancypagestyle{appendixpages}{\fancyhf{}\lhead{\small\scshape Appendix}\chead{\small\papertitle}\rfoot{\thepage}\renewcommand{\headrulewidth}{0.4pt}\renewcommand{\footrulewidth}{0.4pt}}
 % article's title block opens with a 2em gap; pull the title up to the header rule instead.
 \makeatletter
-\renewcommand{\@maketitle}{\newpage\null%
-  \begin{center}\vspace*{-4em}\let\footnote\thanks  % glue after \null at the page top is discarded; this is not
-  {\LARGE \@title \par}\vskip 1.2em%
-  {\large \lineskip .5em \begin{tabular}[t]{c}\@author\end{tabular}\par}\vskip 0.6em%
-  {\large \@date}\end{center}\par\vskip 1em}
+\renewcommand{\@maketitle}{\newpage\null\vspace*{-3.2em}%
+  {\noindent\LARGE\bfseries\@title\par}\vskip 0.9em%
+  {\noindent\normalsize\bfseries Randeep Singh\par}\vskip 0.15em%
+  {\noindent\small Lucio AI \quad \texttt{randeep@lucioai.com}\par}\vskip 1.4em}
+\renewenvironment{abstract}{\noindent\textbf{Abstract.}\ \ignorespaces}{\par}
 \makeatother
 \title{\papertitle}
 \hypersetup{pdftitle={What Do Language Models Need to Know About Their Tools?}}
-\author{\textbf{Randeep Singh}\\ Lucio AI\\ \texttt{randeep@lucioai.com}}
+\author{Randeep Singh}
 
-\date{\vspace{-3ex}}  % article still reserves a line for an empty date
+\date{}
 \begin{document}
 \maketitle
 \pagestyle{bodypages}
@@ -69,12 +83,22 @@
 \suppressfloats[t]
 
 \begin{abstract}
-Tool-calling interfaces describe each tool with four pieces of text: a name, a description, parameter names and parameter descriptions. How much of it does a model need, and does it matter where it sits? On the Berkeley Function Calling Leaderboard's multi-turn tasks (BFCL) we remove each piece, then all four, for four models. Only one removal hurts every model: the parameter descriptions. The damage is confined to argument construction, to a handful of parameters whose descriptions alone stated an allowed value, format or entity type. An audit of where constraints live explains why: BFCL keeps them in prose; $\tau^2$-bench's airline domain states them structurally or in the conversation, where the removal has no detectable cost. Writing those constraints into the schema, with every parameter description blank, returns success to baseline within our resolution; writing them into the tool description does so for two models, falls short for one and lands in between for the fourth. Removing every carrier of a tool's purpose collapses tool selection on all three benchmarks tested; on $\tau^2$ models cancel reservations they meant to look up. A constraint has to be stated once, somewhere the model reads; the schema was the place every model read.
+Much of the text in a tool schema restates what the model can read elsewhere. We remove each piece of a tool's documentation in turn, then all of them, on the multi-turn tasks of the Berkeley Function Calling Leaderboard (BFCL), for four models. Only one removal costs every model: the parameter descriptions. The loss comes from argument construction, on a handful of parameters whose descriptions were the only place an allowed value, a format or an entity type was stated. An audit of where every constraint is stated predicts this. On $\tau^2$-bench, where the same constraints live in \code{enum}s or in the conversation, the removal has no detectable cost. Writing BFCL's constraints into the schema returns every model to baseline with every parameter description blank; writing them into the tool description instead does so for two models, falls short for one and lands in between for the fourth. Removing every statement of what a tool does collapses tool selection on all three benchmarks tested.
 \end{abstract}
+
+\noindent\textbf{Code and data:} \url{https://github.com/Eazydraft/exp-tool-semantics-ablation}
 
 \section{Introduction}
 
-Function calling is the standard way to connect a language model to software. The model is shown a list of tools, each a JSON Schema~\citep{jsonschema2020} with a name, a description and, for every parameter, a name, a type and a description, and it answers a user by emitting calls against that list~\citep{openai2023functioncalling,anthropic2024mcp}. Practitioners spend real effort on this text. They rewrite tool descriptions by hand, and a line of work studies how to write them well~\citep{hsieh2023tooldoc,yuan2025easytool,qu2025draft,guo2026rewrite}. What is missing is controlled evidence about which parts of that text a model relies on inside a realistic task, one with state to track, several turns to get through and a few dozen tools to choose from.
+Function calling is the standard way to connect a language model to software. The model is shown a list of tools, each a JSON Schema~\citep{jsonschema2020} with a name, a description and, for every parameter, a name, a type and a description, and it answers a user by emitting calls against that list~\citep{openai2023functioncalling,anthropic2024mcp}. Practitioners spend real effort on this text. They rewrite tool descriptions by hand, and a line of work studies how to write them well~\citep{hsieh2023tooldoc,yuan2025easytool,qu2025draft,guo2026rewrite}. What is missing is controlled evidence about which parts of that text a model relies on inside a realistic task, one with state to track, several turns to get through and a few dozen tools to choose from. Figure~\ref{fig:frontier} gives our answer in one chart.
+
+\begin{figure}[b]
+\centering
+\includegraphics[width=0.9\linewidth]{fig12_tokens_frontier}
+\caption{What each piece of tool documentation costs to drop. Each point is one of four models under one condition on BFCL: the $x$-axis is the size of a task's first request, which carries the tool schemas, relative to the unmodified schema, and the $y$-axis is the change in task success. Removing tool descriptions (D1) cuts the schema by a third to a half at no detectable cost; removing parameter descriptions (D2) saves little and costs 14 to 33.5 points; writing the constraints those descriptions carried into the schema (D6) returns success to baseline at D2's cost; removing every piece of prose (D5) collapses success. Conditions are defined in Table~\ref{tab:conditions}. (b) enlarges the dashed box of (a), with the four conditions Section~\ref{sec:followup} discusses in colour and the rest in grey; the band is the widest run-to-run noise floor. (c) repeats D1 to D5 on $\tau^2$-bench, where the constraints are stated structurally and nothing but D5 costs anything.}
+\label{fig:frontier}
+\end{figure}
+
 
 We use the multi-turn base section of BFCL~\citep{patil2025bfcl,mao2024bfclv3}, keep the tasks and the execution environment fixed, and vary only the tool documentation shown to the model. Four models from four providers ran every task under every condition, three of them with reasoning on and off. All comparisons are paired at the task level, and a repeated baseline run measures run-to-run noise. Figure~\ref{fig:trajectory} shows what the ablation does to one task.
 
@@ -89,7 +113,7 @@ We then repeat the experiment on two other benchmarks. Apple's ToolSandbox~\cite
 
 Section~\ref{sec:background} fixes the vocabulary. A tool call involves two decisions, \emph{selecting} a tool and \emph{constructing} its arguments, and each needs a different kind of information: what a tool does, which values its parameters accept, and what values to supply. Any of this can be stated in several places, which we call \emph{carriers}: the four text components, the structural fields of the schema, and the conversation itself. The experiment removes carriers one at a time, and then all at once, to see how the information they carry affects tool use. We find:
 
-\begin{itemize}\setlength\itemsep{2pt}
+\begin{itemize}
   \item \textbf{Where a constraint is stated predicts what its removal costs.} Removing parameter descriptions (D2) is the one single removal that hurts every model on BFCL, by 14 to 33.5 percentage points (Section~\ref{sec:bfcl}). The damage is at argument construction rather than tool selection (Section~\ref{sec:selection}), and it is concentrated on six parameters whose description alone stated an allowed value, a format or an entity type (Section~\ref{sec:which}). An audit of every ground-truth argument turns this into a property of the interface rather than of the models. BFCL keeps two fifths of its constraints in prose and nowhere else; $\tau^2$-bench states the same kind of constraint as an \code{enum} or supplies the value in the conversation, and there the same removal has no detectable cost (Sections~\ref{sec:audit} and~\ref{sec:nulls}). ToolSandbox's descriptions hold no constraint at all, so its null speaks only to the next point.
   \item \textbf{Tool-purpose information is stated redundantly.} Removing tool descriptions, tool names or parameter names one at a time leaves success within each model's own run-to-run noise for all but one model and condition (Sections~\ref{sec:bfcl} and~\ref{sec:nulls}). Removing all of them collapses tool selection on all three benchmarks (Section~\ref{sec:d5}). On $\tau^2$ airline the models then cancel the reservations they meant to look up, because the cancel and look-up tools share a signature and nothing else is left to tell them apart.
   \item \textbf{Structure can carry the constraints instead.} Writing the BFCL constraints into the schema as \code{enum}s, \code{pattern}s and two more informative parameter names (D6) returns every model to its baseline with every description blank (Section~\ref{sec:followup}). Stating the same constraints as sentences in the tool description (D9) recovers most of the loss for every model and all of it for two; Gemma~4 stays 15.5 points short and Qwen3 8 to 10, so the information has to be stated somewhere the model reads, and the schema was the place every model read. The carriers are not freely interchangeable, though. Qwen3 loses 11.5 points when parameter names become generic although every description stays, and removing parameter names and descriptions together (D8) costs more than removing either.
@@ -263,14 +287,7 @@ Model & D0 & D2 & D6a & D6b & D6 & D9 \\
 \end{tabular}
 \end{table}
 
-\begin{figure}[t]
-\centering
-\includegraphics[width=\linewidth]{fig12_tokens_frontier}
-\caption{What each condition costs the tool author against what it costs the model, four default configurations. The $x$-axis is the size of the task's first request, which carries the tool schemas, as a share of that model's D0; the $y$-axis is the change in task success from D0. Colour is the model; in (b), which enlarges the dashed box of (a), the four conditions the text discusses carry their own marker and a label at the centroid of their four models, and the other conditions are grey; the grey band is the widest of the four run-to-run noise floors (Table~\ref{tab:noise}). Two caveats: the first request is what providers cache, so the saving is context budget more than money; and D1 also removes the prose in BFCL's response schemas, so part of its saving is not a tool-description saving in the usual sense.}
-\label{fig:frontier}
-\end{figure}
-
-\paragraph{Structure carries the constraints, and names and descriptions restate each other.} The conditions after D5 test the explanation of Section~\ref{sec:which} directly (Table~\ref{tab:followupmain} and Figure~\ref{fig:frontier}; Appendix~\ref{app:followup} reports them in full). Figure~\ref{fig:frontier} puts every condition on one chart, the size of the schema against what it costs: D1 is the biggest saving at no detectable cost, D5 is the cheapest and collapses, and D6 sits near D2's cost at D0's success. D6 writes the prose-only constraints into the schema and blanks every description. It lands within 3.5 points of D0 for every model, with no significant difference and equivalence bounds of \dsixvsdzeroboundrange\pp, and every D6--D2 difference is significant, recovering 17.5 to 31.0 points. D7, which keeps only the six descriptions, recovers most but not all of the loss. Splitting D6 into its two moves shows that the structural fields carry most of the recovery (D6a, \dsixavsdtwo\pp\ over D2) and that the two renames add the rest only in combination with them, because the tasks that need the zip codes also need the enums (Appendix~\ref{app:followup-split}). Stating the same constraints as sentences in the tool description instead (D9) recovers about as much as the fields alone. It brings Luna and Haiku back to baseline. Gemma~4 stays $15.5$\pp\ below it against its first D0 run and \gemmadninesb\pp\ against a second one made alongside D9 ($p\gemmadninesbp$), and Qwen3 lands in between, 8 to 10\pp\ short on both baselines with intervals that exclude zero but a difference that does not pass the corrected threshold: the constraint has to be stated somewhere the model reads, and the schema was the place every model read. D8 removes parameter names and descriptions together and costs \deightvsdtworange\pp\ more than D2 (Appendix~\ref{app:followup-d8}): what a parameter is was stated twice, and removing both statements leaves only the type.
+\paragraph{Structure carries the constraints, and names and descriptions restate each other.} The conditions after D5 test the explanation of Section~\ref{sec:which} directly (Table~\ref{tab:followupmain} and Figure~\ref{fig:frontier}; Appendix~\ref{app:followup} reports them in full). Figure~\ref{fig:frontier} puts every condition on one chart, the size of the schema against what it costs: D1 is the biggest saving at no detectable cost, D5 is the cheapest and collapses, and D6 sits near D2's cost at D0's success. Two caveats apply to the chart: the first request is what providers cache, so the saving is context budget more than money, and D1 also removes the prose in BFCL's response schemas, so part of its saving is not a tool-description saving in the usual sense. D6 writes the prose-only constraints into the schema and blanks every description. It lands within 3.5 points of D0 for every model, with no significant difference and equivalence bounds of \dsixvsdzeroboundrange\pp, and every D6--D2 difference is significant, recovering 17.5 to 31.0 points. D7, which keeps only the six descriptions, recovers most but not all of the loss. Splitting D6 into its two moves shows that the structural fields carry most of the recovery (D6a, \dsixavsdtwo\pp\ over D2) and that the two renames add the rest only in combination with them, because the tasks that need the zip codes also need the enums (Appendix~\ref{app:followup-split}). Stating the same constraints as sentences in the tool description instead (D9) recovers about as much as the fields alone. It brings Luna and Haiku back to baseline. Gemma~4 stays $15.5$\pp\ below it against its first D0 run and \gemmadninesb\pp\ against a second one made alongside D9 ($p\gemmadninesbp$), and Qwen3 lands in between, 8 to 10\pp\ short on both baselines with intervals that exclude zero but a difference that does not pass the corrected threshold: the constraint has to be stated somewhere the model reads, and the schema was the place every model read. D8 removes parameter names and descriptions together and costs \deightvsdtworange\pp\ more than D2 (Appendix~\ref{app:followup-d8}): what a parameter is was stated twice, and removing both statements leaves only the type.
 
 \subsection{Behaviour, recovery and failure outcomes}\label{sec:behaviour}
 

@@ -213,4 +213,4 @@ domain in text mode, one trial, with GPT-4.1 as the user and the benchmark's pin
 The code (`ablation/`, `browser/`, `run.sh`, the scripts in `paper/`) is under the [MIT License](LICENSE).
 The data and the paper (`runs/`, the paper sources and PDF) are under the
 [Creative Commons Attribution 4.0 International License](LICENSE-CC-BY-4.0) (CC BY 4.0).
-Copyright 2026 Lucio AI and Randeep Singh. The benchmark submodules keep their own licenses.
+Copyright 2026 Lucio AI. The benchmark submodules keep their own licenses.
